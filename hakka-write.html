@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>客語橫式生字練習簿產生器 | Hakka Copybook</title>
-    <!-- 引入臺灣客語推薦手寫字型：芫荽體 (Iansui) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-iansui@1.0.0/dist/iansui.min.css" crossorigin="anonymous">
+    <!-- 正確載入臺灣 ButTaiwan 芫荽體開源字型 -->
     <style>
+        @font-face {
+            font-family: 'Iansui';
+            src: url('https://cdn.jsdelivr.net/gh/ButTaiwan/iansui@main/dist/Iansui-Regular.woff2') format('woff2');
+            font-display: swap;
+        }
+
         :root {
             --primary: #1b4965;
             --primary-hover: #13354a;
@@ -156,7 +161,6 @@
             color: #000;
         }
 
-        /* 頁首標題與班級資訊 */
         .sheet-header {
             display: flex;
             justify-content: space-between;
@@ -185,7 +189,6 @@
             display: inline-block;
         }
 
-        /* 練習格容器 */
         .sheet-content {
             flex: 1;
             display: flex;
@@ -199,7 +202,6 @@
             margin-bottom: 4px;
         }
 
-        /* 拼音四線格 */
         .pinyin-row {
             display: flex;
             height: 22px;
@@ -231,7 +233,6 @@
             opacity: 0.65;
         }
 
-        /* 漢字練習格行 */
         .hanzi-row {
             display: flex;
         }
@@ -246,7 +247,6 @@
             background-color: #fff;
         }
 
-        /* 田字格虛線 */
         .tian-grid::before {
             content: '';
             position: absolute;
@@ -266,7 +266,6 @@
             opacity: 0.7;
         }
 
-        /* 米字格 */
         .mi-grid::before {
             content: '';
             position: absolute;
@@ -292,7 +291,6 @@
             opacity: 0.5;
         }
 
-        /* 格內文字 */
         .char-text {
             position: relative;
             z-index: 2;
@@ -300,7 +298,6 @@
             line-height: 1;
         }
 
-        /* 芫荽體與備用楷體 fallback */
         .font-iansui {
             font-family: 'Iansui', "BiauKai", "DFKai-SB", "標楷體", serif;
         }
@@ -316,7 +313,6 @@
         .mode-red { color: #e63946; opacity: 0.38; }
         .mode-gray { color: #94a3b8; opacity: 0.45; }
 
-        /* 列印配置 */
         @media print {
             @page {
                 size: A4 landscape;
