@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客語橫式生字練習簿產生器 | Hakka Copybook</title>
+    <!-- 引入臺灣客語推薦手寫字型：芫荽體 (Iansui) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-iansui@1.0.0/dist/iansui.min.css" crossorigin="anonymous">
+    <style>
+        :root {
+            --primary: #1b4965;
+            --primary-hover: #13354a;
+            --bg-ui: #2b3035;
+            --panel-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --grid-line-color: #e63946;
+            --grid-dash-color: #f4a261;
+            --pinyin-line-color: #457b9d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
+            background-color: var(--bg-ui);
+            color: #2b2d42;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 側邊控制面板 */
+        #control-panel {
+            width: 360px;
+            min-width: 360px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .panel-header h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .panel-header p {
+            font-size: 0.8rem;
+            color: #e0f2fe;
+            margin-top: 4px;
+        }
+
+        .panel-body {
+            padding: 16px 20px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .form-group textarea, 
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .form-group textarea {
+            height: 90px;
+            resize: vertical;
+            line-height: 1.4;
+        }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .panel-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border-color);
+            background: #fff;
+        }
+
+        .btn-print {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-print:hover {
+            background: var(--primary-hover);
+        }
+
+        /* 預覽視窗區塊 */
+        #preview-area {
+            flex: 1;
+            overflow: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #525659;
+        }
+
+        /* A4 橫式規格 (297mm x 210mm) */
+        .page {
+            width: 297mm;
+            min-width: 297mm;
+            height: 210mm;
+            min-height: 210mm;
+            background: #ffffff !important;
+            padding: 12mm 15mm;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            color: #000;
+        }
+
+        /* 頁首標題與班級資訊 */
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #334155;
+            margin-bottom: 12px;
+        }
+
+        .sheet-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .sheet-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .meta-field {
+            border-bottom: 1px solid #64748b;
+            min-width: 60px;
+            display: inline-block;
+        }
+
+        /* 練習格容器 */
+        .sheet-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .practice-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 4px;
+        }
+
+        /* 拼音四線格 */
+        .pinyin-row {
+            display: flex;
+            height: 22px;
+            position: relative;
+        }
+
+        .pinyin-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .pinyin-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom,
+                var(--pinyin-line-color) 1px, transparent 1px,
+                transparent 7px, rgba(69, 123, 157, 0.4) 7px, rgba(69, 123, 157, 0.4) 8px, transparent 8px,
+                transparent 14px, rgba(69, 123, 157, 0.4) 14px, rgba(69, 123, 157, 0.4) 15px, transparent 15px,
+                transparent 21px, var(--pinyin-line-color) 21px
+            );
+            pointer-events: none;
+            opacity: 0.65;
+        }
+
+        /* 漢字練習格行 */
+        .hanzi-row {
+            display: flex;
+        }
+
+        .grid-cell {
+            position: relative;
+            border: 1px solid var(--grid-line-color);
+            margin-right: -1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+        }
+
+        /* 田字格虛線 */
+        .tian-grid::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 1px;
+            border-top: 1px dashed var(--grid-dash-color);
+            transform: translateY(-50%);
+            opacity: 0.7;
+        }
+        .tian-grid::after {
+            content: '';
+            position: absolute;
+            left: 50%; top: 0; bottom: 0;
+            width: 1px;
+            border-left: 1px dashed var(--grid-dash-color);
+            transform: translateX(-50%);
+            opacity: 0.7;
+        }
+
+        /* 米字格 */
+        .mi-grid::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 1px;
+            border-top: 1px dashed var(--grid-dash-color);
+            transform: translateY(-50%);
+            opacity: 0.7;
+        }
+        .mi-grid::after {
+            content: '';
+            position: absolute;
+            left: 50%; top: 0; bottom: 0;
+            width: 1px;
+            border-left: 1px dashed var(--grid-dash-color);
+            transform: translateX(-50%);
+            opacity: 0.7;
+        }
+        .mi-diag {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* 格內文字 */
+        .char-text {
+            position: relative;
+            z-index: 2;
+            font-size: 38px;
+            line-height: 1;
+        }
+
+        /* 芫荽體與備用楷體 fallback */
+        .font-iansui {
+            font-family: 'Iansui', "BiauKai", "DFKai-SB", "標楷體", serif;
+        }
+        .font-kai {
+            font-family: "BiauKai", "DFKai-SB", "標楷體", serif;
+        }
+        .font-sans {
+            font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+            font-weight: 500;
+        }
+
+        .mode-black { color: #000; }
+        .mode-red { color: #e63946; opacity: 0.38; }
+        .mode-gray { color: #94a3b8; opacity: 0.45; }
+
+        /* 列印配置 */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+            body {
+                background: transparent !important;
+                display: block !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+            #control-panel {
+                display: none !important;
+            }
+            #preview-area {
+                padding: 0 !important;
+                background: transparent !important;
+                display: block !important;
+            }
+            .page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <aside id="control-panel">
+        <div class="panel-header">
+            <h1>🍵 客語橫式生字簿</h1>
+            <p>A4 Landscape 臺灣客語教學字帖</p>
+        </div>
+
+        <div class="panel-body">
+            <div class="form-group">
+                <label>常用詞彙範本</label>
+                <select id="preset-select">
+                    <option value="">-- 請選擇載入範本 --</option>
+                    <option value="恁(anˋ) 仔(eˋ) 細(se)">問候：恁仔細 (四縣)</option>
+                    <option value="承(shin) 蒙(mung) 你(ngi)">問候：承蒙你 (海陸)</option>
+                    <option value="食(shid) 飽(bauˋ) 吂(mang)">關懷：食飽吂</option>
+                    <option value="天(tien) 公(gung) 落(log) 水(suiˋ)">童謠：天公落水</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>輸入漢字與拼音 (格式：字(pinyin))</label>
+                <textarea id="input-text">恁(anˋ) 仔(eˋ) 細(se)
+承(shin) 蒙(mung) 你(ngi)
+食(shid) 飽(bauˋ) 吂(mang)
+天(tien) 公(gung) 落(log) 水(suiˋ)</textarea>
+            </div>
+
+            <div class="row-2">
+                <div class="form-group">
+                    <label>字帖標題</label>
+                    <input type="text" id="title-input" value="客家語文作業生字簿">
+                </div>
+                <div class="form-group">
+                    <label>字體樣式</label>
+                    <select id="font-select">
+                        <option value="font-iansui" selected>芫荽體 (推薦手寫)</option>
+                        <option value="font-kai">系統標楷體</option>
+                        <option value="font-sans">標準黑體</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row-2">
+                <div class="form-group">
+                    <label>格子格式</label>
+                    <select id="grid-type">
+                        <option value="mi" selected>米字格</option>
+                        <option value="tian">田字格</option>
+                        <option value="none">純方格</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>每行格數</label>
+                    <select id="cols-per-row">
+                        <option value="11">11 格</option>
+                        <option value="12" selected>12 格 (標準)</option>
+                        <option value="13">13 格</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row-2">
+                <div class="form-group">
+                    <label>練習模式</label>
+                    <select id="practice-mode">
+                        <option value="repeat" selected>詞語循環練習</option>
+                        <option value="first-only">首字示範 + 空格</option>
+                        <option value="trace-red">整列紅色描紅</option>
+                        <option value="trace-gray">整列灰色描紅</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>格線顏色</label>
+                    <select id="line-color">
+                        <option value="#e63946">硃砂紅</option>
+                        <option value="#2a9d8f">文藝綠</option>
+                        <option value="#457b9d">雅致藍</option>
+                        <option value="#64748b">鉛筆灰</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-footer">
+            <button class="btn-print" onclick="window.print()">
+                🖨️ 列印 / 另存為 PDF
+            </button>
+        </div>
+    </aside>
+
+    <main id="preview-area">
+        <div class="page" id="sheet-page">
+            <div class="sheet-header">
+                <div class="sheet-title font-iansui" id="display-title">客家語文作業生字簿</div>
+                <div class="sheet-meta font-iansui">
+                    <div>年級：<span class="meta-field"></span></div>
+                    <div>班級：<span class="meta-field"></span></div>
+                    <div>座號：<span class="meta-field" style="min-width:35px;"></span></div>
+                    <div>姓名：<span class="meta-field"></span></div>
+                    <div>評分：<span class="meta-field" style="min-width:35px;"></span></div>
+                </div>
+            </div>
+            <div class="sheet-content" id="sheet-content"></div>
+        </div>
+    </main>
+
+    <script>
+        function parsePinyinText(line) {
+            const regex = /([^\s(（]+)(?:[(（]([^)）]+)[)）])?/g;
+            const items = [];
+            let match;
+            while ((match = regex.exec(line)) !== null) {
+                const chars = match[1].split('');
+                const pinyin = match[2] || '';
+                if (chars.length === 1) {
+                    items.push({ char: chars[0], pinyin: pinyin });
+                } else {
+                    const pinyinParts = pinyin.split(/\s+/);
+                    chars.forEach((c, i) => {
+                        items.push({ char: c, pinyin: pinyinParts[i] || '' });
+                    });
+                }
+            }
+            return items;
+        }
+
+        function renderSheet() {
+            const inputArea = document.getElementById('input-text');
+            const titleInput = document.getElementById('title-input');
+            const fontSelect = document.getElementById('font-select');
+            const gridTypeSelect = document.getElementById('grid-type');
+            const colsSelect = document.getElementById('cols-per-row');
+            const modeSelect = document.getElementById('practice-mode');
+            const lineColorSelect = document.getElementById('line-color');
+            const displayTitle = document.getElementById('display-title');
+            const sheetContent = document.getElementById('sheet-content');
+
+            if (!inputArea || !sheetContent) return;
+
+            displayTitle.textContent = titleInput.value || '客家語文作業生字簿';
+            displayTitle.className = `sheet-title ${fontSelect.value}`;
+
+            document.documentElement.style.setProperty('--grid-line-color', lineColorSelect.value);
+
+            const lines = inputArea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const cols = parseInt(colsSelect.value, 10);
+            const gridType = gridTypeSelect.value;
+            const fontClass = fontSelect.value;
+            const mode = modeSelect.value;
+
+            sheetContent.innerHTML = '';
+            const maxRows = 4;
+            const targetLines = lines.slice(0, maxRows);
+
+            targetLines.forEach(lineStr => {
+                const parsedItems = parsePinyinText(lineStr);
+                if (parsedItems.length === 0) return;
+
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'practice-row';
+
+                const pinyinRow = document.createElement('div');
+                pinyinRow.className = 'pinyin-row';
+
+                const hanziRow = document.createElement('div');
+                hanziRow.className = 'hanzi-row';
+
+                for (let c = 0; c < cols; c++) {
+                    const cellItem = parsedItems[c % parsedItems.length];
+
+                    const pBox = document.createElement('div');
+                    pBox.className = 'pinyin-box';
+                    pBox.style.width = (100 / cols) + '%';
+
+                    const hCell = document.createElement('div');
+                    hCell.className = `grid-cell ${gridType === 'tian' ? 'tian-grid' : (gridType === 'mi' ? 'mi-grid' : '')}`;
+                    hCell.style.width = (100 / cols) + '%';
+                    hCell.style.aspectRatio = '1 / 1';
+
+                    if (gridType === 'mi') {
+                        const miSvg = document.createElement('div');
+                        miSvg.className = 'mi-diag';
+                        miSvg.innerHTML = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <line x1="0" y1="0" x2="100" y2="100" stroke="${lineColorSelect.value}" stroke-dasharray="3,3" stroke-width="0.8"/>
+                            <line x1="100" y1="0" x2="0" y2="100" stroke="${lineColorSelect.value}" stroke-dasharray="3,3" stroke-width="0.8"/>
+                        </svg>`;
+                        hCell.appendChild(miSvg);
+                    }
+
+                    const charSpan = document.createElement('span');
+                    charSpan.className = `char-text ${fontClass}`;
+
+                    if (mode === 'repeat') {
+                        if (c < parsedItems.length) {
+                            charSpan.classList.add('mode-black');
+                            charSpan.textContent = cellItem.char;
+                            pBox.textContent = cellItem.pinyin;
+                        } else if (c < parsedItems.length * 2) {
+                            charSpan.classList.add('mode-red');
+                            charSpan.textContent = cellItem.char;
+                            pBox.textContent = cellItem.pinyin;
+                            pBox.style.opacity = '0.4';
+                        }
+                    } else if (mode === 'first-only') {
+                        if (c < parsedItems.length) {
+                            charSpan.classList.add('mode-black');
+                            charSpan.textContent = cellItem.char;
+                            pBox.textContent = cellItem.pinyin;
+                        }
+                    } else if (mode === 'trace-red') {
+                        charSpan.classList.add('mode-red');
+                        charSpan.textContent = cellItem.char;
+                        pBox.textContent = cellItem.pinyin;
+                    } else if (mode === 'trace-gray') {
+                        charSpan.classList.add('mode-gray');
+                        charSpan.textContent = cellItem.char;
+                        pBox.textContent = cellItem.pinyin;
+                    }
+
+                    hCell.appendChild(charSpan);
+                    pinyinRow.appendChild(pBox);
+                    hanziRow.appendChild(hCell);
+                }
+
+                rowDiv.appendChild(pinyinRow);
+                rowDiv.appendChild(hanziRow);
+                sheetContent.appendChild(rowDiv);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const inputs = ['input-text', 'title-input', 'font-select', 'grid-type', 'cols-per-row', 'practice-mode', 'line-color'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', renderSheet);
+                    el.addEventListener('change', renderSheet);
+                }
+            });
+
+            const preset = document.getElementById('preset-select');
+            if (preset) {
+                preset.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        document.getElementById('input-text').value = e.target.value;
+                        renderSheet();
+                    }
+                });
+            }
+
+            renderSheet();
+        });
+
+        // 立即執行一次確保繪製
+        renderSheet();
+    </script>
+</body>
+</html>
