@@ -29,7 +29,7 @@
       color: #1f2937;
     }
 
-    /* 優先採用專案芫荽體，後續為系統楷體 fallback */
+    /* 優先採用專案芫荽體 */
     .font-kai {
       font-family: 'Iansui', 'DFKai-SB', 'BiauKai', '標楷體', cursive, serif;
     }
@@ -104,7 +104,6 @@
       pointer-events: none;
     }
 
-    /* 自訂捲軸 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -129,7 +128,7 @@
             客家語文生字簿產生器
             <span class="text-xs bg-teal-800 text-teal-200 px-2 py-0.5 rounded font-medium">A4 橫向專用版</span>
           </h1>
-          <p class="text-xs text-stone-400">專為臺灣客語（四縣、海陸腔等）設計，支援「漢字 + 拼音四線/雙線格」精確對齊與列印</p>
+          <p class="text-xs text-stone-400">專為臺灣客語（四縣、海陸腔等）設計，三欄自動拼音對齊</p>
         </div>
       </div>
       <div class="flex items-center space-x-3">
@@ -143,66 +142,96 @@
   <!-- 主操作介面 -->
   <div class="flex-1 flex flex-col xl:flex-row max-w-[1750px] w-full mx-auto p-4 gap-6 items-start">
     
-    <!-- 左側控制設定 (A4 橫式列印時隱藏) -->
-    <aside class="no-print w-full xl:w-[450px] bg-white rounded-xl shadow-sm border border-stone-200 p-5 shrink-0 flex flex-col gap-4 max-h-[calc(100vh-100px)] xl:sticky xl:top-4 overflow-y-auto">
+    <!-- 左側控制設定 -->
+    <aside class="no-print w-full xl:w-[460px] bg-white rounded-xl shadow-sm border border-stone-200 p-5 shrink-0 flex flex-col gap-4 max-h-[calc(100vh-100px)] xl:sticky xl:top-4 overflow-y-auto">
       
       <!-- 快速範本 -->
       <div>
         <label class="block text-xs font-bold text-stone-700 mb-2 uppercase tracking-wider">
-          <i class="fa-solid fa-bookmark text-teal-600 mr-1"></i> 客語常用範本快速載入（四縣 / 海陸腔）
+          <i class="fa-solid fa-bookmark text-teal-600 mr-1"></i> 客語常用範本快速載入
         </label>
         <div class="grid grid-cols-2 gap-2 text-xs">
           <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
             data-title="客家日常問候語"
-            data-content="恁(anˋ) 仔(ziiˋ) 細(se)
-承(shinˇ) 蒙(mungˇ) 你(ngi)
-食(siid) 飽(bauˋ) 吂(mangˇ)
-天(tienˊ) 公(gungˊ) 落(log) 水(suiˋ)">
+            data-hanzi="恁仔細&#10;承蒙你&#10;食飽吂&#10;天公落水"
+            data-pinyin="anˋ eˋ se&#10;shinˇ mungˇ ngi&#10;siid bauˋ mangˇ&#10;tienˊ gungˊ log suiˋ">
             <span class="font-bold text-teal-900 block">日常問候語</span>
             <span class="text-stone-500 text-[11px]">恁仔細、承蒙你、食飽吂</span>
           </button>
 
           <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
-            data-title="客語童謠 - 月光光"
-            data-content="天(tienˊ) 公(gungˊ) 落(log) 水(suiˋ) 老(loˋ) 妹(moi) 戴(dai) 等(denˋ) 笠(lib) 嫲(maˇ)
-落(log) 水(suiˋ) 淋(limˇ) 濕(siib) 緊(ginˋ) 走(zeuˋ) 歸(guiˊ) 屋(vuk) 下(ha)">
+            data-title="客語童謠 - 天公落水"
+            data-hanzi="天公落水阿妹戴等笠嫲&#10;落水淋濕緊走歸屋下"
+            data-pinyin="tienˊ gungˊ log suiˋ aˊ moi dai denˋ lib maˇ&#10;log suiˋ limˇ siib ginˋ zeuˋ guiˊ vuk ha">
             <span class="font-bold text-teal-900 block">客語童謠精選</span>
             <span class="text-stone-500 text-[11px]">天公落水、戴等笠嫲</span>
           </button>
 
           <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
             data-title="客家家庭親屬稱謂"
-            data-content="阿(aˊ) 爸(baˊ) 阿(aˊ) 姆(meˊ)
-阿(aˊ) 公(gungˊ) 阿(aˊ) 婆(poˇ)
-阿(aˊ) 哥(goˊ) 阿(aˊ) 姊(jeˋ)
-細(se) 妹(moi) 細(se) 倈(lai)">
+            data-hanzi="阿爸 阿姆&#10;阿公 阿婆&#10;阿哥 阿姊&#10;細妹 細倈"
+            data-pinyin="aˊ baˊ aˊ meˊ&#10;aˊ gungˊ aˊ poˇ&#10;aˊ goˊ aˊ jeˋ&#10;se moi se lai">
             <span class="font-bold text-teal-900 block">家庭親屬稱謂</span>
             <span class="text-stone-500 text-[11px]">阿公、阿婆、阿爸、阿姆</span>
           </button>
 
           <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
-            data-title="客家數字與生活詞彙"
-            data-content="一(yid) 二(ngi) 三(samˊ) 四(xi) 五(ngˋ)
-六(liug) 七(qid) 八(bad) 九(giuˋ) 十(siib)">
+            data-title="客家數字拼讀"
+            data-hanzi="一二三四五&#10;六七八九十"
+            data-pinyin="yid ngi samˊ xi ngˋ&#10;liug qid bad giuˋ siib">
             <span class="font-bold text-teal-900 block">基礎數字拼讀</span>
             <span class="text-stone-500 text-[11px]">一至十客語拼音與數字</span>
           </button>
         </div>
       </div>
 
-      <!-- 文字輸入 -->
-      <div>
-        <div class="flex justify-between items-center mb-1">
-          <label for="input-content" class="text-xs font-bold text-stone-700 uppercase tracking-wider">
-            <i class="fa-solid fa-feather text-teal-600 mr-1"></i> 漢字與客語拼音輸入
+      <!-- 三欄式文字輸入區塊 -->
+      <div class="space-y-3 bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-table-columns text-teal-600"></i> 三欄式文字與拼音對齊
           </label>
-          <span class="text-[11px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded">格式：字(phin-yim)</span>
+          <span class="text-[10px] text-stone-500">換行自動對應行數</span>
         </div>
-        <textarea id="input-content" rows="4" class="w-full text-stone-800 border border-stone-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none transition resize-y font-kai leading-relaxed" placeholder="請依照「漢字(客語拼音)」輸入，例如：&#10;恁(anˋ) 仔(eˋ) 細(se)&#10;食(siid) 飽(bauˋ) 吂(mangˇ)&#10;亦可純輸入漢字（不帶括號則上方留白）">恁(anˋ) 仔(eˋ) 細(se)
-承(shinˇ) 蒙(mungˇ) 你(ngi)
-食(siid) 飽(bauˋ) 吂(mangˇ)
-天(tienˊ) 公(gungˊ) 落(log) 水(suiˋ)</textarea>
-        <p class="text-[11px] text-stone-500 mt-1">提示：換行即代表新的一行練習。支援直接輸入調號符號（ˊ ˇ ˆ ˋ）或數字調號。</p>
+
+        <!-- 欄位 1：純漢字 -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-semibold text-teal-900">第一欄：純漢字 (每行一個詞或句子)</span>
+          </div>
+          <textarea id="col-hanzi" rows="3" class="w-full text-stone-800 border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none transition resize-y font-kai leading-relaxed bg-white" placeholder="請直接輸入客語漢字，每行一句，例如：
+恁仔細
+承蒙你
+食飽吂
+天公落水">恁仔細
+承蒙你
+食飽吂
+天公落水</textarea>
+        </div>
+
+        <!-- 欄位 2：拼音（空格分隔） -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-semibold text-teal-900">第二欄：客語拼音 (以空白分開每個字的音)</span>
+          </div>
+          <textarea id="col-pinyin" rows="3" class="w-full text-stone-800 border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none transition resize-y font-pinyin leading-relaxed bg-white" placeholder="用空白隔開拼音，例如：
+anˋ eˋ se
+shinˇ mungˇ ngi
+siid bauˋ mangˇ
+tienˊ gungˊ log suiˋ">anˋ eˋ se
+shinˇ mungˇ ngi
+siid bauˋ mangˇ
+tienˊ gungˊ log suiˋ</textarea>
+        </div>
+
+        <!-- 欄位 3：自動合成組合結果 (可直接用於繪製，也可微調) -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-semibold text-stone-600">第三欄：自動生成格式 【字(phin-yim)】</span>
+            <span class="text-[10px] bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded">即時自動組合</span>
+          </div>
+          <textarea id="input-content" rows="3" class="w-full text-stone-700 border border-stone-200 rounded-lg p-2 text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none transition resize-y font-kai bg-stone-100 leading-relaxed" placeholder="系統會自動將第 1 欄與第 2 欄組合產生於此"></textarea>
+        </div>
       </div>
 
       <hr class="border-stone-100">
@@ -254,7 +283,6 @@
         <div>
           <label class="block text-xs font-bold text-stone-700 mb-1">漢字字體</label>
           <select id="font-family" class="w-full border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500">
-            <!-- 已刪除霞鶩文楷，預設為專案芫荽體 -->
             <option value="font-kai" selected>芫荽體 (推薦手寫硬筆)</option>
             <option value="font-song">思源宋體 (端正)</option>
             <option value="font-sans">黑體 (現代工整)</option>
@@ -331,7 +359,7 @@
      * 狀態管理物件
      */
     const state = {
-      content: document.getElementById('input-content').value,
+      content: '',
       practiceMode: 'word_repeat',
       gridStyle: 'mizi',
       pinyinStyle: 'four_lines',
@@ -346,6 +374,8 @@
 
     // DOM 快取
     const dom = {
+      colHanzi: document.getElementById('col-hanzi'),
+      colPinyin: document.getElementById('col-pinyin'),
       inputContent: document.getElementById('input-content'),
       practiceMode: document.getElementById('practice-mode'),
       gridStyle: document.getElementById('grid-style'),
@@ -363,6 +393,52 @@
       btnPrint: document.getElementById('btn-print'),
       presetBtns: document.querySelectorAll('.preset-btn')
     };
+
+    /**
+     * 自動將第一欄（漢字）與第二欄（拼音）逐行逐字組裝至第三欄
+     */
+    function autoCompose() {
+      const hanziLines = dom.colHanzi.value.split('\n');
+      const pinyinLines = dom.colPinyin.value.split('\n');
+      const maxLines = Math.max(hanziLines.length, pinyinLines.length);
+
+      const combinedLines = [];
+
+      for (let i = 0; i < maxLines; i++) {
+        const hLine = (hanziLines[i] || '').trim();
+        const pLine = (pinyinLines[i] || '').trim();
+
+        if (!hLine && !pLine) continue;
+
+        // 拆分漢字：保留中文字元與非空白符號
+        const chars = hLine.split('').filter(c => c.trim() !== '');
+        // 拆分拼音：以一個或多個空白切分
+        const pinyins = pLine.length > 0 ? pLine.split(/\s+/) : [];
+
+        const lineResult = [];
+        for (let j = 0; j < chars.length; j++) {
+          const char = chars[j];
+          const py = pinyins[j] || '';
+          if (py) {
+            lineResult.push(`${char}(${py})`);
+          } else {
+            lineResult.push(char);
+          }
+        }
+
+        // 若漢字字數少於拼音，則將剩下的純拼音文字補齊
+        if (chars.length < pinyins.length && chars.length === 0) {
+          pinyins.forEach(py => lineResult.push(`(${py})`));
+        }
+
+        combinedLines.push(lineResult.join(' '));
+      }
+
+      const finalContent = combinedLines.join('\n');
+      dom.inputContent.value = finalContent;
+      state.content = finalContent;
+      render();
+    }
 
     /**
      * 解析使用者輸入的「字(拼音)」格式
@@ -685,6 +761,11 @@
      * 綁定控制項事件
      */
     function initListeners() {
+      // 第一欄與第二欄即時組合監聽
+      dom.colHanzi.addEventListener('input', autoCompose);
+      dom.colPinyin.addEventListener('input', autoCompose);
+
+      // 若使用者手動微調第三欄
       dom.inputContent.addEventListener('input', (e) => {
         state.content = e.target.value;
         render();
@@ -741,17 +822,24 @@
         render();
       });
 
+      // 範本切換按鈕事件
       dom.presetBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-          const content = btn.getAttribute('data-content');
+          const hanzi = btn.getAttribute('data-hanzi');
+          const pinyin = btn.getAttribute('data-pinyin');
           const title = btn.getAttribute('data-title');
-          dom.inputContent.value = content;
-          state.content = content;
+
+          if (hanzi && pinyin) {
+            dom.colHanzi.value = hanzi;
+            dom.colPinyin.value = pinyin;
+            autoCompose();
+          }
+
           if (title) {
             dom.sheetTitle.value = title;
             state.sheetTitle = title;
+            render();
           }
-          render();
         });
       });
 
@@ -762,7 +850,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initListeners();
-      render();
+      autoCompose(); // 初始化自動執行一次合成
     });
   </script>
 </body>
