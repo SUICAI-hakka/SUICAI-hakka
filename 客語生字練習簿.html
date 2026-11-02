@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>臺灣客家語文習字簿產生器 (A4橫式)</title>
+  <!-- Google Fonts: 楷體、黑體、明體與英數拉丁字體 (客語拼音調號清晰) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Charis+SIL:ital,wght@0,400;0,700;1,400&family=LXGW+WenKai+TC&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #f3f4f6;
+      color: #1f2937;
+    }
+
+    /* 楷體與書法字形 */
+    .font-kai {
+      font-family: 'LXGW WenKai TC', 'DFKai-SB', 'BiauKai', '標楷體', cursive, serif;
+    }
+    .font-song {
+      font-family: 'Noto Serif TC', serif;
+    }
+    .font-sans {
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    /* 客語拼音字體：採用 Charis SIL，調號（ˊ ˇ ˆ ˋ）與特殊符號最清晰齊全 */
+    .font-pinyin {
+      font-family: 'Charis SIL', 'Noto Sans TC', sans-serif;
+    }
+
+    /* 固定 A4 橫式 (Landscape) 規格: 297mm x 210mm */
+    .page-a4-landscape {
+      width: 297mm;
+      min-height: 210mm;
+      height: 210mm;
+      max-height: 210mm;
+      padding: 10mm 12mm 8mm 12mm;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      position: relative;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    /* 列印最佳化 */
+    @media print {
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-area {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+      }
+      .page-a4-landscape {
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        padding: 8mm 10mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+    }
+
+    .grid-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* 自訂捲軸 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- 頂部導航 -->
+  <header class="no-print bg-stone-900 text-stone-100 shadow border-b border-stone-800">
+    <div class="max-w-[1700px] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-teal-600 flex items-center justify-center text-white font-bold text-xl shadow">
+          <i class="fa-solid fa-pen-fancy"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-wider flex items-center gap-2">
+            客家語文生字簿產生器
+            <span class="text-xs bg-teal-800 text-teal-200 px-2 py-0.5 rounded font-medium">A4 橫向專用版</span>
+          </h1>
+          <p class="text-xs text-stone-400">專為臺灣客語（四縣、海陸腔等）設計，支援「漢字 + 拼音四線/雙線格」精確對齊與列印</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="btn-print" class="px-5 py-2 bg-teal-600 hover:bg-teal-500 active:scale-95 text-white rounded-lg text-sm font-semibold transition shadow flex items-center gap-2">
+          <i class="fa-solid fa-print"></i> 列印 / 另存 A4 橫式 PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主操作介面 -->
+  <div class="flex-1 flex flex-col xl:flex-row max-w-[1750px] w-full mx-auto p-4 gap-6 items-start">
+    
+    <!-- 左側控制設定 (A4 橫式列印時隱藏) -->
+    <aside class="no-print w-full xl:w-[450px] bg-white rounded-xl shadow-sm border border-stone-200 p-5 shrink-0 flex flex-col gap-4 max-h-[calc(100vh-100px)] xl:sticky xl:top-4 overflow-y-auto">
+      
+      <!-- 快速範本 -->
+      <div>
+        <label class="block text-xs font-bold text-stone-700 mb-2 uppercase tracking-wider">
+          <i class="fa-solid fa-bookmark text-teal-600 mr-1"></i> 客語常用範本快速載入（四縣 / 海陸腔）
+        </label>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
+            data-title="客家日常問候語"
+            data-content="恁(anˋ) 仔(eˋ) 細(se)
+承(shinˇ) 蒙(mungˇ) 你(ngi)
+食(siid) 飽(bauˋ) 吂(mangˇ)
+天(tienˊ) 公(gungˊ) 落(log) 水(suiˋ)">
+            <span class="font-bold text-teal-900 block">日常問候語</span>
+            <span class="text-stone-500 text-[11px]">恁仔細、承蒙你、食飽吂</span>
+          </button>
+
+          <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
+            data-title="客語童謠 - 天公落水"
+            data-content="天(tienˊ) 公(gungˊ) 落(log) 水(suiˋ) 阿(aˊ) 妹(moi) 戴(dai) 等(denˋ) 笠(lib) 嫲(maˇ)
+落(log) 水(suiˋ) 淋(limˇ) 濕(siib) 緊(ginˋ) 走(zeuˋ) 歸(guiˊ) 屋(vuk) 下(ha)">
+            <span class="font-bold text-teal-900 block">客語童謠精選</span>
+            <span class="text-stone-500 text-[11px]">天公落水、戴等笠嫲</span>
+          </button>
+
+          <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
+            data-title="客家家庭親屬稱謂"
+            data-content="阿(aˊ) 爸(baˊ) 阿(aˊ) 姆(meˊ)
+阿(aˊ) 公(gungˊ) 阿(aˊ) 婆(poˇ)
+阿(aˊ) 哥(goˊ) 阿(aˊ) 姊(jeˋ)
+細(se) 妹(moi) 細(se) 倈(lai)">
+            <span class="font-bold text-teal-900 block">家庭親屬稱謂</span>
+            <span class="text-stone-500 text-[11px]">阿公、阿婆、阿爸、阿姆</span>
+          </button>
+
+          <button type="button" class="preset-btn p-2 rounded-lg border border-stone-200 hover:border-teal-500 hover:bg-teal-50 text-left transition"
+            data-title="客家數字與生活詞彙"
+            data-content="一(yid) 二(ngi) 三(samˊ) 四(xi) 五(ngˋ)
+六(liug) 七(qid) 八(bad) 九(giuˋ) 十(siib)">
+            <span class="font-bold text-teal-900 block">基礎數字拼讀</span>
+            <span class="text-stone-500 text-[11px]">一至十客語拼音與數字</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 文字輸入 -->
+      <div>
+        <div class="flex justify-between items-center mb-1">
+          <label for="input-content" class="text-xs font-bold text-stone-700 uppercase tracking-wider">
+            <i class="fa-solid fa-feather text-teal-600 mr-1"></i> 漢字與客語拼音輸入
+          </label>
+          <span class="text-[11px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded">格式：字(phin-yim)</span>
+        </div>
+        <textarea id="input-content" rows="4" class="w-full text-stone-800 border border-stone-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none transition resize-y font-kai leading-relaxed" placeholder="請依照「漢字(客語拼音)」輸入，例如：&#10;恁(anˋ) 仔(eˋ) 細(se)&#10;食(siid) 飽(bauˋ) 吂(mangˇ)&#10;亦可純輸入漢字（不帶括號則上方留白）">恁(anˋ) 仔(eˋ) 細(se)
+承(shinˇ) 蒙(mungˇ) 你(ngi)
+食(siid) 飽(bauˋ) 吂(mangˇ)
+天(tienˊ) 公(gungˊ) 落(log) 水(suiˋ)</textarea>
+        <p class="text-[11px] text-stone-500 mt-1">提示：換行即代表新的一行練習。支援直接輸入調號符號（ˊ ˇ ˆ ˋ）或數字調號。</p>
+      </div>
+
+      <hr class="border-stone-100">
+
+      <!-- 練習排版模式 -->
+      <div>
+        <label class="block text-xs font-bold text-stone-700 mb-2 uppercase tracking-wider">
+          <i class="fa-solid fa-list-check text-teal-600 mr-1"></i> 練習模式
+        </label>
+        <select id="practice-mode" class="w-full border border-stone-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-500">
+          <option value="word_repeat" selected>詞語循環書寫練習（輸入詞語每行自動重複鋪滿）</option>
+          <option value="first_trace_blank">首字/詞深色示範 + 後續淺灰描紅與空格習字</option>
+          <option value="full_trace">全列淺色描紅（適合剛學筆順與拼音）</option>
+          <option value="straight_text">連續書寫模式（按文章順序一字一格，不循環）</option>
+          <option value="blank_sheet">純空白客語練習格（自訂手寫作業紙）</option>
+        </select>
+      </div>
+
+      <!-- 格子樣式與尺寸 -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">漢字格樣式</label>
+          <select id="grid-style" class="w-full border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500">
+            <option value="mizi" selected>米字格 (傳統四角八向)</option>
+            <option value="tianzi">田字格 (標準十字)</option>
+            <option value="jiugong">九宮格 (書法間架)</option>
+            <option value="square">回宮格 / 純方格</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">拼音格標註樣式</label>
+          <select id="pinyin-style" class="w-full border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500">
+            <option value="four_lines" selected>標準四線三格 (適合初學)</option>
+            <option value="two_lines">雙線格 (上界與基線)</option>
+            <option value="box_only">單一文字方格</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 格子大小與字體 -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="flex justify-between items-center text-xs mb-1">
+            <span class="font-bold text-stone-700">漢字格子大小</span>
+            <span id="size-val" class="text-teal-700 font-mono">54px</span>
+          </div>
+          <input type="range" id="grid-size" min="42" max="68" value="54" class="w-full accent-teal-600">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">漢字字體</label>
+          <select id="font-family" class="w-full border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500">
+            <option value="font-kai" selected>標楷體 / 霞鶩文楷</option>
+            <option value="font-song">思源宋體 (端正)</option>
+            <option value="font-sans">黑體 (現代工整)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 配色設定 -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">格線配色預設</label>
+          <select id="color-preset" class="w-full border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500">
+            <option value="#dc2626">傳統米紅 (#dc2626)</option>
+            <option value="#0d9488" selected>客家湖水綠 (#0d9488)</option>
+            <option value="#2563eb">客家藍衫靛青 (#2563eb)</option>
+            <option value="#64748b">鉛筆淡灰 (#64748b)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-stone-700 mb-1">描紅文字濃度</label>
+          <input type="range" id="trace-opacity" min="0.15" max="0.6" step="0.05" value="0.25" class="w-full accent-teal-600 mt-2">
+        </div>
+      </div>
+
+      <hr class="border-stone-100">
+
+      <!-- 頁首自訂欄位 -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+          <i class="fa-solid fa-heading text-teal-600 mr-1"></i> A4 橫式頁首標題與班級資訊
+        </label>
+        <input type="text" id="sheet-title" class="w-full border border-stone-300 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-teal-500" value="客家語文生字練習簿（四縣腔）" placeholder="輸入頁首主標題">
+        
+        <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+          <label class="flex items-center gap-1.5 text-stone-600 cursor-pointer">
+            <input type="checkbox" id="show-student-info" checked class="rounded text-teal-600 focus:ring-teal-500">
+            <span>顯示姓名/班級/座號</span>
+          </label>
+          <label class="flex items-center gap-1.5 text-stone-600 cursor-pointer">
+            <input type="checkbox" id="show-grading" checked class="rounded text-teal-600 focus:ring-teal-500">
+            <span>顯示老師評分欄 (Grade)</span>
+          </label>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- 右側：A4 橫向即時預覽與列印區塊 -->
+    <main class="flex-1 flex flex-col items-center justify-start w-full overflow-x-auto pb-12 print-area">
+      <!-- 預覽資訊列 -->
+      <div class="no-print mb-4 w-full flex flex-wrap justify-between items-center text-xs text-stone-600 bg-white px-4 py-2.5 rounded-xl border border-stone-200 shadow-sm gap-2">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded">
+            <i class="fa-regular fa-file-lines"></i> A4 橫式規格 (297mm × 210mm)
+          </span>
+          <span class="text-stone-400">|</span>
+          <span id="page-summary">正在計算分頁...</span>
+        </div>
+        <div class="text-stone-500 text-[11px]">
+          <i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>若列印時有留白邊，請在瀏覽器列印對話框中將<strong>「邊界」設為「無」</strong>或「最低」
+        </div>
+      </div>
+
+      <!-- A4 橫向分頁容器 -->
+      <div id="pages-container" class="flex flex-col gap-8 w-full items-center">
+        <!-- Javascript 動態生成 A4 頁面 -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    /**
+     * 狀態管理物件
+     */
+    const state = {
+      content: document.getElementById('input-content').value,
+      practiceMode: 'word_repeat',
+      gridStyle: 'mizi',
+      pinyinStyle: 'four_lines',
+      gridSize: 54, // 像素
+      fontFamily: 'font-kai',
+      gridColor: '#0d9488',
+      traceOpacity: 0.25,
+      sheetTitle: '客家語文生字練習簿（四縣腔）',
+      showStudentInfo: true,
+      showGrading: true
+    };
+
+    // DOM 快取
+    const dom = {
+      inputContent: document.getElementById('input-content'),
+      practiceMode: document.getElementById('practice-mode'),
+      gridStyle: document.getElementById('grid-style'),
+      pinyinStyle: document.getElementById('pinyin-style'),
+      gridSize: document.getElementById('grid-size'),
+      sizeVal: document.getElementById('size-val'),
+      fontFamily: document.getElementById('font-family'),
+      colorPreset: document.getElementById('color-preset'),
+      traceOpacity: document.getElementById('trace-opacity'),
+      sheetTitle: document.getElementById('sheet-title'),
+      showStudentInfo: document.getElementById('show-student-info'),
+      showGrading: document.getElementById('show-grading'),
+      pagesContainer: document.getElementById('pages-container'),
+      pageSummary: document.getElementById('page-summary'),
+      btnPrint: document.getElementById('btn-print'),
+      presetBtns: document.querySelectorAll('.preset-btn')
+    };
+
+    /**
+     * 解析使用者輸入的「字(拼音)」格式
+     * 範例："恁(anˋ) 細(se) 妹(moi)" -> [ {char: '恁', pinyin: 'anˋ'}, ... ]
+     */
+    function parseLines(rawText) {
+      const lines = rawText.split('\n');
+      const parsedLines = [];
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+
+        const wordsInLine = [];
+        // 正則比對：漢字 + 括號內的客語拼音 或 純單獨字元
+        const tokenRegex = /([\u4e00-\u9fa5\w])(?:\(([^)]+)\)|（([^）]+)）)?|[^\s]/g;
+        let match;
+
+        while ((match = tokenRegex.exec(trimmed)) !== null) {
+          const char = match[1] || match[0];
+          const pinyin = match[2] || match[3] || '';
+          wordsInLine.push({ char, pinyin });
+        }
+
+        if (wordsInLine.length > 0) {
+          parsedLines.push(wordsInLine);
+        }
+      });
+
+      return parsedLines;
+    }
+
+    /**
+     * 生成拼音格 SVG（四線三格、雙線格或邊框）
+     */
+    function createPinyinSvg(style, strokeColor, height) {
+      let lines = '';
+      if (style === 'four_lines') {
+        // 標準英語/羅馬拼音四線三格 (25%, 50%, 75% 高度)
+        lines = `
+          <line x1="0" y1="25%" x2="100%" y2="25%" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="2 2" opacity="0.6"/>
+          <line x1="0" y1="50%" x2="100%" y2="50%" stroke="${strokeColor}" stroke-width="0.8" opacity="0.8"/>
+          <line x1="0" y1="75%" x2="100%" y2="75%" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="2 2" opacity="0.6"/>
+        `;
+      } else if (style === 'two_lines') {
+        // 雙線格 (頂線與基底線)
+        lines = `
+          <line x1="0" y1="30%" x2="100%" y2="30%" stroke="${strokeColor}" stroke-width="0.7" opacity="0.7"/>
+          <line x1="0" y1="75%" x2="100%" y2="75%" stroke="${strokeColor}" stroke-width="0.8" opacity="0.8"/>
+        `;
+      }
+
+      return `
+        <svg class="grid-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <rect x="0" y="0" width="100" height="100" fill="none" stroke="${strokeColor}" stroke-width="1.2"/>
+          ${lines}
+        </svg>
+      `;
+    }
+
+    /**
+     * 生成漢字格 SVG（米字格、田字格、九宮格、回宮格）
+     */
+    function createCharGridSvg(style, strokeColor) {
+      let innerLines = '';
+      const dash = '2 2';
+
+      if (style === 'mizi') {
+        innerLines = `
+          <line x1="0" y1="50" x2="100" y2="50" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="${dash}" opacity="0.65" />
+          <line x1="50" y1="0" x2="50" y2="100" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="${dash}" opacity="0.65" />
+          <line x1="0" y1="0" x2="100" y2="100" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="${dash}" opacity="0.5" />
+          <line x1="0" y1="100" x2="100" y2="0" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="${dash}" opacity="0.5" />
+        `;
+      } else if (style === 'tianzi') {
+        innerLines = `
+          <line x1="0" y1="50" x2="100" y2="50" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="${dash}" opacity="0.7" />
+          <line x1="50" y1="0" x2="50" y2="100" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="${dash}" opacity="0.7" />
+        `;
+      } else if (style === 'jiugong') {
+        innerLines = `
+          <line x1="0" y1="33.3" x2="100" y2="33.3" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="${dash}" opacity="0.6" />
+          <line x1="0" y1="66.6" x2="100" y2="66.6" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="${dash}" opacity="0.6" />
+          <line x1="33.3" y1="0" x2="33.3" y2="100" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="${dash}" opacity="0.6" />
+          <line x1="66.6" y1="0" x2="66.6" y2="100" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="${dash}" opacity="0.6" />
+        `;
+      } else if (style === 'square') {
+        // 內回宮框
+        innerLines = `
+          <rect x="20" y="20" width="60" height="60" fill="none" stroke="${strokeColor}" stroke-width="0.7" stroke-dasharray="${dash}" opacity="0.5" />
+        `;
+      }
+
+      return `
+        <svg class="grid-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <rect x="0" y="0" width="100" height="100" fill="none" stroke="${strokeColor}" stroke-width="1.2" />
+          ${innerLines}
+        </svg>
+      `;
+    }
+
+    /**
+     * 核心渲染：精確針對 A4 橫式計算可容納行數與欄數
+     */
+    function render() {
+      const parsedLines = parseLines(state.content);
+
+      // A4 橫式：297mm x 210mm
+      // 扣除頂部頁首(約 26mm)、底部留白(約 10mm)、左右邊界(24mm)
+      // 剩餘可用寬度 ≈ 273mm (約 1032px @96dpi)
+      // 剩餘可用高度 ≈ 165mm (約 624px @96dpi)
+      const a4WidthPx = 1032;
+      const a4HeightPx = 620;
+
+      const charBoxSize = state.gridSize;
+      const pinyinHeight = Math.max(22, Math.floor(charBoxSize * 0.42)); // 拼音格高度約為漢字格 42%
+      const unitTotalHeight = charBoxSize + pinyinHeight;
+
+      // 每行欄數與每頁行數
+      const cols = Math.max(5, Math.floor(a4WidthPx / charBoxSize));
+      const rowsPerPage = Math.max(3, Math.floor(a4HeightPx / unitTotalHeight));
+
+      // 預備每一行 (Row) 的單元資料
+      let allRowsData = [];
+
+      if (state.practiceMode === 'blank_sheet') {
+        // 純空白客語練習簿 (每頁 rowsPerPage 行空白)
+        for (let r = 0; r < rowsPerPage; r++) {
+          let rowCells = [];
+          for (let c = 0; c < cols; c++) {
+            rowCells.push({ char: '', pinyin: '', mode: 'empty' });
+          }
+          allRowsData.push(rowCells);
+        }
+      } else if (state.practiceMode === 'word_repeat') {
+        // 詞語循環練習：每行以一個詞語重複循環排滿
+        const sourceLines = parsedLines.length > 0 ? parsedLines : [[{ char: '客', pinyin: 'hag' }, { char: '家', pinyin: 'gaˊ' }]];
+        
+        sourceLines.forEach(lineWords => {
+          let rowCells = [];
+          let wordIdx = 0;
+          for (let c = 0; c < cols; c++) {
+            const currentItem = lineWords[wordIdx % lineWords.length];
+            const isFirstGroup = c < lineWords.length;
+            const isSecondGroup = c >= lineWords.length && c < lineWords.length * 2;
+
+            rowCells.push({
+              char: currentItem.char,
+              pinyin: currentItem.pinyin,
+              // 第一組為黑色示範，第二組為描紅，其餘空格自寫
+              mode: isFirstGroup ? 'sample' : (isSecondGroup ? 'trace' : 'empty')
+            });
+            wordIdx++;
+          }
+          allRowsData.push(rowCells);
+        });
+
+      } else if (state.practiceMode === 'first_trace_blank') {
+        // 每一行開頭為示範，接著 2~3 格描紅，後面留空練習
+        const sourceLines = parsedLines.length > 0 ? parsedLines : [[{ char: '客', pinyin: 'hag' }]];
+
+        sourceLines.forEach(lineWords => {
+          lineWords.forEach(item => {
+            let rowCells = [];
+            for (let c = 0; c < cols; c++) {
+              let cellMode = 'empty';
+              if (c === 0) cellMode = 'sample';
+              else if (c === 1 || c === 2) cellMode = 'trace';
+              
+              rowCells.push({
+                char: item.char,
+                pinyin: item.pinyin,
+                mode: cellMode
+              });
+            }
+            allRowsData.push(rowCells);
+          });
+        });
+
+      } else if (state.practiceMode === 'full_trace') {
+        // 全列淺色描紅模式
+        const sourceLines = parsedLines.length > 0 ? parsedLines : [[{ char: '客', pinyin: 'hag' }]];
+        sourceLines.forEach(lineWords => {
+          let rowCells = [];
+          for (let c = 0; c < cols; c++) {
+            const currentItem = lineWords[c % lineWords.length];
+            rowCells.push({
+              char: currentItem.char,
+              pinyin: currentItem.pinyin,
+              mode: c === 0 ? 'sample' : 'trace'
+            });
+          }
+          allRowsData.push(rowCells);
+        });
+
+      } else if (state.practiceMode === 'straight_text') {
+        // 連續直述文章模式
+        const flatWords = [];
+        parsedLines.forEach(line => flatWords.push(...line));
+
+        let currentWordIndex = 0;
+        const totalRows = Math.ceil(Math.max(1, flatWords.length) / cols);
+
+        for (let r = 0; r < totalRows; r++) {
+          let rowCells = [];
+          for (let c = 0; c < cols; c++) {
+            if (currentWordIndex < flatWords.length) {
+              const item = flatWords[currentWordIndex];
+              rowCells.push({
+                char: item.char,
+                pinyin: item.pinyin,
+                mode: 'trace'
+              });
+              currentWordIndex++;
+            } else {
+              rowCells.push({ char: '', pinyin: '', mode: 'empty' });
+            }
+          }
+          allRowsData.push(rowCells);
+        }
+      }
+
+      // 補足至少滿 1 頁的行數
+      if (allRowsData.length === 0) {
+        let emptyRow = [];
+        for (let c = 0; c < cols; c++) emptyRow.push({ char: '', pinyin: '', mode: 'empty' });
+        allRowsData.push(emptyRow);
+      }
+
+      // 依照每頁 rowsPerPage 拆分頁面
+      const totalPages = Math.ceil(allRowsData.length / rowsPerPage);
+      dom.pageSummary.innerHTML = `每頁 <strong>${rowsPerPage}</strong> 行 × <strong>${cols}</strong> 格（共 <strong>${totalPages}</strong> 頁）`;
+
+      dom.pagesContainer.innerHTML = '';
+
+      const pinyinSvg = createPinyinSvg(state.pinyinStyle, state.gridColor, pinyinHeight);
+      const charSvg = createCharGridSvg(state.gridStyle, state.gridColor);
+
+      for (let p = 0; p < totalPages; p++) {
+        const pageRows = allRowsData.slice(p * rowsPerPage, (p + 1) * rowsPerPage);
+
+        // A4 橫式紙張元素
+        const pageEl = document.createElement('div');
+        pageEl.className = 'page-a4-landscape';
+
+        // 頁首 Header
+        const headerEl = document.createElement('header');
+        headerEl.className = 'w-full pb-2 mb-2 border-b-2 border-stone-800 flex justify-between items-end';
+
+        let headerHtml = `
+          <div>
+            <h2 class="text-xl font-bold tracking-widest text-teal-950">${state.sheetTitle}</h2>
+          </div>
+        `;
+
+        let rightMeta = `<div class="flex items-center gap-4 text-xs text-stone-700">`;
+        if (state.showStudentInfo) {
+          rightMeta += `
+            <span class="border-b border-stone-400 pb-0.5 min-w-[70px]">班級：</span>
+            <span class="border-b border-stone-400 pb-0.5 min-w-[60px]">座號：</span>
+            <span class="border-b border-stone-400 pb-0.5 min-w-[80px]">姓名：</span>
+            <span class="border-b border-stone-400 pb-0.5 min-w-[80px]">日期：</span>
+          `;
+        }
+        if (state.showGrading) {
+          rightMeta += `
+            <span class="border border-stone-400 px-2.5 py-1 rounded text-stone-800 font-bold bg-stone-50">評分：　　</span>
+          `;
+        }
+        rightMeta += `<span class="text-stone-400 text-[11px] ml-1">第 ${p + 1}/${totalPages} 頁</span></div>`;
+        headerEl.innerHTML = headerHtml + rightMeta;
+        pageEl.appendChild(headerEl);
+
+        // 主網格內容區域 (Rows)
+        const gridBody = document.createElement('div');
+        gridBody.className = 'flex-1 flex flex-col justify-between';
+
+        pageRows.forEach(rowCells => {
+          const rowEl = document.createElement('div');
+          rowEl.className = 'flex items-center justify-start';
+          rowEl.style.width = `${cols * charBoxSize}px`;
+          rowEl.style.margin = '0 auto';
+
+          rowCells.forEach(cell => {
+            // 單一字元複合組（上方拼音 + 下方漢字）
+            const unit = document.createElement('div');
+            unit.className = 'flex flex-col shrink-0';
+            unit.style.width = `${charBoxSize}px`;
+            unit.style.marginRight = '-1px'; // 讓邊框重疊不變粗
+
+            // 上方拼音格
+            const pinyinBox = document.createElement('div');
+            pinyinBox.className = 'relative flex items-center justify-center font-pinyin select-none overflow-hidden';
+            pinyinBox.style.height = `${pinyinHeight}px`;
+            pinyinBox.style.width = `${charBoxSize}px`;
+            pinyinBox.innerHTML = pinyinSvg;
+
+            // 下方漢字格
+            const charBox = document.createElement('div');
+            charBox.className = 'relative flex items-center justify-center select-none overflow-hidden';
+            charBox.style.height = `${charBoxSize}px`;
+            charBox.style.width = `${charBoxSize}px`;
+            charBox.style.marginTop = '-1px';
+            charBox.innerHTML = charSvg;
+
+            // 填入客語拼音與漢字內容
+            if (cell.mode === 'sample') {
+              // 黑色示範
+              if (cell.pinyin) {
+                pinyinBox.innerHTML += `<span class="relative z-10 text-stone-900 font-bold leading-none tracking-tight" style="font-size: ${Math.floor(pinyinHeight * 0.65)}px; padding-bottom: 2px;">${cell.pinyin}</span>`;
+              }
+              if (cell.char) {
+                charBox.innerHTML += `<span class="relative z-10 ${state.fontFamily} text-stone-900 font-medium leading-none" style="font-size: ${Math.floor(charBoxSize * 0.72)}px">${cell.char}</span>`;
+              }
+            } else if (cell.mode === 'trace') {
+              // 淺色描紅
+              if (cell.pinyin) {
+                pinyinBox.innerHTML += `<span class="relative z-10 font-pinyin font-bold leading-none tracking-tight" style="font-size: ${Math.floor(pinyinHeight * 0.65)}px; color: ${state.gridColor}; opacity: ${state.traceOpacity}; padding-bottom: 2px;">${cell.pinyin}</span>`;
+              }
+              if (cell.char) {
+                charBox.innerHTML += `<span class="relative z-10 ${state.fontFamily} leading-none font-medium" style="font-size: ${Math.floor(charBoxSize * 0.72)}px; color: #4b5563; opacity: ${state.traceOpacity}">${cell.char}</span>`;
+              }
+            }
+            // empty 模式則只保留空白格線供學生自主練習
+
+            unit.appendChild(pinyinBox);
+            unit.appendChild(charBox);
+            rowEl.appendChild(unit);
+          });
+
+          gridBody.appendChild(rowEl);
+        });
+
+        pageEl.appendChild(gridBody);
+
+        // 頁尾 Footer 說明
+        const footerEl = document.createElement('footer');
+        footerEl.className = 'w-full pt-1.5 mt-1 border-t border-stone-200 flex justify-between items-center text-[10px] text-stone-400';
+        footerEl.innerHTML = `
+          <span>臺灣客家語文生字簿 &bull; 羅馬拼音／調號練習 &bull; A4 橫式列印</span>
+          <span>按時練習 &bull; 傳承客家好語言</span>
+        `;
+        pageEl.appendChild(footerEl);
+
+        dom.pagesContainer.appendChild(pageEl);
+      }
+    }
+
+    /**
+     * 綁定控制項事件
+     */
+    function initListeners() {
+      dom.inputContent.addEventListener('input', (e) => {
+        state.content = e.target.value;
+        render();
+      });
+
+      dom.practiceMode.addEventListener('change', (e) => {
+        state.practiceMode = e.target.value;
+        render();
+      });
+
+      dom.gridStyle.addEventListener('change', (e) => {
+        state.gridStyle = e.target.value;
+        render();
+      });
+
+      dom.pinyinStyle.addEventListener('change', (e) => {
+        state.pinyinStyle = e.target.value;
+        render();
+      });
+
+      dom.gridSize.addEventListener('input', (e) => {
+        state.gridSize = parseInt(e.target.value, 10);
+        dom.sizeVal.textContent = `${state.gridSize}px`;
+        render();
+      });
+
+      dom.fontFamily.addEventListener('change', (e) => {
+        state.fontFamily = e.target.value;
+        render();
+      });
+
+      dom.colorPreset.addEventListener('change', (e) => {
+        state.gridColor = e.target.value;
+        render();
+      });
+
+      dom.traceOpacity.addEventListener('input', (e) => {
+        state.traceOpacity = parseFloat(e.target.value);
+        render();
+      });
+
+      dom.sheetTitle.addEventListener('input', (e) => {
+        state.sheetTitle = e.target.value;
+        render();
+      });
+
+      dom.showStudentInfo.addEventListener('change', (e) => {
+        state.showStudentInfo = e.target.checked;
+        render();
+      });
+
+      dom.showGrading.addEventListener('change', (e) => {
+        state.showGrading = e.target.checked;
+        render();
+      });
+
+      // 範本快速切換
+      dom.presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const content = btn.getAttribute('data-content');
+          const title = btn.getAttribute('data-title');
+          dom.inputContent.value = content;
+          state.content = content;
+          if (title) {
+            dom.sheetTitle.value = title;
+            state.sheetTitle = title;
+          }
+          render();
+        });
+      });
+
+      // 列印觸發
+      dom.btnPrint.addEventListener('click', () => {
+        window.print();
+      });
+    }
+
+    // 啟動應用
+    window.addEventListener('DOMContentLoaded', () => {
+      initListeners();
+      render();
+    });
+  </script>
+</body>
+</html>
