@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>客語橫式生字練習簿產生器 | Hakka Copybook</title>
-    <!-- 引入臺灣教育部客語/台語推薦硬筆手寫字型：芫荽體 (Iansui) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-iansui@1.0.0/dist/iansui.min.css">
+    <!-- 引入臺灣客語推薦手寫字型：芫荽體 (Iansui) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-iansui@1.0.0/dist/iansui.min.css" crossorigin="anonymous">
     <style>
         :root {
             --primary: #1b4965;
             --primary-hover: #13354a;
-            --accent: #d4a373;
-            --bg-ui: #f4f6f8;
+            --bg-ui: #2b3035;
             --panel-bg: #ffffff;
             --border-color: #cbd5e1;
             --grid-line-color: #e63946;
@@ -36,28 +35,25 @@
 
         /* 側邊控制面板 */
         #control-panel {
-            width: 380px;
+            width: 360px;
+            min-width: 360px;
             background: var(--panel-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.15);
             z-index: 10;
         }
 
         .panel-header {
-            padding: 20px;
+            padding: 16px 20px;
             background: var(--primary);
             color: #fff;
         }
 
         .panel-header h1 {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 700;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .panel-header p {
@@ -67,22 +63,22 @@
         }
 
         .panel-body {
-            padding: 20px;
+            padding: 16px 20px;
             overflow-y: auto;
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
         .form-group label {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
             color: #475569;
         }
@@ -94,20 +90,13 @@
             padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-family: inherit;
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-group textarea:focus, 
-        .form-group input:focus, 
-        .form-group select:focus {
-            border-color: var(--primary);
         }
 
         .form-group textarea {
-            height: 100px;
+            height: 90px;
             resize: vertical;
             line-height: 1.4;
         }
@@ -119,7 +108,7 @@
         }
 
         .panel-footer {
-            padding: 16px 20px;
+            padding: 14px 20px;
             border-top: 1px solid var(--border-color);
             background: #fff;
         }
@@ -131,13 +120,9 @@
             color: #fff;
             border: none;
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
             transition: background 0.2s;
         }
 
@@ -149,12 +134,16 @@
         #preview-area {
             flex: 1;
             overflow: auto;
-            padding: 30px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
             background-color: #525659;
-            gap: 30px;
         }
 
-        /* A4 橫式頁面 (297mm
+        /* A4 橫式規格 (297mm x 210mm) */
+        .page {
+            width: 297mm;
+            min-width: 297mm;
+            height: 210mm;
+            min-height
