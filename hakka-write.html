@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>客語橫式生字練習簿產生器 | Hakka Copybook</title>
     <style>
-        /* 從專案目錄 fonts/Iansui-Regular.ttf 載入本機字型 */
+        /* 從專案目錄載入芫荽體 */
         @font-face {
             font-family: 'Iansui';
             src: url('./fonts/Iansui-Regular.ttf') format('truetype');
@@ -17,7 +17,8 @@
         :root {
             --primary: #1b4965;
             --primary-hover: #13354a;
-            --bg-ui: #2b3035;
+            --accent: #d4a373;
+            --bg-ui: #f1f5f9;
             --panel-bg: #ffffff;
             --border-color: #cbd5e1;
             --grid-line-color: #e63946;
@@ -34,58 +35,63 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
             background-color: var(--bg-ui);
-            color: #2b2d42;
+            color: #1e293b;
             display: flex;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* 側邊控制面板 */
+        /* 第一版精緻側邊控制面板 */
         #control-panel {
-            width: 360px;
-            min-width: 360px;
+            width: 380px;
+            min-width: 380px;
             background: var(--panel-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.06);
             z-index: 10;
         }
 
         .panel-header {
-            padding: 16px 20px;
-            background: var(--primary);
+            padding: 22px 24px;
+            background: linear-gradient(135deg, #16364a 0%, #1b4965 100%);
             color: #fff;
         }
 
         .panel-header h1 {
-            font-size: 1.15rem;
+            font-size: 1.25rem;
             font-weight: 700;
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .panel-header p {
-            font-size: 0.8rem;
-            color: #e0f2fe;
-            margin-top: 4px;
+            font-size: 0.82rem;
+            color: #bae6fd;
+            margin-top: 5px;
+            opacity: 0.9;
         }
 
         .panel-body {
-            padding: 16px 20px;
+            padding: 20px 24px;
             overflow-y: auto;
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 16px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
         }
 
         .form-group label {
-            font-size: 0.82rem;
+            font-size: 0.84rem;
             font-weight: 600;
             color: #475569;
         }
@@ -94,103 +100,124 @@
         .form-group input, 
         .form-group select {
             width: 100%;
-            padding: 8px 10px;
+            padding: 9px 12px;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 0.88rem;
             font-family: inherit;
             outline: none;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+        }
+
+        .form-group textarea:focus, 
+        .form-group input:focus, 
+        .form-group select:focus {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(27, 73, 101, 0.12);
         }
 
         .form-group textarea {
-            height: 90px;
+            height: 96px;
             resize: vertical;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         .row-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
         }
 
         .panel-footer {
-            padding: 14px 20px;
+            padding: 16px 24px;
             border-top: 1px solid var(--border-color);
             background: #fff;
         }
 
         .btn-print {
             width: 100%;
-            padding: 12px;
+            padding: 13px;
             background: var(--primary);
             color: #fff;
             border: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
+            border-radius: 8px;
+            font-size: 0.98rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(27, 73, 101, 0.25);
+            transition: all 0.2s ease;
         }
 
         .btn-print:hover {
             background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(27, 73, 101, 0.35);
         }
 
         /* 預覽視窗區塊 */
         #preview-area {
             flex: 1;
             overflow: auto;
-            padding: 24px;
+            padding: 36px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #525659;
+            background: #475569;
         }
 
-        /* A4 橫式規格 (297mm x 210mm) */
+        /* A4 橫式頁面 (297mm x 210mm) */
         .page {
             width: 297mm;
             min-width: 297mm;
             height: 210mm;
             min-height: 210mm;
             background: #ffffff !important;
-            padding: 12mm 15mm;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+            padding: 13mm 16mm;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            color: #000;
+            border-radius: 2px;
         }
 
+        /* 頁首標題與班級資訊 */
         .sheet-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
             padding-bottom: 8px;
-            border-bottom: 2px solid #334155;
+            border-bottom: 2px solid #1e293b;
             margin-bottom: 12px;
         }
 
         .sheet-title {
-            font-size: 20px;
-            font-weight: bold;
+            font-size: 21px;
+            font-weight: 700;
             color: #0f172a;
+            letter-spacing: 1px;
         }
 
         .sheet-meta {
             display: flex;
-            gap: 16px;
+            gap: 18px;
             font-size: 13px;
             color: #334155;
+            font-weight: 500;
         }
 
         .meta-field {
-            border-bottom: 1px solid #64748b;
-            min-width: 60px;
+            border-bottom: 1px solid #475569;
+            min-width: 65px;
             display: inline-block;
         }
 
+        /* 練習格容器 */
         .sheet-content {
             flex: 1;
             display: flex;
@@ -201,9 +228,10 @@
         .practice-row {
             display: flex;
             flex-direction: column;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
+        /* 拼音四線格 */
         .pinyin-row {
             display: flex;
             height: 22px;
@@ -227,14 +255,15 @@
             top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(to bottom,
                 var(--pinyin-line-color) 1px, transparent 1px,
-                transparent 7px, rgba(69, 123, 157, 0.4) 7px, rgba(69, 123, 157, 0.4) 8px, transparent 8px,
-                transparent 14px, rgba(69, 123, 157, 0.4) 14px, rgba(69, 123, 157, 0.4) 15px, transparent 15px,
+                transparent 7px, rgba(69, 123, 157, 0.45) 7px, rgba(69, 123, 157, 0.45) 8px, transparent 8px,
+                transparent 14px, rgba(69, 123, 157, 0.45) 14px, rgba(69, 123, 157, 0.45) 15px, transparent 15px,
                 transparent 21px, var(--pinyin-line-color) 21px
             );
             pointer-events: none;
-            opacity: 0.65;
+            opacity: 0.7;
         }
 
+        /* 漢字練習格行 */
         .hanzi-row {
             display: flex;
         }
@@ -247,8 +276,10 @@
             align-items: center;
             justify-content: center;
             background-color: #fff;
+            user-select: none;
         }
 
+        /* 田字格虛線 */
         .tian-grid::before {
             content: '';
             position: absolute;
@@ -256,7 +287,7 @@
             height: 1px;
             border-top: 1px dashed var(--grid-dash-color);
             transform: translateY(-50%);
-            opacity: 0.7;
+            opacity: 0.75;
         }
         .tian-grid::after {
             content: '';
@@ -265,9 +296,10 @@
             width: 1px;
             border-left: 1px dashed var(--grid-dash-color);
             transform: translateX(-50%);
-            opacity: 0.7;
+            opacity: 0.75;
         }
 
+        /* 米字格 */
         .mi-grid::before {
             content: '';
             position: absolute;
@@ -275,7 +307,7 @@
             height: 1px;
             border-top: 1px dashed var(--grid-dash-color);
             transform: translateY(-50%);
-            opacity: 0.7;
+            opacity: 0.75;
         }
         .mi-grid::after {
             content: '';
@@ -284,7 +316,7 @@
             width: 1px;
             border-left: 1px dashed var(--grid-dash-color);
             transform: translateX(-50%);
-            opacity: 0.7;
+            opacity: 0.75;
         }
         .mi-diag {
             position: absolute;
@@ -293,14 +325,15 @@
             opacity: 0.5;
         }
 
+        /* 格內文字 */
         .char-text {
             position: relative;
             z-index: 2;
-            font-size: 38px;
+            font-size: 40px;
             line-height: 1;
         }
 
-        /* 字體類別：優先使用本機載入的芫荽體 */
+        /* 字體類別：已徹底移除霞鶩文楷 */
         .font-iansui {
             font-family: 'Iansui', "BiauKai", "DFKai-SB", "標楷體", serif;
         }
@@ -312,10 +345,11 @@
             font-weight: 500;
         }
 
-        .mode-black { color: #000; }
+        .mode-black { color: #0f172a; }
         .mode-red { color: #e63946; opacity: 0.38; }
         .mode-gray { color: #94a3b8; opacity: 0.45; }
 
+        /* 列印樣式 - A4 橫式 */
         @media print {
             @page {
                 size: A4 landscape;
@@ -345,21 +379,23 @@
 </head>
 <body>
 
+    <!-- 側邊控制面板 -->
     <aside id="control-panel">
         <div class="panel-header">
             <h1>🍵 客語橫式生字簿</h1>
-            <p>A4 Landscape 臺灣客語教學字帖</p>
+            <p>A4 Landscape 臺灣客語教學字帖產生器</p>
         </div>
 
         <div class="panel-body">
             <div class="form-group">
-                <label>常用詞彙範本</label>
+                <label>常用詞彙範本 (一鍵載入)</label>
                 <select id="preset-select">
-                    <option value="">-- 請選擇載入範本 --</option>
+                    <option value="">-- 請選擇範本 --</option>
                     <option value="恁(anˋ) 仔(eˋ) 細(se)">問候：恁仔細 (四縣)</option>
                     <option value="承(shin) 蒙(mung) 你(ngi)">問候：承蒙你 (海陸)</option>
                     <option value="食(shid) 飽(bauˋ) 吂(mang)">關懷：食飽吂</option>
                     <option value="天(tien) 公(gung) 落(log) 水(suiˋ)">童謠：天公落水</option>
+                    <option value="阿(aˊ) 爸(ba) 阿(aˊ) 姆(meˊ) 阿(aˊ) 哥(goˊ) 阿(aˊ) 妹(moi)">家庭稱謂 (四縣)</option>
                 </select>
             </div>
 
@@ -379,7 +415,7 @@
                 <div class="form-group">
                     <label>字體樣式</label>
                     <select id="font-select">
-                        <option value="font-iansui" selected>芫荽體 (專案手寫字型)</option>
+                        <option value="font-iansui" selected>芫荽體 (專案手寫)</option>
                         <option value="font-kai">系統標楷體</option>
                         <option value="font-sans">標準黑體</option>
                     </select>
@@ -434,6 +470,7 @@
         </div>
     </aside>
 
+    <!-- 即時預覽區 (A4 Landscape) -->
     <main id="preview-area">
         <div class="page" id="sheet-page">
             <div class="sheet-header">
