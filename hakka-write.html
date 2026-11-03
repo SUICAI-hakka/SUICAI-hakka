@@ -716,13 +716,16 @@ zang loiˇ liau</textarea>
         pageEl.appendChild(headerEl);
 
         const gridBody = document.createElement('div');
-        gridBody.className = 'flex-1 flex flex-col justify-between';
+        gridBody.className = 'flex-1 flex flex-col justify-start';
 
         pageRows.forEach(rowCells => {
           const rowEl = document.createElement('div');
           rowEl.className = 'flex items-center justify-start';
           rowEl.style.width = `${cols * charBoxSize}px`;
           rowEl.style.margin = '0 auto';
+          if (rIdx > 0) {
+            rowEl.style.marginTop = '-1px'; // 上下行邊框緊密貼合、完全重疊
+          }
 
           rowCells.forEach(cell => {
             const unit = document.createElement('div');
