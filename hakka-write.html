@@ -603,14 +603,14 @@ zang loiˇ liau</textarea>
       const parsedLines = parseLines(state.content);
 
       const a4WidthPx = 1032;
-      const a4HeightPx = 640; 
+      const a4HeightPx = 660;  // 極限安全容納值，扣除頁首與頁尾邊界剛好滿版且絕不溢出
 
       const charBoxSize = state.gridSize;
       const pinyinHeight = Math.max(22, Math.floor(charBoxSize * 0.42));
-      const unitTotalHeight = charBoxSize + pinyinHeight;
+      const unitTotalHeight = charBoxSize + pinyinHeight - 1;
 
       const cols = Math.max(5, Math.floor(a4WidthPx / charBoxSize));
-      const rowsPerPage = Math.max(3, Math.floor(a4HeightPx / unitTotalHeight));
+      const rowsPerPage = Math.max(3, Math.floor((a4HeightPx + 1) / unitTotalHeight));
 
       let allRowsData = [];
 
