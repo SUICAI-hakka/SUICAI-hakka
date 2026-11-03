@@ -322,7 +322,7 @@ zang loiˇ liau</textarea>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-[#4e6070] mb-1">拼音格標註樣式</label>
+          <label class="block text-xs font-medium text-[#4e6070] mb-1">拼音格樣式</label>
           <select id="pinyin-style" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
             <option value="four_lines" selected>標準四線三格 (適合初學)</option>
             <option value="two_lines">雙線格 (上界與基線)</option>
@@ -331,14 +331,16 @@ zang loiˇ liau</textarea>
         </div>
       </div>
 
-      <!-- 格子大小與字體 -->
+      <!-- 練習格規格（下拉選單）與字體 -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <div class="flex justify-between items-center text-xs mb-1">
-            <span class="font-medium text-[#4e6070]">漢字格子大小</span>
-            <span id="size-val" class="text-[#426077] font-mono font-medium">54px</span>
-          </div>
-          <input type="range" id="grid-size" min="42" max="68" value="54" class="w-full accent-[#4a6b82]">
+          <label class="block text-xs font-medium text-[#4e6070] mb-1">練習格規格</label>
+          <select id="grid-size" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
+            <option value="68">特大格：7 行 × 15 格 (68px)</option>
+            <option value="59" selected>標準大格：8 行 × 17 格 (59px)</option>
+            <option value="53">標準中格：9 行 × 19 格 (53px)</option>
+            <option value="45">精細小格：10 行 × 22 格 (45px)</option>
+          </select>
         </div>
         <div>
           <label class="block text-xs font-medium text-[#4e6070] mb-1">漢字字體</label>
@@ -354,7 +356,7 @@ zang loiˇ liau</textarea>
       <!-- 配色設定：格線色彩選項保留不動 -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-[#4e6070] mb-1">格線配色預設</label>
+          <label class="block text-xs font-medium text-[#4e6070] mb-1">格線配色</label>
           <select id="color-preset" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
             <option value="#dc2626">傳統紅</option>
             <option value="#389F5D" selected>習作綠</option>
@@ -424,7 +426,7 @@ zang loiˇ liau</textarea>
       practiceMode: 'word_repeat',
       gridStyle: 'mizi',
       pinyinStyle: 'four_lines',
-      gridSize: 54,
+      gridSize: 59, // 預設為標準大格 59px (8行×17格)
       fontFamily: 'font-twkai',
       gridColor: '#389F5D', // 預設格線維持習作綠
       traceOpacity: 0.25,
@@ -442,7 +444,6 @@ zang loiˇ liau</textarea>
       gridStyle: document.getElementById('grid-style'),
       pinyinStyle: document.getElementById('pinyin-style'),
       gridSize: document.getElementById('grid-size'),
-      sizeVal: document.getElementById('size-val'),
       fontFamily: document.getElementById('font-family'),
       colorPreset: document.getElementById('color-preset'),
       traceOpacity: document.getElementById('trace-opacity'),
@@ -603,11 +604,11 @@ zang loiˇ liau</textarea>
       const parsedLines = parseLines(state.content);
 
       const a4WidthPx = 1032;
-      const a4HeightPx = 670;  // 極限安全容納值，扣除頁首與頁尾邊界剛好滿版且絕不溢出
+      const a4HeightPx = 670; // 物理最高安全容納值，確保行數算滿且不溢出
 
       const charBoxSize = state.gridSize;
-      const pinyinHeight = Math.max(22, Math.floor(charBoxSize * 0.42));
-      const unitTotalHeight = charBoxSize + pinyinHeight - 1;
+      const pinyinHeight = Math.max(22, Math.floor(charBoxSize * 0.42)); // 保持 0.42 黃金拼音比例
+      const unitTotalHeight = charBoxSize + pinyinHeight - 1; // 扣除重疊的 1px 邊框
 
       const cols = Math.max(5, Math.floor(a4WidthPx / charBoxSize));
       const rowsPerPage = Math.max(3, Math.floor((a4HeightPx + 1) / unitTotalHeight));
@@ -774,7 +775,7 @@ zang loiˇ liau</textarea>
           rowEl.style.width = `${cols * charBoxSize}px`;
           rowEl.style.margin = '0 auto';
           if (rIdx > 0) {
-            rowEl.style.marginTop = '-1px';
+            rowEl.style.marginTop = '-1px'; // 讓上下行邊框完全重合
           }
 
           rowCells.forEach(cell => {
@@ -861,9 +862,9 @@ zang loiˇ liau</textarea>
         render();
       });
 
-      dom.gridSize.addEventListener('input', (e) => {
+      // 監聽規格下拉選單切換
+      dom.gridSize.addEventListener('change', (e) => {
         state.gridSize = parseInt(e.target.value, 10);
-        dom.sizeVal.textContent = `${state.gridSize}px`;
         render();
       });
 
