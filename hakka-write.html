@@ -246,7 +246,21 @@
     
     <!-- 左側控制設定：獨立捲動 -->
     <aside class="no-print custom-scroll w-full xl:w-[460px] bg-white rounded-2xl shadow-sm border border-[#dce5ed] p-5 shrink-0 flex flex-col gap-4 h-full overflow-y-auto">
-      
+
+      <!-- 練習排版模式 -->
+      <div>
+        <label class="block text-xs font-semibold text-[#4e6070] mb-1.5 uppercase tracking-wider">
+          <i class="fa-solid fa-list-check text-[#4a6b82] mr-1.5"></i> 練習模式
+        </label>
+        <select id="practice-mode" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
+          <option value="word_repeat" selected>詞語循環書寫練習</option>
+          <option value="first_trace_blank">首字/詞深色示範 + 後續淺灰描紅與空格習字</option>
+          <option value="full_trace">全列淺色描紅</option>
+          <option value="straight_text">連續書寫模式</option>
+          <option value="blank_sheet">純空白練習格</option>
+        </select>
+      </div>
+
       <!-- 快速範本 -->
       <div>
         <label class="block text-xs font-semibold text-[#4e6070] mb-2 uppercase tracking-wider">
@@ -329,20 +343,6 @@ zang loiˇ liau</textarea>
       </div>
 
       <hr class="border-[#e5edf3]">
-
-      <!-- 練習排版模式 -->
-      <div>
-        <label class="block text-xs font-semibold text-[#4e6070] mb-1.5 uppercase tracking-wider">
-          <i class="fa-solid fa-list-check text-[#4a6b82] mr-1.5"></i> 練習模式
-        </label>
-        <select id="practice-mode" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
-          <option value="word_repeat" selected>詞語循環書寫練習</option>
-          <option value="first_trace_blank">首字/詞深色示範 + 後續淺灰描紅與空格習字</option>
-          <option value="full_trace">全列淺色描紅</option>
-          <option value="straight_text">連續書寫模式</option>
-          <option value="blank_sheet">純空白練習格</option>
-        </select>
-      </div>
 
       <!-- 格子樣式與尺寸 -->
       <div class="grid grid-cols-2 gap-3">
