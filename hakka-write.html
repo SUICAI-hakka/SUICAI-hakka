@@ -699,15 +699,16 @@ zang loiˇ liau</textarea>
         let rightMeta = `<div class="flex items-center gap-4 text-xs text-[#485b6b] font-twkai">`;
         if (state.showStudentInfo) {
           rightMeta += `
-            <span class="border-b border-[#6d8294] pb-0.5 min-w-[70px]">班級：</span>
-            <span class="border-b border-[#6d8294] pb-0.5 min-w-[60px]">座號：</span>
-            <span class="border-b border-[#6d8294] pb-0.5 min-w-[80px]">姓名：</span>
-            <span class="border-b border-[#6d8294] pb-0.5 min-w-[80px]">日期：</span>
+            <span class="border-b border-[#6d8294] pb-0.5 min-w-[75px]">班級：</span>
+            <span class="border-b border-[#6d8294] pb-0.5 min-w-[65px]">座號：</span>
+            <span class="border-b border-[#6d8294] pb-0.5 min-w-[85px]">姓名：</span>
           `;
         }
         if (state.showGrading) {
           rightMeta += `
-            <span class="border border-[#6d8294] px-2.5 py-1 rounded text-[#1c2730] font-bold bg-[#fafbfc]">評分：  </span>
+            <span class="inline-flex items-center gap-1.5 font-bold text-[#1c2730]">
+              評分：<span class="inline-block w-14 h-9 border-2 border-[#6d8294] rounded bg-white"></span>
+            </span>
           `;
         }
         rightMeta += `<span class="text-[#879cb0] text-[11px] ml-1">第 ${p + 1}/${totalPages} 頁</span></div>`;
