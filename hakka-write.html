@@ -667,10 +667,22 @@ zang loiˇ liau</textarea>
         }
       }
 
+      // 若無任何內容，至少確保有完整一頁的空白行
       if (allRowsData.length === 0) {
-        let emptyRow = [];
-        for (let c = 0; c < cols; c++) emptyRow.push({ char: '', pinyin: '', mode: 'empty' });
-        allRowsData.push(emptyRow);
+        allRowsData = [];
+      }
+
+      // 自動補齊空白行，直到整頁排滿（整除 rowsPerPage）
+      const remainder = allRowsData.length % rowsPerPage;
+      if (remainder !== 0 || allRowsData.length === 0) {
+        const rowsToFill = rowsPerPage - remainder;
+        for (let r = 0; r < rowsToFill; r++) {
+          let emptyRow = [];
+          for (let c = 0; c < cols; c++) {
+            emptyRow.push({ char: '', pinyin: '', mode: 'empty' });
+          }
+          allRowsData.push(emptyRow);
+        }
       }
 
       const totalPages = Math.ceil(allRowsData.length / rowsPerPage);
