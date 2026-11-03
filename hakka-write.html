@@ -88,14 +88,16 @@
       border-radius: 2px;
     }
 
-    /* 列印最佳化：徹底消除首頁空白、尾頁空白與溢出問題 */
+    /* 列印最佳化：精準隱藏上方導覽，保留 A4 頁首，徹底消除空白頁 */
     @media print {
-      /* 1. 隱藏所有非列印元件 */
-      .no-print, header, aside {
+      /* 1. 只隱藏上方藍色導航列與左側面板，絕不影響 A4 內部的頁首 header */
+      header.no-print, 
+      aside.no-print, 
+      div.no-print {
         display: none !important;
       }
 
-      /* 2. 重設全域佈局，解除 flex-col 與滿版高度造成的空白頁 */
+      /* 2. 解除網頁外層 flex 容器的高度與間距限制 */
       html, body {
         background: transparent !important;
         padding: 0 !important;
@@ -104,10 +106,16 @@
         height: auto !important;
         min-height: 0 !important;
         display: block !important;
-        overflow: visible !important;
       }
 
-      /* 3. 列印區域完全佔滿並以區塊流自然排列 */
+      body > div.flex-1 {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+        width: 100% !important;
+      }
+
       .print-area {
         display: block !important;
         margin: 0 !important;
@@ -121,22 +129,22 @@
         gap: 0 !important;
       }
 
-      /* 4. 每頁精確控制：高度略小於 210mm（防溢出），最後一頁不強制分頁（消除尾頁空白） */
+      /* 3. A4 頁面尺寸與分頁控制 */
       .page-a4-landscape {
         box-shadow: none !important;
         margin: 0 auto !important;
         width: 297mm !important;
-        height: 206mm !important; /* 縮至 206mm，保留 4mm 安全邊界，杜絕瀏覽器多切一張 */
-        max-height: 206mm !important;
-        padding: 6mm 10mm 5mm 10mm !important;
+        height: 204mm !important; /* 預留 6mm 安全寬限值，防止微小像素誤差引發額外空白頁 */
+        max-height: 204mm !important;
+        padding: 6mm 10mm 4mm 10mm !important;
         box-sizing: border-box !important;
-        page-break-after: always;
-        break-after: page;
-        page-break-inside: avoid;
-        break-inside: avoid;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: always !important;
+        break-after: page !important;
       }
 
-      /* 只有最後一頁不要強制分頁，解決第三頁空白 */
+      /* 最後一頁取消換頁，杜絕尾頁空白 */
       .page-a4-landscape:last-child {
         page-break-after: auto !important;
         break-after: auto !important;
@@ -144,7 +152,7 @@
 
       @page {
         size: A4 landscape;
-        margin: 0;
+        margin: 0; /* 清除瀏覽器預設邊界 */
       }
     }
 
