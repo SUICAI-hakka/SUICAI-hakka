@@ -88,42 +88,66 @@
       border-radius: 2px;
     }
 
-    /* 列印最佳化 */
+    /* 列印最佳化：徹底消除首頁空白、尾頁空白與溢出問題 */
     @media print {
+      /* 1. 隱藏所有非列印元件 */
+      .no-print, header, aside {
+        display: none !important;
+      }
+
+      /* 2. 重設全域佈局，解除 flex-col 與滿版高度造成的空白頁 */
       html, body {
         background: transparent !important;
         padding: 0 !important;
         margin: 0 !important;
+        width: 100% !important;
         height: auto !important;
         min-height: 0 !important;
+        display: block !important;
+        overflow: visible !important;
       }
-      .no-print {
-        display: none !important;
-      }
+
+      /* 3. 列印區域完全佔滿並以區塊流自然排列 */
       .print-area {
+        display: block !important;
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
       }
+
+      #pages-container {
+        display: block !important;
+        width: 100% !important;
+        gap: 0 !important;
+      }
+
+      /* 4. 每頁精確控制：高度略小於 210mm（防溢出），最後一頁不強制分頁（消除尾頁空白） */
       .page-a4-landscape {
         box-shadow: none !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         width: 297mm !important;
-        /* 改為精確高度並設定 box-sizing，防止 padding 把紙張撐爆 */
-        height: 210mm !important;
-        max-height: 210mm !important;
-        padding: 6mm 10mm !important;
+        height: 206mm !important; /* 縮至 206mm，保留 4mm 安全邊界，杜絕瀏覽器多切一張 */
+        max-height: 206mm !important;
+        padding: 6mm 10mm 5mm 10mm !important;
         box-sizing: border-box !important;
-        page-break-after: always !important;
-        break-after: page !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+        page-break-after: always;
+        break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
       }
+
+      /* 只有最後一頁不要強制分頁，解決第三頁空白 */
+      .page-a4-landscape:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+
       @page {
         size: A4 landscape;
         margin: 0;
       }
     }
+
     .grid-svg {
       position: absolute;
       top: 0;
