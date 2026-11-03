@@ -25,7 +25,7 @@
 
     /* 引入字體資料夾的臺灣楷體 */
     @font-face {
-      font-family: 'TaiwanKaiti';
+       'TaiwanKaiti';
       src: url('./fonts/Taiwan-Kaiti.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
@@ -34,7 +34,7 @@
 
     /* 引入字體資料夾的辰宇落雁體 */
     @font-face {
-      font-family: 'ChenYuluoyan';
+       'ChenYuluoyan';
       src: url('./fonts/ChenYuluoyan.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
@@ -43,7 +43,7 @@
 
     /* 莫蘭迪霧霾藍柔和背景 */
     body {
-      font-family: 'Noto Sans TC', sans-serif;
+       'Noto Sans TC', sans-serif;
       background-color: #eef3f6;
       color: #2c3842;
     }
@@ -52,11 +52,11 @@
     .font-twkai {
       font-family: 'TaiwanKaiti', 'Iansui', 'DFKai-SB', 'BiauKai', '標楷體', cursive, serif;
     }
-    .font-kai {
+    .font-iansuikai {
       font-family: 'Iansui', 'TaiwanKaiti', 'DFKai-SB', 'BiauKai', '標楷體', cursive, serif;
     }
-    .font-song {
-      font-family: 'Noto Serif TC', serif;
+    .font-handwrite {
+      font-family: 'ChenYuluoyan', 'Iansui','TaiwanKaiti', serif;
     }
     .font-sans {
       font-family: 'Noto Sans TC', sans-serif;
@@ -154,7 +154,7 @@
             客家語文生字簿產生器
             <span class="text-xs bg-[#36495b] text-[#c9dbe7] px-2 py-0.5 rounded font-normal">A4 橫向專用版</span>
           </h1>
-          <p class="text-xs text-[#95a8b8]">專為臺灣客語設計，拼音調號固定使用臺灣楷體，三欄自動拼音對齊</p>
+          <p class="text-xs text-[#95a8b8]">專為臺灣客語設計，拼音調號固定使用臺灣楷體</p>
         </div>
       </div>
       <div class="flex items-center space-x-3">
@@ -305,10 +305,10 @@ zang loiˇ liau</textarea>
         <div>
           <label class="block text-xs font-medium text-[#4e6070] mb-1">漢字字體</label>
           <select id="font-family" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
-            <option value="font-twkai" selected>臺灣楷體 (專案推薦)</option>
-            <option value="font-kai">芫荽體 (硬筆楷體)</option>
-            <option value="font-song">思源宋體 (端正)</option>
-            <option value="font-sans">黑體 (現代工整)</option>
+            <option value="font-twkai" selected>臺灣楷體 (預設推薦)</option>
+            <option value="font-iansuikai">芫荽體 (硬筆楷體)</option>
+            <option value="font-handwrite">辰宇落雁體 (溫暖手寫)</option>
+            <option value="font-sans">思源黑體 (現代工整)</option>
           </select>
         </div>
       </div>
