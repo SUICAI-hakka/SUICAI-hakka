@@ -73,7 +73,7 @@
       min-height: 210mm;
       height: 210mm;
       max-height: 210mm;
-      padding: 8mm 12mm 6mm 12mm; /* 稍微減少底部 padding，給 footer 留安全空間 */
+      padding: 8mm 12mm 6mm 12mm;
       margin: 0 auto;
       background: white;
       box-shadow: 0 10px 28px -5px rgba(36, 47, 61, 0.09), 0 8px 12px -6px rgba(36, 47, 61, 0.04);
@@ -81,23 +81,22 @@
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: space-between; /* 讓 header 在頂部、footer 牢牢卡在最底部 */
+      justify-content: space-between;
       overflow: hidden;
       page-break-after: always;
       break-after: page;
       border-radius: 2px;
+      transform-origin: top center;
     }
 
-    /* 列印最佳化：精準隱藏上方導覽，保留 A4 頁首，徹底消除空白頁 */
+    /* 列印最佳化：精準隱藏上方導覽與控制項，保留 A4 頁首與頁尾，徹底消除多餘空白頁 */
     @media print {
-      /* 1. 只隱藏上方藍色導航列與左側面板，絕不影響 A4 內部的頁首 header */
       header.no-print, 
       aside.no-print, 
       div.no-print {
         display: none !important;
       }
 
-      /* 2. 解除網頁外層 flex 容器的高度與間距限制 */
       html, body {
         background: transparent !important;
         padding: 0 !important;
@@ -106,6 +105,7 @@
         height: auto !important;
         min-height: 0 !important;
         display: block !important;
+        overflow: visible !important;
       }
 
       body > div.flex-1 {
@@ -114,6 +114,8 @@
         margin: 0 !important;
         max-width: none !important;
         width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
       }
 
       .print-area {
@@ -121,20 +123,25 @@
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
       }
 
+      #pages-viewport,
       #pages-container {
         display: block !important;
         width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
         gap: 0 !important;
+        transform: none !important;
       }
 
-      /* 3. A4 頁面尺寸與分頁控制 */
       .page-a4-landscape {
         box-shadow: none !important;
         margin: 0 auto !important;
         width: 297mm !important;
-        height: 204mm !important; /* 預留 6mm 安全寬限值，防止微小像素誤差引發額外空白頁 */
+        height: 204mm !important;
         max-height: 204mm !important;
         padding: 6mm 10mm 4mm 10mm !important;
         box-sizing: border-box !important;
@@ -142,9 +149,9 @@
         break-inside: avoid !important;
         page-break-after: always !important;
         break-after: page !important;
+        transform: none !important;
       }
 
-      /* 最後一頁取消換頁，杜絕尾頁空白 */
       .page-a4-landscape:last-child {
         page-break-after: auto !important;
         break-after: auto !important;
@@ -152,7 +159,7 @@
 
       @page {
         size: A4 landscape;
-        margin: 0; /* 清除瀏覽器預設邊界 */
+        margin: 0;
       }
     }
 
@@ -165,24 +172,52 @@
       pointer-events: none;
     }
 
-    ::-webkit-scrollbar {
+    /* 極簡滾動條：絕無上下箭頭、靜止時隱藏、捲動或懸停時淡入、頭尾內縮 8px 藏入圓角 */
+    .custom-scroll::-webkit-scrollbar,
+    textarea.custom-scroll::-webkit-scrollbar {
       width: 6px;
       height: 6px;
+      background-color: transparent;
     }
-    ::-webkit-scrollbar-thumb {
-      background: #c3cfd9;
-      border-radius: 4px;
+    
+    .custom-scroll::-webkit-scrollbar-track,
+    textarea.custom-scroll::-webkit-scrollbar-track {
+      background-color: transparent;
+      margin: 8px 0;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #a4b6c4;
+
+    .custom-scroll::-webkit-scrollbar-thumb,
+    textarea.custom-scroll::-webkit-scrollbar-thumb {
+      background-color: transparent;
+      border-radius: 9999px;
+      transition: background-color 0.3s ease;
+    }
+
+    .custom-scroll:hover::-webkit-scrollbar-thumb,
+    .custom-scroll.is-scrolling::-webkit-scrollbar-thumb,
+    textarea.custom-scroll:hover::-webkit-scrollbar-thumb,
+    textarea.custom-scroll.is-scrolling::-webkit-scrollbar-thumb {
+      background-color: #b5c7d5;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover,
+    textarea.custom-scroll::-webkit-scrollbar-thumb:hover {
+      background-color: #8fa7bc;
+    }
+
+    .custom-scroll::-webkit-scrollbar-button,
+    textarea.custom-scroll::-webkit-scrollbar-button {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body class="h-screen w-screen overflow-hidden flex flex-col justify-between">
 
   <!-- 頂部導航：莫蘭迪暗夜靛灰藍 -->
-  <header class="no-print bg-[#242f3d] text-[#e3e9ee] shadow-sm border-b border-[#344254]">
-    <div class="max-w-[1700px] mx-auto px-5 py-3 flex flex-wrap justify-between items-center gap-3">
+  <header class="no-print bg-[#242f3d] text-[#e3e9ee] shadow-sm border-b border-[#344254] shrink-0 z-20">
+    <div class="max-w-[1750px] mx-auto px-5 py-3 flex flex-wrap justify-between items-center gap-3">
       <div class="flex items-center space-x-3.5">
         <div class="w-9 h-9 rounded-lg bg-[#4a6b82] flex items-center justify-center text-white font-bold text-lg shadow-sm">
           <i class="fa-solid fa-pen-fancy"></i>
@@ -203,11 +238,11 @@
     </div>
   </header>
 
-  <!-- 主操作介面 -->
-  <div class="flex-1 flex flex-col xl:flex-row max-w-[1750px] w-full mx-auto p-5 gap-6 items-start">
+  <!-- 主操作介面：左右雙軌獨立捲動佈局 -->
+  <div class="flex-1 flex flex-col xl:flex-row max-w-[1750px] w-full mx-auto p-4 gap-5 items-stretch overflow-hidden">
     
-    <!-- 左側控制設定 -->
-    <aside class="no-print w-full xl:w-[460px] bg-white rounded-2xl shadow-sm border border-[#dce5ed] p-5 shrink-0 flex flex-col gap-4 max-h-[calc(100vh-100px)] xl:sticky xl:top-5 overflow-y-auto">
+    <!-- 左側控制設定：獨立捲動 -->
+    <aside class="no-print custom-scroll w-full xl:w-[460px] bg-white rounded-2xl shadow-sm border border-[#dce5ed] p-5 shrink-0 flex flex-col gap-4 h-full overflow-y-auto">
       
       <!-- 快速範本 -->
       <div>
@@ -215,7 +250,6 @@
           <i class="fa-solid fa-bookmark text-[#4a6b82] mr-1.5"></i> 客語常用範本快速載入
         </label>
         <div class="grid grid-cols-2 gap-2 text-xs">
-          <!-- 範本一 -->
           <button type="button" class="preset-btn p-2.5 rounded-xl border border-[#dfe7ee] hover:border-[#7a9bb5] hover:bg-[#f3f7fa] text-left transition group"
             data-title="客家日常問候語"
             data-hanzi="恁仔細&#10;承蒙你&#10;食飽吂&#10;正來尞"
@@ -224,7 +258,6 @@
             <span class="text-[#718596] text-[11px]">恁仔細、承蒙你、食飽吂</span>
           </button>
 
-          <!-- 範本二 -->
           <button type="button" class="preset-btn p-2.5 rounded-xl border border-[#dfe7ee] hover:border-[#7a9bb5] hover:bg-[#f3f7fa] text-left transition group"
             data-title="客語童謠 - 月光光"
             data-hanzi="月光光，秀才郎，騎白馬，過蓮塘。&#10;蓮塘背，種韭菜，韭菜花，結親家。&#10;親家門前一口塘，畜个鯉嫲八尺長。&#10;長个拿來煮酒食，短个留來討餔娘。"
@@ -233,7 +266,6 @@
             <span class="text-[#718596] text-[11px]">秀才郎、騎白馬、過蓮塘</span>
           </button>
 
-          <!-- 範本三 -->
           <button type="button" class="preset-btn p-2.5 rounded-xl border border-[#dfe7ee] hover:border-[#7a9bb5] hover:bg-[#f3f7fa] text-left transition group"
             data-title="客家家庭親屬稱謂"
             data-hanzi="阿爸 阿姆&#10;阿公 阿婆&#10;阿哥 阿姊&#10;老弟 老妹"
@@ -242,7 +274,6 @@
             <span class="text-[#718596] text-[11px]">阿公婆、阿爸姆、老弟妹</span>
           </button>
 
-          <!-- 範本四 -->
           <button type="button" class="preset-btn p-2.5 rounded-xl border border-[#dfe7ee] hover:border-[#7a9bb5] hover:bg-[#f3f7fa] text-left transition group"
             data-title="客家數字拼讀"
             data-hanzi="一二三四五&#10;六七八九十&#10;百千萬億兆"
@@ -253,7 +284,7 @@
         </div>
       </div>
 
-      <!-- 三欄式文字輸入區塊：莫蘭迪淡霧藍底色 -->
+      <!-- 三欄式文字輸入區塊：套用極簡滾動樣式且保留自由調整長度 (resize-y) -->
       <div class="space-y-3 bg-[#f5f8fa] p-3.5 rounded-xl border border-[#dbe4eb]">
         <div class="flex justify-between items-center">
           <label class="text-xs font-semibold text-[#3b4c5c] uppercase tracking-wider flex items-center gap-1.5">
@@ -267,7 +298,7 @@
           <div class="flex justify-between items-center mb-1">
             <span class="text-xs font-medium text-[#3b4c5c]">第一欄：客語漢字 (每行一個詞或句子)</span>
           </div>
-          <textarea id="col-hanzi" rows="3" class="w-full text-[#283540] border border-[#cedbe6] rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none transition resize-y font-twkai leading-relaxed bg-white" placeholder="請直接輸入客語漢字，每行一句">恁仔細
+          <textarea id="col-hanzi" rows="3" class="custom-scroll w-full text-[#283540] border border-[#cedbe6] rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none transition resize-y font-twkai leading-relaxed bg-white" placeholder="請直接輸入客語漢字，每行一句">恁仔細
 承蒙你
 食飽吂
 正來尞</textarea>
@@ -278,7 +309,7 @@
           <div class="flex justify-between items-center mb-1">
             <span class="text-xs font-medium text-[#3b4c5c]">第二欄：客語拼音 (以空白分開每個字的音)</span>
           </div>
-          <textarea id="col-pinyin" rows="3" class="w-full text-[#283540] border border-[#cedbe6] rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none transition resize-y font-pinyin leading-relaxed bg-white" placeholder="用空白隔開拼音">anˋ ziiˋ se
+          <textarea id="col-pinyin" rows="3" class="custom-scroll w-full text-[#283540] border border-[#cedbe6] rounded-lg p-2 text-xs focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none transition resize-y font-pinyin leading-relaxed bg-white" placeholder="用空白隔開拼音">anˋ ziiˋ se
 siinˇ mungˇ ngˇ
 siid bauˋ mangˇ
 zang loiˇ liau</textarea>
@@ -290,7 +321,7 @@ zang loiˇ liau</textarea>
             <span class="text-xs font-medium text-[#5c6e7f]">第三欄：自動組合格式</span>
             <span class="text-[10px] bg-[#e3ecf3] text-[#426077] px-1.5 py-0.5 rounded font-normal">可自行修改</span>
           </div>
-          <textarea id="input-content" rows="3" class="w-full text-[#485969] border border-[#d2dfeb] rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#7b9ab4] focus:outline-none transition resize-y font-twkai bg-[#ebf1f6] leading-relaxed" placeholder="系統會自動將第 1 欄與第 2 欄組合產生於此"></textarea>
+          <textarea id="input-content" rows="3" class="custom-scroll w-full text-[#485969] border border-[#d2dfeb] rounded-lg p-2 text-xs focus:ring-1 focus:ring-[#7b9ab4] focus:outline-none transition resize-y font-twkai bg-[#ebf1f6] leading-relaxed" placeholder="系統會自動將第 1 欄與第 2 欄組合產生於此"></textarea>
         </div>
       </div>
 
@@ -322,7 +353,7 @@ zang loiˇ liau</textarea>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-[#4e6070] mb-1">拼音格樣式</label>
+          <label class="block text-xs font-medium text-[#4e6070] mb-1">拼音格標註樣式</label>
           <select id="pinyin-style" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
             <option value="four_lines" selected>標準四線三格 (適合初學)</option>
             <option value="two_lines">雙線格 (上界與基線)</option>
@@ -331,15 +362,15 @@ zang loiˇ liau</textarea>
         </div>
       </div>
 
-      <!-- 練習格規格（下拉選單）與字體 -->
+      <!-- 格子大小（4組滿版黃金規格下拉選單）與字體 -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-[#4e6070] mb-1">練習格規格</label>
+          <label class="block text-xs font-medium text-[#4e6070] mb-1">練習格滿版規格</label>
           <select id="grid-size" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
-            <option value="68">特大格：7 行 × 15 格 (68px)</option>
-            <option value="59" selected>標準大格：8 行 × 17 格 (59px)</option>
-            <option value="53">標準中格：9 行 × 19 格 (53px)</option>
-            <option value="45">精細小格：10 行 × 22 格 (45px)</option>
+            <option value="68">特大格：7 行 × 15 格 (68px 初學)</option>
+            <option value="59" selected>標準大格：8 行 × 17 格 (59px 常用)</option>
+            <option value="53">標準中格：9 行 × 19 格 (53px 密集)</option>
+            <option value="45">精緻小格：10 行 × 22 格 (45px 抄寫)</option>
           </select>
         </div>
         <div>
@@ -353,10 +384,10 @@ zang loiˇ liau</textarea>
         </div>
       </div>
 
-      <!-- 配色設定：格線色彩選項保留不動 -->
+      <!-- 配色設定 -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-medium text-[#4e6070] mb-1">格線配色</label>
+          <label class="block text-xs font-medium text-[#4e6070] mb-1">格線配色預設</label>
           <select id="color-preset" class="w-full border border-[#cedbe6] rounded-lg p-2 text-xs text-[#2c3842] focus:ring-2 focus:ring-[#7b9ab4] focus:border-[#7b9ab4] focus:outline-none bg-white">
             <option value="#dc2626">傳統紅</option>
             <option value="#389F5D" selected>習作綠</option>
@@ -393,25 +424,44 @@ zang loiˇ liau</textarea>
 
     </aside>
 
-    <!-- 右側：A4 橫向即時預覽與列印區塊 -->
-    <main class="flex-1 flex flex-col items-center justify-start w-full overflow-x-auto pb-12 print-area">
-      <!-- 預覽資訊列：清爽霧白卡片 -->
-      <div class="no-print mb-4 w-full flex flex-wrap justify-between items-center text-xs text-[#526473] bg-white px-4 py-2.5 rounded-xl border border-[#dce5ed] shadow-sm gap-2">
-        <div class="flex items-center gap-2">
+    <!-- 右側：A4 橫向即時預覽與列印區塊（頂部常駐固定，字帖區獨立滾動） -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden print-area">
+      <!-- 右側頂部常駐資訊列：永遠置頂不隨字帖滾動 -->
+      <div class="no-print shrink-0 mb-3 w-full flex flex-wrap justify-between items-center text-xs text-[#526473] bg-white px-4 py-2.5 rounded-xl border border-[#dce5ed] shadow-sm gap-2 z-10">
+        <div class="flex items-center gap-2 flex-wrap">
           <span class="inline-flex items-center gap-1.5 font-medium text-[#36495b] bg-[#e8f0f6] px-2.5 py-0.5 rounded">
             <i class="fa-regular fa-file-lines text-[#4a6b82]"></i> A4 橫式規格 (297mm × 210mm)
           </span>
           <span class="text-[#c7d5e0]">|</span>
           <span id="page-summary">正在計算分頁...</span>
         </div>
-        <div class="text-[#758897] text-[11px]">
-          <i class="fa-solid fa-lightbulb text-[#c49a6c] mr-1"></i>若列印時有留白邊，請在瀏覽器列印對話框中將<strong>「邊界」設為「無」</strong>或「最低」
+        
+        <!-- 縮放與列印提示 -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 bg-[#f0f4f8] px-2 py-1 rounded-lg border border-[#d5e2ed]">
+            <i class="fa-solid fa-magnifying-glass text-[#4a6b82] text-[11px]"></i>
+            <span class="text-[11px] text-[#4e6070] font-medium">預覽縮放：</span>
+            <select id="zoom-select" class="bg-transparent text-xs text-[#2c3842] font-medium focus:outline-none cursor-pointer">
+              <option value="fit-page" selected>整頁完整預覽 (寬高最適)</option>
+              <option value="fit-width">符合寬度</option>
+              <option value="1">100% 原始大小</option>
+              <option value="0.85">85%</option>
+              <option value="0.75">75%</option>
+              <option value="0.65">65%</option>
+              <option value="0.5">50%</option>
+            </select>
+          </div>
+          <div class="hidden lg:flex items-center text-[#758897] text-[11px]">
+            <i class="fa-solid fa-lightbulb text-[#c49a6c] mr-1"></i>列印請將「邊界」設為「無」
+          </div>
         </div>
       </div>
 
-      <!-- A4 橫向分頁容器 -->
-      <div id="pages-container" class="flex flex-col gap-8 w-full items-center">
-        <!-- Javascript 動態生成 A4 頁面 -->
+      <!-- 字帖專屬獨立滾動視窗 -->
+      <div id="pages-viewport" class="custom-scroll flex-1 w-full overflow-y-auto overflow-x-auto flex justify-center pb-16">
+        <div id="pages-container" class="flex flex-col gap-8 items-center w-full">
+          <!-- Javascript 動態生成 A4 頁面 -->
+        </div>
       </div>
     </main>
 
@@ -426,13 +476,14 @@ zang loiˇ liau</textarea>
       practiceMode: 'word_repeat',
       gridStyle: 'mizi',
       pinyinStyle: 'four_lines',
-      gridSize: 59, // 預設為標準大格 59px (8行×17格)
+      gridSize: 59, // 預設 59px (8 行 × 17 格)
       fontFamily: 'font-twkai',
-      gridColor: '#389F5D', // 預設格線維持習作綠
+      gridColor: '#389F5D',
       traceOpacity: 0.25,
       sheetTitle: '客家語文生字練習簿',
       showStudentInfo: true,
-      showGrading: true
+      showGrading: true,
+      zoomMode: 'fit-page'
     };
 
     // DOM 快取
@@ -451,13 +502,50 @@ zang loiˇ liau</textarea>
       showStudentInfo: document.getElementById('show-student-info'),
       showGrading: document.getElementById('show-grading'),
       pagesContainer: document.getElementById('pages-container'),
+      pagesScrollViewport: document.getElementById('pages-viewport'),
       pageSummary: document.getElementById('page-summary'),
       btnPrint: document.getElementById('btn-print'),
-      presetBtns: document.querySelectorAll('.preset-btn')
+      presetBtns: document.querySelectorAll('.preset-btn'),
+      zoomSelect: document.getElementById('zoom-select')
     };
 
     /**
-     * 自動將第一欄（漢字）與第二欄（拼音）逐行逐字組裝至第三欄
+     * 計算並套用最佳縮放比例（預設同時符合寬度與高度）
+     */
+    function applyZoom() {
+      if (!dom.pagesScrollViewport) return;
+      const pages = dom.pagesContainer.querySelectorAll('.page-a4-landscape');
+      if (pages.length === 0) return;
+
+      const viewportWidth = dom.pagesScrollViewport.clientWidth - 48;
+      const viewportHeight = dom.pagesScrollViewport.clientHeight - 48;
+
+      const a4WidthPx = 1122.5; // 297mm @ 96DPI
+      const a4HeightPx = 793.7; // 210mm @ 96DPI
+
+      let scale = 1;
+
+      if (state.zoomMode === 'fit-page') {
+        const scaleW = viewportWidth / a4WidthPx;
+        const scaleH = viewportHeight / a4HeightPx;
+        scale = Math.min(scaleW, scaleH);
+        scale = Math.min(Math.max(scale, 0.35), 1.25);
+      } else if (state.zoomMode === 'fit-width') {
+        scale = viewportWidth / a4WidthPx;
+        scale = Math.min(Math.max(scale, 0.4), 1.25);
+      } else {
+        scale = parseFloat(state.zoomMode);
+      }
+
+      pages.forEach(p => {
+        p.style.transform = `scale(${scale})`;
+        p.style.transformOrigin = 'top center';
+        p.style.marginBottom = `${(a4HeightPx * (scale - 1))}px`;
+      });
+    }
+
+    /**
+     * 自動將第一欄（漢字）與第二欄（拼音）組裝至第三欄
      */
     function autoCompose() {
       const hanziLines = dom.colHanzi.value.split('\n');
@@ -604,11 +692,11 @@ zang loiˇ liau</textarea>
       const parsedLines = parseLines(state.content);
 
       const a4WidthPx = 1032;
-      const a4HeightPx = 670; // 物理最高安全容納值，確保行數算滿且不溢出
+      const a4HeightPx = 670; // 精準安全容納高度
 
       const charBoxSize = state.gridSize;
-      const pinyinHeight = Math.max(22, Math.floor(charBoxSize * 0.42)); // 保持 0.42 黃金拼音比例
-      const unitTotalHeight = charBoxSize + pinyinHeight - 1; // 扣除重疊的 1px 邊框
+      const pinyinHeight = Math.max(22, Math.floor(charBoxSize * 0.42));
+      const unitTotalHeight = charBoxSize + pinyinHeight - 1;
 
       const cols = Math.max(5, Math.floor(a4WidthPx / charBoxSize));
       const rowsPerPage = Math.max(3, Math.floor((a4HeightPx + 1) / unitTotalHeight));
@@ -706,12 +794,11 @@ zang loiˇ liau</textarea>
         }
       }
 
-      // 若無任何內容，至少確保有完整一頁的空白行
       if (allRowsData.length === 0) {
         allRowsData = [];
       }
 
-      // 自動補齊空白行，直到整頁排滿（整除 rowsPerPage）
+      // 自動補齊空白行，直到整頁排滿
       const remainder = allRowsData.length % rowsPerPage;
       if (remainder !== 0 || allRowsData.length === 0) {
         const rowsToFill = rowsPerPage - remainder;
@@ -775,7 +862,7 @@ zang loiˇ liau</textarea>
           rowEl.style.width = `${cols * charBoxSize}px`;
           rowEl.style.margin = '0 auto';
           if (rIdx > 0) {
-            rowEl.style.marginTop = '-1px'; // 讓上下行邊框完全重合
+            rowEl.style.marginTop = '-1px';
           }
 
           rowCells.forEach(cell => {
@@ -833,6 +920,8 @@ zang loiˇ liau</textarea>
 
         dom.pagesContainer.appendChild(pageEl);
       }
+
+      applyZoom();
     }
 
     /**
@@ -862,7 +951,6 @@ zang loiˇ liau</textarea>
         render();
       });
 
-      // 監聽規格下拉選單切換
       dom.gridSize.addEventListener('change', (e) => {
         state.gridSize = parseInt(e.target.value, 10);
         render();
@@ -898,6 +986,17 @@ zang loiˇ liau</textarea>
         render();
       });
 
+      dom.zoomSelect.addEventListener('change', (e) => {
+        state.zoomMode = e.target.value;
+        applyZoom();
+      });
+
+      window.addEventListener('resize', () => {
+        if (state.zoomMode === 'fit-page' || state.zoomMode === 'fit-width') {
+          applyZoom();
+        }
+      });
+
       dom.presetBtns.forEach(btn => {
         btn.addEventListener('click', () => {
           const hanzi = btn.getAttribute('data-hanzi');
@@ -921,6 +1020,25 @@ zang loiˇ liau</textarea>
       dom.btnPrint.addEventListener('click', () => {
         window.print();
       });
+
+      // 滾動條動態淡入淡出監聽：捲動時淡入，停止 1 秒後淡出
+      function setupScrollFade(element) {
+        let timer = null;
+        element.addEventListener('scroll', () => {
+          element.classList.add('is-scrolling');
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            element.classList.remove('is-scrolling');
+          }, 1000);
+        }, { passive: true });
+      }
+
+      const asideEl = document.querySelector('aside');
+      if (asideEl) setupScrollFade(asideEl);
+      if (dom.pagesScrollViewport) setupScrollFade(dom.pagesScrollViewport);
+      if (dom.colHanzi) setupScrollFade(dom.colHanzi);
+      if (dom.colPinyin) setupScrollFade(dom.colPinyin);
+      if (dom.inputContent) setupScrollFade(dom.inputContent);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
