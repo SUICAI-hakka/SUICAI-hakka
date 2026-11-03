@@ -86,7 +86,7 @@
       page-break-after: always;
       break-after: page;
       border-radius: 2px;
-      transform-origin: top center;
+      flex-shrink: 0;
     }
 
     /* 列印最佳化：精準隱藏上方導覽與控制項，保留 A4 頁首與頁尾，徹底消除多餘空白頁 */
@@ -134,7 +134,9 @@
         height: auto !important;
         overflow: visible !important;
         gap: 0 !important;
+        padding: 0 !important;
         transform: none !important;
+        zoom: 1 !important;
       }
 
       .page-a4-landscape {
@@ -150,6 +152,7 @@
         page-break-after: always !important;
         break-after: page !important;
         transform: none !important;
+        zoom: 1 !important;
       }
 
       .page-a4-landscape:last-child {
@@ -457,9 +460,9 @@ zang loiˇ liau</textarea>
         </div>
       </div>
 
-      <!-- 字帖專屬獨立滾動視窗 -->
-      <div id="pages-viewport" class="custom-scroll flex-1 w-full overflow-y-auto overflow-x-auto flex justify-center pb-16">
-        <div id="pages-container" class="flex flex-col gap-8 items-center w-full">
+      <!-- 字帖專屬獨立滾動視窗：水平與垂直自然置中 -->
+      <div id="pages-viewport" class="custom-scroll flex-1 w-full overflow-y-auto overflow-x-auto p-4 pb-16 flex justify-center">
+        <div id="pages-container" class="flex flex-col gap-6 items-center m-auto">
           <!-- Javascript 動態生成 A4 頁面 -->
         </div>
       </div>
@@ -510,15 +513,17 @@ zang loiˇ liau</textarea>
     };
 
     /**
-     * 計算並套用最佳縮放比例（預設同時符合寬度與高度）
+     * 計算並套用最佳縮放比例
+     * 使用 zoom 屬性確保字帖尺寸直接縮放並配合 margin: auto 穩定置中
      */
     function applyZoom() {
       if (!dom.pagesScrollViewport) return;
       const pages = dom.pagesContainer.querySelectorAll('.page-a4-landscape');
       if (pages.length === 0) return;
 
-      const viewportWidth = dom.pagesScrollViewport.clientWidth - 48;
-      const viewportHeight = dom.pagesScrollViewport.clientHeight - 48;
+      // 取得實際可視區域寬高（保留餘裕邊距）
+      const viewportWidth = dom.pagesScrollViewport.clientWidth - 40;
+      const viewportHeight = dom.pagesScrollViewport.clientHeight - 40;
 
       const a4WidthPx = 1122.5; // 297mm @ 96DPI
       const a4HeightPx = 793.7; // 210mm @ 96DPI
@@ -529,18 +534,20 @@ zang loiˇ liau</textarea>
         const scaleW = viewportWidth / a4WidthPx;
         const scaleH = viewportHeight / a4HeightPx;
         scale = Math.min(scaleW, scaleH);
-        scale = Math.min(Math.max(scale, 0.35), 1.25);
+        scale = Math.min(Math.max(scale, 0.35), 1.2);
       } else if (state.zoomMode === 'fit-width') {
         scale = viewportWidth / a4WidthPx;
-        scale = Math.min(Math.max(scale, 0.4), 1.25);
+        scale = Math.min(Math.max(scale, 0.35), 1.2);
       } else {
         scale = parseFloat(state.zoomMode);
       }
 
       pages.forEach(p => {
-        p.style.transform = `scale(${scale})`;
-        p.style.transformOrigin = 'top center';
-        p.style.marginBottom = `${(a4HeightPx * (scale - 1))}px`;
+        // 優先使用 zoom，瀏覽器能直接正確計算盒模型居中位置
+        p.style.zoom = scale;
+        // 重設 transform 避免衝突
+        p.style.transform = 'none';
+        p.style.marginBottom = '0px';
       });
     }
 
