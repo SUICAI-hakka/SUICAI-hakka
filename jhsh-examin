@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>段考考務即時管理系統 (Exam Control Center)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter & Noto Sans TC -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'marquee': 'marquee 25s linear infinite',
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 自定義捲軸樣式，適合大螢幕深色背景 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+        /* 數位時鐘等寬數字防抖動 */
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
+
+    <!-- 試務廣播與公告橫幅 (Exam Broadcast & Alerts) -->
+    <div id="broadcastBanner" class="bg-blue-600 text-white px-4 py-2.5 shadow-md transition-colors duration-300 flex items-center justify-between gap-3 z-30">
+        <div class="flex items-center gap-2.5 shrink-0 font-bold tracking-wide">
+            <span id="broadcastBadge" class="bg-white/20 px-2 py-0.5 rounded text-xs uppercase flex items-center gap-1">
+                <i data-lucide="megaphone" class="w-4 h-4"></i> 試務公告
+            </span>
+        </div>
+        <div class="flex-1 overflow-hidden relative h-6 flex items-center">
+            <p id="broadcastText" class="font-medium text-sm md:text-base whitespace-nowrap truncate">
+                請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。
+            </p>
+        </div>
+        <button onclick="openBroadcastModal()" class="shrink-0 bg-black/25 hover:bg-black/40 text-white text-xs md:text-sm px-3 py-1 rounded-lg font-medium transition flex items-center gap-1.5 border border-white/15">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+            <span>發布/修改廣播</span>
+        </button>
+    </div>
+
+    <!-- 頂部狀態列 (Header) -->
+    <header class="bg-slate-900 border-b border-slate-800 px-4 lg:px-6 py-4 shadow-xl z-20">
+        <div class="max-w-[1800px] mx-auto flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+            
+            <!-- 左側：系統標題與即時數位時鐘 -->
+            <div class="flex flex-wrap items-center justify-between xl:justify-start gap-4 lg:gap-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 border border-indigo-400/30">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg md:text-xl font-black tracking-tight text-white leading-tight">
+                            段考考務即時管理系統
+                        </h1>
+                        <p class="text-xs text-slate-400 font-mono tracking-wider">EXAM CONTROL CENTER</p>
+                    </div>
+                </div>
+
+                <!-- 數位時鐘 -->
+                <div class="bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-2 flex items-center gap-3 shadow-inner">
+                    <i data-lucide="clock" class="w-5 h-5 text-indigo-400"></i>
+                    <div>
+                        <div id="liveClock" class="text-xl md:text-2xl font-mono font-bold text-white tabular-nums leading-none">00:00:00</div>
+                        <div id="liveDate" class="text-[11px] text-slate-400 mt-1 font-medium">2026/11/11 (週三)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中間：當前節次選擇與考場倒數計時器 -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-slate-800/60 p-2.5 rounded-2xl border border-slate-700/80">
+                <!-- 節次切換 -->
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1 sm:flex-initial">
+                        <select id="sessionSelector" onchange="changeSession(this.value)" class="w-full sm:w-64 appearance-none bg-slate-900 border border-slate-700 hover:border-indigo-500 text-white font-bold text-sm md:text-base rounded-xl pl-3.5 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition cursor-pointer">
+                            <!-- 動態生成節次選項 -->
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    </div>
+                    <button onclick="openSessionModal()" title="編輯節次與時間" class="p-2.5 bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- 倒數計時與狀態指示器 -->
+                <div class="flex items-center justify-between sm:justify-start gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 min-w-[260px]">
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                            <span id="timerStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span id="timerStatusText" class="text-xs font-bold text-emerald-400 tracking-wide">考試進行中</span>
+                        </div>
+                        <div class="w-32 bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                            <div id="timerProgressBar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-400 uppercase font-semibold">剩餘時間</div>
+                        <div id="countdownDisplay" class="text-xl md:text-2xl font-mono font-extrabold text-amber-400 tabular-nums leading-none mt-0.5">45:00</div>
+                    </div>
+                    <!-- 模擬時間測試小按鈕 (方便試務人員預覽不同時段效果) -->
+                    <button onclick="toggleSimulationMode()" id="simBtn" title="切換「即時系統時間」或「模擬考試中倒數」" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                        模擬中
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右側：資料管理操作按鈕 -->
+            <div class="flex items-center justify-end gap-2">
+                <button onclick="exportCSV()" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-900/30 transition flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>匯出報表 (CSV)</span>
+                </button>
+                <button onclick="openResetConfirmModal()" class="bg-slate-800 hover:bg-rose-950/80 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-800 font-medium text-sm px-3.5 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5" title="重置所有考場為預設模擬資料">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">重置資料</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 全校總體統計看板 (KPI Bar) -->
+        <div class="max-w-[1800px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-4 pt-4 border-t border-slate-800/80">
+            <!-- 應到總人數 -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">應到總人數</p>
+                    <p id="statExpected" class="text-2xl font-black text-white tabular-nums mt-0.5">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- 實到總人數 -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">實到總人數</p>
+                    <p id="statActual" class="text-2xl font-black text-emerald-400 tabular-nums mt-0.5">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-emerald-950/60 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
+                    <i data-lucide="user-check" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- 缺考總人數 -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">缺考總人數</p>
+                    <p id="statAbsent" class="text-2xl font-black text-amber-400 tabular-nums mt-0.5">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-amber-950/60 border border-amber-800/40 flex items-center justify-center text-amber-400">
+                    <i data-lucide="user-x" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- 異常通報件數 -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-400 font-medium">待處理異常通報</p>
+                    <p id="statIncidents" class="text-2xl font-black text-rose-400 tabular-nums mt-0.5">0</p>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-rose-950/60 border border-rose-800/40 flex items-center justify-center text-rose-400">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+            </div>
+
+            <!-- 試卷回收完成率 -->
+            <div class="col-span-2 sm:col-span-1 bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs text-slate-400 font-medium">試卷回收完成率</p>
+                    <span id="statCollectionText" class="text-xs font-mono text-indigo-300 font-bold">0/0 班</span>
+                </div>
+                <div class="flex items-end justify-between gap-3 mt-1">
+                    <p id="statCollectionRate" class="text-2xl font-black text-indigo-400 tabular-nums leading-none">0%</p>
+                    <div class="flex-1 bg-slate-800 h-2.5 rounded-full overflow-hidden mb-1">
+                        <div id="statCollectionBar" class="bg-indigo-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主內容區：左側考場網格 + 右側即時通報紀錄 -->
+    <main class="flex-1 max-w-[1800px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6">
+        
+        <!-- 左側：考場教室即時監控網格 (佔 8 或 9 欄) -->
+        <section class="xl:col-span-8 2xl:col-span-9 flex flex-col gap-4">
+            <!-- 篩選與操作工具列 -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- 年級篩選 -->
+                    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button onclick="setGradeFilter('ALL')" data-grade="ALL" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition">全部年級</button>
+                        <button onclick="setGradeFilter('7')" data-grade="7" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">七年級</button>
+                        <button onclick="setGradeFilter('8')" data-grade="8" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">八年級</button>
+                        <button onclick="setGradeFilter('9')" data-grade="9" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">九年級</button>
+                    </div>
+
+                    <!-- 狀態篩選 -->
+                    <select id="statusFilter" onchange="setStatusFilter(this.value)" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500">
+                        <option value="ALL">所有狀態</option>
+                        <option value="INCIDENT">⚠️ 異常狀況</option>
+                        <option value="ABSENT">👤 有缺考通報</option>
+                        <option value="UNCOLLECTED">📝 尚未領卷</option>
+                        <option value="TESTING">✍️ 考試進行中</option>
+                        <option value="COMPLETED">✅ 已交卷完成</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    <!-- 搜尋框 -->
+                    <div class="relative flex-1 sm:w-48">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="searchInput" oninput="renderClassrooms()" placeholder="搜尋班級或監考老師..." class="w-full bg-slate-950 border border-slate-800 text-sm text-white rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <!-- 新增考場按鈕 -->
+                    <button onclick="openAddRoomModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-md shadow-indigo-950">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>新增考場</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 狀態圖例說明 -->
+            <div class="flex flex-wrap items-center gap-4 px-2 text-xs text-slate-400">
+                <span class="font-semibold text-slate-300">狀態燈號說明：</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>未領卷</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>考試中 (正常)</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>缺考通報</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>突發異常</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>已交卷完成</span>
+            </div>
+
+            <!-- 考場卡片網格 -->
+            <div id="classroomGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                <!-- 由 JS 動態渲染考場卡片 -->
+            </div>
+        </section>
+
+        <!-- 右側：即時異常與缺考通報紀錄 (佔 4 或 3 欄) -->
+        <aside class="xl:col-span-4 2xl:col-span-3 flex flex-col gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-full max-h-[calc(100vh-240px)] min-h-[500px] shadow-xl">
+                <!-- 面板標題 -->
+                <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                        </span>
+                        <h2 class="font-bold text-base text-white">即時異常與缺考動態</h2>
+                    </div>
+                    <button onclick="openQuickLogModal()" class="bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> 試務備忘
+                    </button>
+                </div>
+
+                <!-- 篩選小標籤 -->
+                <div class="px-4 py-2 bg-slate-950/50 border-b border-slate-800/80 flex items-center justify-between text-xs">
+                    <div class="flex gap-2">
+                        <button onclick="setLogFilter('ALL')" id="logFilterAll" class="font-bold text-indigo-400">全部紀錄</button>
+                        <span class="text-slate-700">|</span>
+                        <button onclick="setLogFilter('UNRESOLVED')" id="logFilterUnresolved" class="text-slate-400 hover:text-white">僅看待處理</button>
+                    </div>
+                    <span id="logCountBadge" class="text-slate-400 font-mono">0 筆</span>
+                </div>
+
+                <!-- 時間軸列表 -->
+                <div id="incidentTimeline" class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <!-- 由 JS 動態渲染時間軸項目 -->
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- ==================== MODALS (彈出視窗) ==================== -->
+
+    <!-- 1. 考場詳情與回報 Modal -->
+    <div id="roomDetailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden my-8">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span id="modalRoomBadge" class="text-xl font-black bg-indigo-600 text-white px-3 py-1 rounded-xl">701</span>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">考場即時回報與管理</h3>
+                        <p id="modalRoomSub" class="text-xs text-slate-400">監考老師：王大明</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('roomDetailModal')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                <input type="hidden" id="editRoomId">
+
+                <!-- 基本資訊與試卷狀態 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1.5">監考老師姓名</label>
+                        <input type="text" id="editProctor" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1.5">試卷收發狀態</label>
+                        <select id="editPaperStatus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white font-bold focus:border-indigo-500 focus:outline-none">
+                            <option value="UNCOLLECTED">⚪ 尚未領卷</option>
+                            <option value="TESTING">🟢 考試進行中</option>
+                            <option value="COMPLETED">🔵 已交卷完成</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 人數統計區 -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i> 考場人數清點
+                    </h4>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                            <label class="block text-xs text-slate-400 mb-1">應到人數</label>
+                            <input type="number" id="editExpected" min="1" max="60" oninput="recalcModalAttendance()" class="w-full text-center bg-slate-950 border border-slate-700 rounded-lg py-1.5 text-lg font-mono font-bold text-white">
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                            <label class="block text-xs text-emerald-400 mb-1">實到人數</label>
+                            <div id="displayActual" class="py-1.5 text-xl font-mono font-black text-emerald-400">30</div>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
+                            <label class="block text-xs text-amber-400 mb-1">缺考人數</label>
+                            <div id="displayAbsentCount" class="py-1.5 text-xl font-mono font-black text-amber-400">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 缺考學生登錄區 -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="user-x" class="w-4 h-4"></i> 缺考學生登錄明細
+                        </h4>
+                    </div>
+                    
+                    <!-- 新增缺考表單列 -->
+                    <div class="grid grid-cols-12 gap-2">
+                        <input type="text" id="newAbsentSeat" placeholder="座號 (例:05)" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <input type="text" id="newAbsentName" placeholder="學生姓名" class="col-span-4 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                        <select id="newAbsentReason" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
+                            <option value="病假">病假</option>
+                            <option value="事假">事假</option>
+                            <option value="公假">公假</option>
+                            <option value="曠考">曠考</option>
+                            <option value="遲到未入場">遲到未入場</option>
+                        </select>
+                        <button type="button" onclick="addAbsentStudentToModal()" class="col-span-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition flex items-center justify-center">
+                            新增
+                        </button>
+                    </div>
+
+                    <!-- 已登錄缺考名單列表 -->
+                    <div id="modalAbsentList" class="space-y-1.5 pt-1">
+                        <!-- 動態渲染 -->
+                    </div>
+                </div>
+
+                <!-- 突發異常狀況回報區 -->
+                <div class="bg-slate-950/80 border border-rose-900/50 rounded-xl p-4 space-y-3">
+                    <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="alert-octagon" class="w-4 h-4"></i> 突發異常狀況回報 (選填)
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <select id="newIncidentType" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:border-rose-500 focus:outline-none">
+                            <option value="">-- 選擇異常類型 --</option>
+                            <option value="缺試卷/印刷瑕疵">缺試卷 / 印刷瑕疵</option>
+                            <option value="學生身體不適">學生身體不適 / 保健室</option>
+                            <option value="考場違規情事">考場違規 / 手機聲響</option>
+                            <option value="鐘聲/廣播異常">鐘聲 / 廣播系統異常</option>
+                            <option value="其他突發狀況">其他突發狀況</option>
+                        </select>
+                        <input type="text" id="newIncidentNote" placeholder="輸入詳細說明 (例如：缺數學試卷2份，請派員補送)..." class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:border-rose-500 focus:outline-none">
+                    </div>
+                    <p class="text-[11px] text-slate-400">* 若填寫異常狀況並儲存，系統將自動推送至右側「即時異常動態」並將該考場標記為異常警示。</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-800/80 border-t border-slate-700 flex items-center justify-between">
+                <button type="button" onclick="deleteRoomFromModal()" class="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-rose-950/50 transition">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 刪除此考場
+                </button>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="closeModal('roomDetailModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-700 transition">取消</button>
+                    <button type="button" onclick="saveRoomDetails()" class="px-5 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/40 transition flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-4 h-4"></i> 儲存並更新狀態
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 新增考場 Modal -->
+    <div id="addRoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="plus-square" class="w-5 h-5 text-indigo-400"></i> 新增考場教室
+                </h3>
+                <button onclick="closeModal('addRoomModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">考場 / 班級編號 *</label>
+                    <input type="text" id="addRoomCode" placeholder="例如：706 或 備用考場1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1">所屬年級</label>
+                        <select id="addRoomGrade" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+                            <option value="7">七年級 (高一)</option>
+                            <option value="8">八年級 (高二)</option>
+                            <option value="9">九年級 (高三)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1">應到人數</label>
+                        <input type="number" id="addRoomExpected" value="30" min="1" max="60" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">監考老師姓名</label>
+                    <input type="text" id="addRoomProctor" placeholder="例如：陳雅婷" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                </div>
+            </div>
+            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-end gap-2">
+                <button onclick="closeModal('addRoomModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
+                <button onclick="confirmAddRoom()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">確認新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 發布試務廣播 Modal -->
+    <div id="broadcastModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="megaphone" class="w-5 h-5 text-amber-400"></i> 發布全校試務廣播公告
+                </h3>
+                <button onclick="closeModal('broadcastModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1.5">公告緊急程度</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="broadcastLevel" value="normal" checked class="peer sr-only">
+                            <div class="p-3 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-blue-500 peer-checked:bg-blue-950/40 text-center transition">
+                                <span class="text-sm font-bold text-blue-400 block">🔵 一般試務通知</span>
+                                <span class="text-[11px] text-slate-400">常規提醒與流程廣播</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="broadcastLevel" value="urgent" class="peer sr-only">
+                            <div class="p-3 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-rose-500 peer-checked:bg-rose-950/40 text-center transition">
+                                <span class="text-sm font-bold text-rose-400 block">🔴 緊急試題勘誤/警示</span>
+                                <span class="text-[11px] text-slate-400">高對比紅色醒目提示</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1.5">廣播公告內容</label>
+                    <textarea id="broadcastInput" rows="3" placeholder="例如：數學科第5題題幹勘誤，請各監考老師提醒學生將選項(B)改為 25..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:border-indigo-500 focus:outline-none"></textarea>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    <span class="text-[11px] text-slate-400 w-full">快速範本：</span>
+                    <button type="button" onclick="fillBroadcastTemplate('請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。', 'normal')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">發卷提醒</button>
+                    <button type="button" onclick="fillBroadcastTemplate('【題幹勘誤】本節試卷第 5 題選項 (B) 印刷有誤，請各考場監考老師口頭更正。', 'urgent')" class="text-[11px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-lg">試題勘誤</button>
+                    <button type="button" onclick="fillBroadcastTemplate('距離本節考試結束還有 10 分鐘，請提醒學生注意作答時間並檢查答案卡劃記。', 'normal')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">結束前10分</button>
+                </div>
+            </div>
+            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-end gap-2">
+                <button onclick="closeModal('broadcastModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
+                <button onclick="saveBroadcast()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">立即發布</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 編輯考試節次與時間 Modal -->
+    <div id="sessionModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="calendar-clock" class="w-5 h-5 text-indigo-400"></i> 自訂段考節次與時間表
+                </h3>
+                <button onclick="closeModal('sessionModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-3 max-h-[65vh] overflow-y-auto" id="sessionEditorList">
+                <!-- 動態渲染節次編輯列表 -->
+            </div>
+            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-between items-center">
+                <button onclick="addNewSessionRow()" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                    <i data-lucide="plus" class="w-4 h-4"></i> 新增節次
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeModal('sessionModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
+                    <button onclick="saveSessionsConfig()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">儲存時間表</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 快速新增試務備忘 Modal -->
+    <div id="quickLogModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="clipboard-edit" class="w-5 h-5 text-indigo-400"></i> 新增試務中心備忘 / 通報
+                </h3>
+                <button onclick="closeModal('quickLogModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1">相關考場/單位</label>
+                        <input type="text" id="quickLogRoom" value="試務中心" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 mb-1">事件類型</label>
+                        <select id="quickLogCategory" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+                            <option value="INCIDENT">⚠️ 突發異常</option>
+                            <option value="MEMO">📌 試務備忘</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">紀錄內容 *</label>
+                    <textarea id="quickLogText" rows="3" placeholder="輸入試務處理紀錄或全校性備忘..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white"></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-end gap-2">
+                <button onclick="closeModal('quickLogModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
+                <button onclick="confirmQuickLog()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">新增紀錄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 重置確認 Modal (取代 confirm()) -->
+    <div id="resetConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full shadow-2xl p-6 text-center space-y-4">
+            <div class="w-12 h-12 rounded-full bg-rose-950 border border-rose-800 text-rose-400 flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-white">確定要重置所有資料嗎？</h3>
+                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">此操作將清除目前所有的缺考登錄、試卷狀態與異常通報紀錄，並還原為預設模擬資料。</p>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeModal('resetConfirmModal')" class="flex-1 py-2.5 rounded-xl text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition">取消</button>
+                <button onclick="executeResetData()" class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-500 text-white transition">確認重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示訊息 -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // ==================== 1. 預設資料與狀態管理 ====================
+        const STORAGE_KEY = 'exam_control_center_v1';
+
+        const defaultSessions = [
+            { id: 's1', name: '第一節 國文', start: '08:10', end: '09:00' },
+            { id: 's2', name: '第二節 數學', start: '09:20', end: '10:10' },
+            { id: 's3', name: '第三節 英文', start: '10:30', end: '11:20' },
+            { id: 's4', name: '第四節 自然', start: '13:10', end: '14:00' },
+            { id: 's5', name: '第五節 社會', start: '14:20', end: '15:10' }
+        ];
+
+        const defaultRooms = [
+            { id: 'r701', code: '701', grade: '7', proctor: '林建宏', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [] },
+            { id: 'r702', code: '702', grade: '7', proctor: '陳淑芬', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [{ seat: '08', name: '張家豪', reason: '病假' }] },
+            { id: 'r703', code: '703', grade: '7', proctor: '王志明', expected: 29, paperStatus: 'TESTING', hasIncident: true, absents: [] },
+            { id: 'r704', code: '704', grade: '7', proctor: '黃雅琪', expected: 30, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
+            { id: 'r705', code: '705', grade: '7', proctor: '李俊傑', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [] },
+
+            { id: 'r801', code: '801', grade: '8', proctor: '張美玲', expected: 31, paperStatus: 'TESTING', hasIncident: false, absents: [] },
+            { id: 'r802', code: '802', grade: '8', proctor: '劉冠宇', expected: 31, paperStatus: 'TESTING', hasIncident: false, absents: [{ seat: '14', name: '林宥嘉', reason: '公假' }, { seat: '22', name: '吳承翰', reason: '事假' }] },
+            { id: 'r803', code: '803', grade: '8', proctor: '吳佳穎', expected: 30, paperStatus: 'UNCOLLECTED', hasIncident: false, absents: [] },
+            { id: 'r804', code: '804', grade: '8', proctor: '蔡宗翰', expected: 31, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
+            { id: 'r805', code: '805', grade: '8', proctor: '鄭宇軒', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [] },
+
+            { id: 'r901', code: '901', grade: '9', proctor: '許文傑', expected: 32, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
+            { id: 'r902', code: '902', grade: '9', proctor: '謝欣怡', expected: 32, paperStatus: 'TESTING', hasIncident: false, absents: [{ seat: '03', name: '周子瑜', reason: '病假' }] },
+            { id: 'r903', code: '903', grade: '9', proctor: '郭明哲', expected: 31, paperStatus: 'TESTING', hasIncident: false, absents: [] },
+            { id: 'r904', code: '904', grade: '9', proctor: '周佩珊', expected: 32, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
+            { id: 'r905', code: '905', grade: '9', proctor: '徐志偉', expected: 32, paperStatus: 'TESTING', hasIncident: false, absents: [] }
+        ];
+
+        const defaultLogs = [
+            { id: 'l1', time: '09:28', room: '703', type: 'INCIDENT', title: '缺試卷/印刷瑕疵', detail: '703考場反映數學科試卷短少 1 份，請機動組派員補送。', resolved: false },
+            { id: 'l2', time: '09:25', room: '802', type: 'ABSENT', title: '缺考登錄 (2人)', detail: '14號 林宥嘉 (公假)、22號 吳承翰 (事假)', resolved: true },
+            { id: 'l3', time: '09:23', room: '702', type: 'ABSENT', title: '缺考登錄 (1人)', detail: '08號 張家豪 (病假)', resolved: true },
+            { id: 'l4', time: '09:21', room: '902', type: 'ABSENT', title: '缺考登錄 (1人)', detail: '03號 周子瑜 (病假)', resolved: true }
+        ];
+
+        // 應用程式狀態
+        let appState = {
+            sessions: JSON.parse(JSON.stringify(defaultSessions)),
+            currentSessionId: 's2',
+            rooms: JSON.parse(JSON.stringify(defaultRooms)),
+            logs: JSON.parse(JSON.stringify(defaultLogs)),
+            broadcast: {
+                text: '請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。',
+                level: 'normal' // 'normal' | 'urgent'
+            }
+        };
+
+        // 篩選器與暫存變數
+        let currentGradeFilter = 'ALL';
+        let currentStatusFilter = 'ALL';
+        let currentLogFilter = 'ALL';
+        let tempModalAbsents = []; // 編輯 Modal 中的暫存缺考名單
+        let simulationMode = true; // 預設開啟模擬倒數 (讓任何時間打開網頁都能看到生動的倒數計時器)
+        let simSecondsRemaining = 38 * 60 + 42; // 模擬剩餘 38 分 42 秒
+
+        // ==================== 2. 初始化與 LocalStorage ====================
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = { ...appState, ...parsed };
+                }
+            } catch (e) {
+                console.error('讀取 LocalStorage 失敗:', e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('儲存 LocalStorage 失敗:', e);
+            }
+        }
+
+        // ==================== 3. 時鐘與考場倒數計時器 ====================
+        function updateClockAndTimer() {
+            const now = new Date();
+            
+            // 更新數位時鐘
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('liveClock').textContent = `${hours}:${minutes}:${seconds}`;
+
+            const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} (${days[now.getDay()]})`;
+            document.getElementById('liveDate').textContent = dateStr;
+
+            // 更新節次倒數計時
+            const session = appState.sessions.find(s => s.id === appState.currentSessionId) || appState.sessions[0];
+            if (!session) return;
+
+            const statusDot = document.getElementById('timerStatusDot');
+            const statusText = document.getElementById('timerStatusText');
+            const countdownEl = document.getElementById('countdownDisplay');
+            const progressBar = document.getElementById('timerProgressBar');
+
+            if (simulationMode) {
+                // 模擬模式：持續倒數，展示試務中心運作效果
+                if (simSecondsRemaining > 0) simSecondsRemaining--;
+                const m = String(Math.floor(simSecondsRemaining / 60)).padStart(2, '0');
+                const s = String(simSecondsRemaining % 60).padStart(2, '0');
+                countdownEl.textContent = `${m}:${s}`;
+                countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-amber-400 tabular-nums leading-none mt-0.5';
+                statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping';
+                statusText.textContent = '考試進行中 (模擬)';
+                statusText.className = 'text-xs font-bold text-emerald-400 tracking-wide';
+                const pct = Math.min(100, Math.max(5, (simSecondsRemaining / (50 * 60)) * 100));
+                progressBar.style.width = `${pct}%`;
+                progressBar.className = 'bg-emerald-500 h-full transition-all duration-500';
+            } else {
+                // 真實系統時間比對
+                const [sh, sm] = session.start.split(':').map(Number);
+                const [eh, em] = session.end.split(':').map(Number);
+
+                const startTime = new Date(now); startTime.setHours(sh, sm, 0, 0);
+                const endTime = new Date(now); endTime.setHours(eh, em, 0, 0);
+                const prepTime = new Date(startTime.getTime() - 5 * 60000); // 考前5分鐘預備鈴
+
+                if (now < prepTime) {
+                    // 尚未開始
+                    const diffSec = Math.floor((startTime - now) / 1000);
+                    const hrs = Math.floor(diffSec / 3600);
+                    const mins = Math.floor((diffSec % 3600) / 60);
+                    const secs = diffSec % 60;
+                    countdownEl.textContent = hrs > 0 
+                        ? `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`
+                        : `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+                    countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-slate-300 tabular-nums leading-none mt-0.5';
+                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+                    statusText.textContent = '尚未開始';
+                    statusText.className = 'text-xs font-bold text-slate-400 tracking-wide';
+                    progressBar.style.width = '0%';
+                } else if (now >= prepTime && now < startTime) {
+                    // 預備鈴階段
+                    const diffSec = Math.floor((startTime - now) / 1000);
+                    const mins = String(Math.floor(diffSec / 60)).padStart(2, '0');
+                    const secs = String(diffSec % 60).padStart(2, '0');
+                    countdownEl.textContent = `${mins}:${secs}`;
+                    countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-sky-400 tabular-nums leading-none mt-0.5';
+                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping';
+                    statusText.textContent = '預備鈴 (發卷中)';
+                    statusText.className = 'text-xs font-bold text-sky-400 tracking-wide';
+                    progressBar.style.width = '100%';
+                    progressBar.className = 'bg-sky-400 h-full transition-all duration-500';
+                } else if (now >= startTime && now <= endTime) {
+                    // 考試進行中
+                    const totalSec = (endTime - startTime) / 1000;
+                    const diffSec = Math.floor((endTime - now) / 1000);
+                    const mins = String(Math.floor(diffSec / 60)).padStart(2, '0');
+                    const secs = String(diffSec % 60).padStart(2, '0');
+                    countdownEl.textContent = `${mins}:${secs}`;
+                    
+                    const isLast5Min = diffSec <= 300;
+                    countdownEl.className = `text-xl md:text-2xl font-mono font-extrabold ${isLast5Min ? 'text-rose-400 animate-pulse' : 'text-amber-400'} tabular-nums leading-none mt-0.5`;
+                    statusDot.className = `w-2.5 h-2.5 rounded-full ${isLast5Min ? 'bg-rose-500' : 'bg-emerald-500'} animate-ping`;
+                    statusText.textContent = isLast5Min ? '即將收卷 (最後5分)' : '考試進行中';
+                    statusText.className = `text-xs font-bold ${isLast5Min ? 'text-rose-400' : 'text-emerald-400'} tracking-wide`;
+                    
+                    const pct = Math.max(0, Math.min(100, (diffSec / totalSec) * 100));
+                    progressBar.style.width = `${pct}%`;
+                    progressBar.className = `${isLast5Min ? 'bg-rose-500' : 'bg-emerald-500'} h-full transition-all duration-500`;
+                } else {
+                    // 已結束
+                    countdownEl.textContent = '00:00';
+                    countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-indigo-400 tabular-nums leading-none mt-0.5';
+                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-indigo-500';
+                    statusText.textContent = '本節考試已結束';
+                    statusText.className = 'text-xs font-bold text-indigo-400 tracking-wide';
+                    progressBar.style.width = '0%';
+                }
+            }
+        }
+
+        function toggleSimulationMode() {
+            simulationMode = !simulationMode;
+            const btn = document.getElementById('simBtn');
+            if (simulationMode) {
+                simSecondsRemaining = 38 * 60 + 42;
+                btn.textContent = '模擬中';
+                btn.classList.add('text-amber-300', 'border-amber-700');
+                showToast('已切換為「模擬考試倒數」模式');
+            } else {
+                btn.textContent = '即時鐘';
+                btn.classList.remove('text-amber-300', 'border-amber-700');
+                showToast('已切換為「真實系統時間」比對模式');
+            }
+            updateClockAndTimer();
+        }
+
+        // ==================== 4. 渲染畫面邏輯 ====================
+        function renderAll() {
+            renderBroadcast();
+            renderSessionSelector();
+            renderKPIs();
+            renderClassrooms();
+            renderTimeline();
+            lucide.createIcons();
+        }
+
+        // 渲染頂部廣播橫幅
+        function renderBroadcast() {
+            const banner = document.getElementById('broadcastBanner');
+            const badge = document.getElementById('broadcastBadge');
+            const textEl = document.getElementById('broadcastText');
+
+            textEl.textContent = appState.broadcast.text;
+            if (appState.broadcast.level === 'urgent') {
+                banner.className = 'bg-rose-600 text-white px-4 py-2.5 shadow-lg shadow-rose-950/50 transition-colors duration-300 flex items-center justify-between gap-3 z-30';
+                badge.innerHTML = `<i data-lucide="alert-octagon" class="w-4 h-4 animate-bounce"></i> 緊急試務通報`;
+            } else {
+                banner.className = 'bg-blue-600 text-white px-4 py-2.5 shadow-md transition-colors duration-300 flex items-center justify-between gap-3 z-30';
+                badge.innerHTML = `<i data-lucide="megaphone" class="w-4 h-4"></i> 試務公告`;
+            }
+        }
+
+        // 渲染節次下拉選單
+        function renderSessionSelector() {
+            const selector = document.getElementById('sessionSelector');
+            selector.innerHTML = appState.sessions.map(s => `
+                <option value="${s.id}" ${s.id === appState.currentSessionId ? 'selected' : ''}>
+                    ${s.name} (${s.start}-${s.end})
+                </option>
+            `).join('');
+        }
+
+        // 渲染全校總體 KPI 統計
+        function renderKPIs() {
+            let totalExpected = 0;
+            let totalAbsent = 0;
+            let completedRooms = 0;
+
+            appState.rooms.forEach(room => {
+                totalExpected += Number(room.expected) || 0;
+                totalAbsent += (room.absents ? room.absents.length : 0);
+                if (room.paperStatus === 'COMPLETED') completedRooms++;
+            });
+
+            const totalActual = Math.max(0, totalExpected - totalAbsent);
+            const unresolvedIncidents = appState.logs.filter(l => l.type === 'INCIDENT' && !l.resolved).length;
+            const totalRooms = appState.rooms.length;
+            const collectionRate = totalRooms > 0 ? Math.round((completedRooms / totalRooms) * 100) : 0;
+
+            document.getElementById('statExpected').textContent = totalExpected;
+            document.getElementById('statActual').textContent = totalActual;
+            document.getElementById('statAbsent').textContent = totalAbsent;
+            document.getElementById('statIncidents').textContent = unresolvedIncidents;
+            document.getElementById('statCollectionRate').textContent = `${collectionRate}%`;
+            document.getElementById('statCollectionText').textContent = `${completedRooms}/${totalRooms} 班`;
+            document.getElementById('statCollectionBar').style.width = `${collectionRate}%`;
+        }
+
+        // 渲染考場卡片網格
+        function renderClassrooms() {
+            const grid = document.getElementById('classroomGrid');
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            const filteredRooms = appState.rooms.filter(room => {
+                // 年級篩選
+                if (currentGradeFilter !== 'ALL' && room.grade !== currentGradeFilter) return false;
+                
+                // 狀態篩選
+                const absentCount = room.absents ? room.absents.length : 0;
+                if (currentStatusFilter === 'INCIDENT' && !room.hasIncident) return false;
+                if (currentStatusFilter === 'ABSENT' && absentCount === 0) return false;
+                if (currentStatusFilter === 'UNCOLLECTED' && room.paperStatus !== 'UNCOLLECTED') return false;
+                if (currentStatusFilter === 'TESTING' && room.paperStatus !== 'TESTING') return false;
+                if (currentStatusFilter === 'COMPLETED' && room.paperStatus !== 'COMPLETED') return false;
+
+                // 關鍵字搜尋
+                if (keyword) {
+                    const matchCode = room.code.toLowerCase().includes(keyword);
+                    const matchProctor = room.proctor.toLowerCase().includes(keyword);
+                    if (!matchCode && !matchProctor) return false;
+                }
+                return true;
+            });
+
+            if (filteredRooms.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-slate-900/50 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
+                        <i data-lucide="inbox" class="w-10 h-10 text-slate-600 mx-auto mb-2"></i>
+                        <p class="text-slate-400 font-medium">沒有符合篩選條件的考場教室</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            grid.innerHTML = filteredRooms.map(room => {
+                const absentCount = room.absents ? room.absents.length : 0;
+                const actualCount = Math.max(0, room.expected - absentCount);
+
+                // 決定卡片視覺狀態樣式
+                let cardBorder = 'border-slate-800 hover:border-slate-600';
+                let cardBg = 'bg-slate-900';
+                let statusBadge = '';
+
+                if (room.hasIncident) {
+                    cardBorder = 'border-rose-500/80 ring-1 ring-rose-500/40';
+                    cardBg = 'bg-rose-950/20';
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1 animate-pulse"><i data-lucide="alert-triangle" class="w-3 h-3"></i> 異常通報</span>`;
+                } else if (room.paperStatus === 'COMPLETED') {
+                    cardBorder = 'border-indigo-500/50 hover:border-indigo-400';
+                    cardBg = 'bg-indigo-950/15';
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> 已交卷</span>`;
+                } else if (absentCount > 0) {
+                    cardBorder = 'border-amber-500/50 hover:border-amber-400';
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"><i data-lucide="user-x" class="w-3 h-3"></i> 缺考 ${absentCount} 人</span>`;
+                } else if (room.paperStatus === 'UNCOLLECTED') {
+                    cardBorder = 'border-slate-700 border-dashed';
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">未領卷</span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 考試中</span>`;
+                }
+
+                // 缺考座號標籤
+                const absentBadgesHtml = absentCount > 0 
+                    ? `<div class="mt-2.5 pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
+                        <span class="text-[11px] text-amber-400/90 font-semibold">缺考座號：</span>
+                        ${room.absents.map(a => `<span class="text-[11px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-800/60 px-1.5 py-0.5 rounded" title="${a.name} (${a.reason})">${a.seat}號(${a.reason})</span>`).join('')}
+                       </div>`
+                    : `<div class="mt-2.5 pt-2 border-t border-slate-800/60 text-[11px] text-slate-500 flex items-center justify-between">
+                        <span>全員到齊無缺考</span>
+                        <span class="text-slate-600">點擊編輯詳情</span>
+                       </div>`;
+
+                // 試卷狀態快速切換按鈕樣式
+                let nextPaperLabel = '';
+                let nextPaperStyle = '';
+                if (room.paperStatus === 'UNCOLLECTED') {
+                    nextPaperLabel = '領卷開始考試';
+                    nextPaperStyle = 'bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white border-slate-700';
+                } else if (room.paperStatus === 'TESTING') {
+                    nextPaperLabel = '標記已交卷';
+                    nextPaperStyle = 'bg-emerald-950/60 hover:bg-indigo-600 text-emerald-300 hover:text-white border-emerald-800/60';
+                } else {
+                    nextPaperLabel = '已交卷 (點擊重設)';
+                    nextPaperStyle = 'bg-indigo-600/30 hover:bg-slate-800 text-indigo-200 border-indigo-500/40';
+                }
+
+                return `
+                    <div onclick="openRoomDetailModal('${room.id}')" class="${cardBg} border ${cardBorder} rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 shadow-lg flex flex-col justify-between group">
+                        <div>
+                            <!-- 卡片頂部：班級編號與狀態 -->
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl font-black text-white tracking-tight group-hover:text-indigo-300 transition">${room.code}</span>
+                                        <span class="text-xs text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">監考：${room.proctor}</span>
+                                    </div>
+                                </div>
+                                ${statusBadge}
+                            </div>
+
+                            <!-- 人數統計三欄 -->
+                            <div class="grid grid-cols-3 gap-2 mt-3.5 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80 text-center">
+                                <div>
+                                    <div class="text-[10px] text-slate-400">應到</div>
+                                    <div class="text-base font-mono font-bold text-slate-200 tabular-nums">${room.expected}</div>
+                                </div>
+                                <div class="border-x border-slate-800">
+                                    <div class="text-[10px] text-emerald-400">實到</div>
+                                    <div class="text-base font-mono font-black text-emerald-400 tabular-nums">${actualCount}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-amber-400">缺考</div>
+                                    <div class="text-base font-mono font-black ${absentCount > 0 ? 'text-amber-400' : 'text-slate-500'} tabular-nums">${absentCount}</div>
+                                </div>
+                            </div>
+
+                            <!-- 缺考明細 -->
+                            ${absentBadgesHtml}
+                        </div>
+
+                        <!-- 卡片底部快速操作列 (阻止事件冒泡避免觸發 Modal) -->
+                        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2" onclick="event.stopPropagation()">
+                            <button onclick="cyclePaperStatus('${room.id}')" class="flex-1 text-xs font-bold py-1.5 px-2.5 rounded-lg border transition flex items-center justify-center gap-1.5 ${nextPaperStyle}">
+                                <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
+                                <span>${nextPaperLabel}</span>
+                            </button>
+                            <button onclick="openRoomDetailModal('${room.id}')" title="缺考與異常回報" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // 渲染右側即時異常與缺考時間軸
+        function renderTimeline() {
+            const container = document.getElementById('incidentTimeline');
+            const filteredLogs = appState.logs.filter(log => {
+                if (currentLogFilter === 'UNRESOLVED' && log.resolved) return false;
+                return true;
+            });
+
+            document.getElementById('logCountBadge').textContent = `${filteredLogs.length} 筆`;
+
+            if (filteredLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-slate-500 text-xs">
+                        <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-slate-700"></i>
+                        目前沒有符合條件的動態紀錄
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = filteredLogs.map(log => {
+                const isIncident = log.type === 'INCIDENT';
+                const isMemo = log.type === 'MEMO';
+                
+                let badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                let iconName = 'user-x';
+                if (isIncident) {
+                    badgeColor = log.resolved 
+                        ? 'bg-slate-800 text-slate-400 border-slate-700' 
+                        : 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+                    iconName = 'alert-triangle';
+                } else if (isMemo) {
+                    badgeColor = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
+                    iconName = 'pin';
+                }
+
+                return `
+                    <div class="bg-slate-950/90 border ${!log.resolved && isIncident ? 'border-rose-500/50' : 'border-slate-800'} rounded-xl p-3 transition">
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-mono font-bold text-slate-400">${log.time}</span>
+                                <span class="text-xs font-black bg-slate-800 text-white px-2 py-0.5 rounded">${log.room}</span>
+                                <span class="text-[11px] font-bold px-2 py-0.5 rounded border ${badgeColor} flex items-center gap-1">
+                                    <i data-lucide="${iconName}" class="w-3 h-3"></i> ${log.title}
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-2.5">${log.detail}</p>
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
+                            <button onclick="toggleLogResolved('${log.id}')" class="text-[11px] font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
+                                log.resolved 
+                                ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-800/50 hover:bg-emerald-900/50' 
+                                : 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm'
+                            }">
+                                <i data-lucide="${log.resolved ? 'check-circle-2' : 'clock'}" class="w-3 h-3"></i>
+                                <span>${log.resolved ? '已處理完成' : '標記為已處理'}</span>
+                            </button>
+                            <button onclick="deleteLog('${log.id}')" class="text-slate-600 hover:text-slate-400 p-1" title="刪除此紀錄">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // ==================== 5. 考場互動與操作邏輯 ====================
+        function setGradeFilter(grade) {
+            currentGradeFilter = grade;
+            document.querySelectorAll('.grade-filter-btn').forEach(btn => {
+                if (btn.dataset.grade === grade) {
+                    btn.className = 'grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition';
+                } else {
+                    btn.className = 'grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition';
+                }
+            });
+            renderClassrooms();
+        }
+
+        function setStatusFilter(status) {
+            currentStatusFilter = status;
+            renderClassrooms();
+        }
+
+        function setLogFilter(filter) {
+            currentLogFilter = filter;
+            document.getElementById('logFilterAll').className = filter === 'ALL' ? 'font-bold text-indigo-400' : 'text-slate-400 hover:text-white';
+            document.getElementById('logFilterUnresolved').className = filter === 'UNRESOLVED' ? 'font-bold text-indigo-400' : 'text-slate-400 hover:text-white';
+            renderTimeline();
+        }
+
+        // 一鍵切換試卷狀態：未領卷 -> 考試中 -> 已交卷 -> 考試中
+        function cyclePaperStatus(roomId) {
+            const room = appState.rooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            if (room.paperStatus === 'UNCOLLECTED') {
+                room.paperStatus = 'TESTING';
+                showToast(`${room.code} 考場已領卷，開始考試`);
+            } else if (room.paperStatus === 'TESTING') {
+                room.paperStatus = 'COMPLETED';
+                showToast(`${room.code} 考場試卷已全數回收完成！`, 'success');
+            } else {
+                room.paperStatus = 'TESTING';
+                showToast(`${room.code} 考場狀態重設為「考試中」`);
+            }
+
+            saveState();
+            renderAll();
+        }
+
+        // 開啟考場詳情與回報 Modal
+        function openRoomDetailModal(roomId) {
+            const room = appState.rooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            document.getElementById('editRoomId').value = room.id;
+            document.getElementById('modalRoomBadge').textContent = room.code;
+            document.getElementById('modalRoomSub').textContent = `監考老師：${room.proctor}`;
+            document.getElementById('editProctor').value = room.proctor;
+            document.getElementById('editPaperStatus').value = room.paperStatus;
+            document.getElementById('editExpected').value = room.expected;
+
+            // 清空異常輸入欄位
+            document.getElementById('newIncidentType').value = '';
+            document.getElementById('newIncidentNote').value = '';
+            document.getElementById('newAbsentSeat').value = '';
+            document.getElementById('newAbsentName').value = '';
+
+            // 複製一份缺考名單供編輯
+            tempModalAbsents = JSON.parse(JSON.stringify(room.absents || []));
+            renderModalAbsentList();
+            recalcModalAttendance();
+
+            openModal('roomDetailModal');
+            lucide.createIcons();
+        }
+
+        function recalcModalAttendance() {
+            const expected = parseInt(document.getElementById('editExpected').value) || 0;
+            const absentCount = tempModalAbsents.length;
+            const actual = Math.max(0, expected - absentCount);
+            document.getElementById('displayActual').textContent = actual;
+            document.getElementById('displayAbsentCount').textContent = absentCount;
+        }
+
+        function renderModalAbsentList() {
+            const listEl = document.getElementById('modalAbsentList');
+            if (tempModalAbsents.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-500 py-1">目前無登錄缺考學生</p>`;
+                return;
+            }
+
+            listEl.innerHTML = tempModalAbsents.map((item, idx) => `
+                <div class="flex items-center justify-between bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-xs">
+                    <div class="flex items-center gap-2.5">
+                        <span class="font-mono font-bold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded">${item.seat} 號</span>
+                        <span class="font-bold text-white">${item.name}</span>
+                        <span class="text-slate-400 bg-slate-800 px-2 py-0.5 rounded">${item.reason}</span>
+                    </div>
+                    <button type="button" onclick="removeAbsentFromModal(${idx})" class="text-rose-400 hover:text-rose-300 p-1">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addAbsentStudentToModal() {
+            const seat = document.getElementById('newAbsentSeat').value.trim();
+            const name = document.getElementById('newAbsentName').value.trim();
+            const reason = document.getElementById('newAbsentReason').value;
+
+            if (!seat || !name) {
+                showToast('請輸入缺考學生的座號與姓名', 'error');
+                return;
+            }
+
+            tempModalAbsents.push({ seat, name, reason });
+            document.getElementById('newAbsentSeat').value = '';
+            document.getElementById('newAbsentName').value = '';
+            
+            renderModalAbsentList();
+            recalcModalAttendance();
+        }
+
+        function removeAbsentFromModal(index) {
+            tempModalAbsents.splice(index, 1);
+            renderModalAbsentList();
+            recalcModalAttendance();
+        }
+
+        // 儲存考場詳情
+        function saveRoomDetails() {
+            const roomId = document.getElementById('editRoomId').value;
+            const room = appState.rooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            const oldAbsentCount = room.absents ? room.absents.length : 0;
+            room.proctor = document.getElementById('editProctor').value.trim() || room.proctor;
+            room.paperStatus = document.getElementById('editPaperStatus').value;
+            room.expected = parseInt(document.getElementById('editExpected').value) || room.expected;
+            room.absents = JSON.parse(JSON.stringify(tempModalAbsents));
+
+            const nowStr = getCurrentTimeHM();
+
+            // 若有新增缺考人數，自動產生時間軸紀錄
+            if (room.absents.length > oldAbsentCount) {
+                const summary = room.absents.map(a => `${a.seat}號 ${a.name}(${a.reason})`).join('、');
+                appState.logs.unshift({
+                    id: 'log_' + Date.now(),
+                    time: nowStr,
+                    room: room.code,
+                    type: 'ABSENT',
+                    title: `缺考更新 (${room.absents.length}人)`,
+                    detail: summary,
+                    resolved: true
+                });
+            }
+
+            // 檢查是否有填寫突發異常狀況
+            const incType = document.getElementById('newIncidentType').value;
+            const incNote = document.getElementById('newIncidentNote').value.trim();
+            if (incType || incNote) {
+                room.hasIncident = true;
+                appState.logs.unshift({
+                    id: 'inc_' + Date.now(),
+                    time: nowStr,
+                    room: room.code,
+                    type: 'INCIDENT',
+                    title: incType || '突發狀況通報',
+                    detail: incNote || `${room.code} 考場回報異常狀況，請試務人員前往協助。`,
+                    resolved: false
+                });
+                showToast(`已發布 ${room.code} 考場異常通報！`, 'error');
+            } else {
+                showToast(`${room.code} 考場資料已儲存更新`, 'success');
+            }
+
+            saveState();
+            closeModal('roomDetailModal');
+            renderAll();
+        }
+
+        function deleteRoomFromModal() {
+            const roomId = document.getElementById('editRoomId').value;
+            appState.rooms = appState.rooms.filter(r => r.id !== roomId);
+            saveState();
+            closeModal('roomDetailModal');
+            renderAll();
+            showToast('已移除該考場');
+        }
+
+        // ==================== 6. 新增考場、廣播、節次編輯、時間軸操作 ====================
+        function openAddRoomModal() {
+            document.getElementById('addRoomCode').value = '';
+            document.getElementById('addRoomProctor').value = '';
+            openModal('addRoomModal');
+        }
+
+        function confirmAddRoom() {
+            const code = document.getElementById('addRoomCode').value.trim();
+            const grade = document.getElementById('addRoomGrade').value;
+            const expected = parseInt(document.getElementById('addRoomExpected').value) || 30;
+            const proctor = document.getElementById('addRoomProctor').value.trim() || '待指派';
+
+            if (!code) {
+                showToast('請輸入考場或班級編號', 'error');
+                return;
+            }
+
+            appState.rooms.push({
+                id: 'r_' + Date.now(),
+                code,
+                grade,
+                proctor,
+                expected,
+                paperStatus: 'UNCOLLECTED',
+                hasIncident: false,
+                absents: []
+            });
+
+            saveState();
+            closeModal('addRoomModal');
+            renderAll();
+            showToast(`已新增 ${code} 考場`, 'success');
+        }
+
+        // 試務廣播
+        function openBroadcastModal() {
+            document.getElementById('broadcastInput').value = appState.broadcast.text;
+            const radios = document.getElementsByName('broadcastLevel');
+            radios.forEach(r => r.checked = (r.value === appState.broadcast.level));
+            openModal('broadcastModal');
+        }
+
+        function fillBroadcastTemplate(text, level) {
+            document.getElementById('broadcastInput').value = text;
+            const radios = document.getElementsByName('broadcastLevel');
+            radios.forEach(r => r.checked = (r.value === level));
+        }
+
+        function saveBroadcast() {
+            const text = document.getElementById('broadcastInput').value.trim();
+            if (!text) {
+                showToast('廣播內容不能為空', 'error');
+                return;
+            }
+            const level = document.querySelector('input[name="broadcastLevel"]:checked').value;
+            appState.broadcast = { text, level };
+            saveState();
+            closeModal('broadcastModal');
+            renderAll();
+            showToast('全校試務廣播已更新發布', 'success');
+        }
+
+        // 節次切換與編輯
+        function changeSession(sessionId) {
+            appState.currentSessionId = sessionId;
+            if (simulationMode) simSecondsRemaining = 50 * 60; // 重設模擬倒數為 50 分鐘
+            saveState();
+            updateClockAndTimer();
+            const s = appState.sessions.find(item => item.id === sessionId);
+            if (s) showToast(`已切換至：${s.name}`);
+        }
+
+        function openSessionModal() {
+            renderSessionEditorList();
+            openModal('sessionModal');
+        }
+
+        function renderSessionEditorList() {
+            const container = document.getElementById('sessionEditorList');
+            container.innerHTML = appState.sessions.map((s, idx) => `
+                <div class="grid grid-cols-12 gap-2 items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800 session-edit-row" data-id="${s.id}">
+                    <input type="text" value="${s.name}" class="col-span-5 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold session-name">
+                    <input type="time" value="${s.start}" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-start">
+                    <input type="time" value="${s.end}" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-end">
+                    <button type="button" onclick="this.closest('.session-edit-row').remove()" class="col-span-1 text-rose-400 hover:text-rose-300 flex justify-center">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addNewSessionRow() {
+            const container = document.getElementById('sessionEditorList');
+            const newId = 's_' + Date.now();
+            const div = document.createElement('div');
+            div.className = 'grid grid-cols-12 gap-2 items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800 session-edit-row';
+            div.dataset.id = newId;
+            div.innerHTML = `
+                <input type="text" value="第六節 自習/補考" class="col-span-5 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold session-name">
+                <input type="time" value="15:30" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-start">
+                <input type="time" value="16:20" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-end">
+                <button type="button" onclick="this.closest('.session-edit-row').remove()" class="col-span-1 text-rose-400 hover:text-rose-300 flex justify-center">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            `;
+            container.appendChild(div);
+            lucide.createIcons();
+        }
+
+        function saveSessionsConfig() {
+            const rows = document.querySelectorAll('.session-edit-row');
+            const updated = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.session-name').value.trim();
+                const start = row.querySelector('.session-start').value;
+                const end = row.querySelector('.session-end').value;
+                if (name && start && end) {
+                    updated.push({ id: row.dataset.id, name, start, end });
+                }
+            });
+
+            if (updated.length === 0) {
+                showToast('請至少保留一個考試節次', 'error');
+                return;
+            }
+
+            appState.sessions = updated;
+            if (!appState.sessions.some(s => s.id === appState.currentSessionId)) {
+                appState.currentSessionId = appState.sessions[0].id;
+            }
+            saveState();
+            closeModal('sessionModal');
+            renderAll();
+            updateClockAndTimer();
+            showToast('考試節次時間表已更新', 'success');
+        }
+
+        // 時間軸事件處理
+        function toggleLogResolved(logId) {
+            const log = appState.logs.find(l => l.id === logId);
+            if (!log) return;
+            log.resolved = !log.resolved;
+
+            // 若該考場的所有異常都已處理，自動解除考場卡片的紅色異常警示
+            if (log.type === 'INCIDENT') {
+                const room = appState.rooms.find(r => r.code === log.room);
+                if (room) {
+                    const stillHasUnresolved = appState.logs.some(l => l.room === room.code && l.type === 'INCIDENT' && !l.resolved);
+                    room.hasIncident = stillHasUnresolved;
+                }
+            }
+
+            saveState();
+            renderAll();
+        }
+
+        function deleteLog(logId) {
+            const target = appState.logs.find(l => l.id === logId);
+            appState.logs = appState.logs.filter(l => l.id !== logId);
+            if (target && target.type === 'INCIDENT') {
+                const room = appState.rooms.find(r => r.code === target.room);
+                if (room) {
+                    room.hasIncident = appState.logs.some(l => l.room === room.code && l.type === 'INCIDENT' && !l.resolved);
+                }
+            }
+            saveState();
+            renderAll();
+        }
+
+        function openQuickLogModal() {
+            document.getElementById('quickLogText').value = '';
+            openModal('quickLogModal');
+        }
+
+        function confirmQuickLog() {
+            const room = document.getElementById('quickLogRoom').value.trim() || '試務中心';
+            const type = document.getElementById('quickLogCategory').value;
+            const detail = document.getElementById('quickLogText').value.trim();
+
+            if (!detail) {
+                showToast('請輸入紀錄內容', 'error');
+                return;
+            }
+
+            appState.logs.unshift({
+                id: 'ql_' + Date.now(),
+                time: getCurrentTimeHM(),
+                room,
+                type,
+                title: type === 'INCIDENT' ? '突發異常通報' : '試務中心備忘',
+                detail,
+                resolved: type !== 'INCIDENT'
+            });
+
+            // 如果填寫的考場存在且為異常，同步標記考場
+            if (type === 'INCIDENT') {
+                const targetRoom = appState.rooms.find(r => r.code === room);
+                if (targetRoom) targetRoom.hasIncident = true;
+            }
+
+            saveState();
+            closeModal('quickLogModal');
+            renderAll();
+            showToast('已新增試務紀錄', 'success');
+        }
+
+        // ==================== 7. 資料匯出 (CSV) 與重置 ====================
+        function exportCSV() {
+            const session = appState.sessions.find(s => s.id === appState.currentSessionId) || { name: '段考' };
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+            // 加上 BOM (\uFEFF) 確保 Excel 開啟繁體中文不亂碼
+            let csvContent = '\uFEFF';
+            csvContent += `段考考務即時統計報表 - ${session.name} (${dateStr})\n`;
+            csvContent += `考場編號,年級,監考老師,試卷狀態,應到人數,實到人數,缺考人數,缺考學生明細,是否有未處理異常\n`;
+
+            const paperStatusMap = {
+                'UNCOLLECTED': '尚未領卷',
+                'TESTING': '考試進行中',
+                'COMPLETED': '已交卷完成'
+            };
+
+            appState.rooms.forEach(r => {
+                const absentCount = r.absents ? r.absents.length : 0;
+                const actual = Math.max(0, r.expected - absentCount);
+                const absentDetail = absentCount > 0 
+                    ? r.absents.map(a => `${a.seat}號${a.name}(${a.reason})`).join('；') 
+                    : '無';
+                const row = [
+                    r.code,
+                    `${r.grade}年級`,
+                    r.proctor,
+                    paperStatusMap[r.paperStatus] || r.paperStatus,
+                    r.expected,
+                    actual,
+                    absentCount,
+                    `"${absentDetail}"`,
+                    r.hasIncident ? '是' : '否'
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `段考考務報表_${session.name}_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('考務統計報表 (CSV) 已匯出下載！', 'success');
+        }
+
+        function openResetConfirmModal() {
+            openModal('resetConfirmModal');
+        }
+
+        function executeResetData() {
+            localStorage.removeItem(STORAGE_KEY);
+            appState = {
+                sessions: JSON.parse(JSON.stringify(defaultSessions)),
+                currentSessionId: 's2',
+                rooms: JSON.parse(JSON.stringify(defaultRooms)),
+                logs: JSON.parse(JSON.stringify(defaultLogs)),
+                broadcast: {
+                    text: '請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。',
+                    level: 'normal'
+                }
+            };
+            saveState();
+            closeModal('resetConfirmModal');
+            renderAll();
+            showToast('已重置為預設模擬資料', 'success');
+        }
+
+        // ==================== 8. 通用工具函式 ====================
+        function openModal(id) {
+            const el = document.getElementById(id);
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+
+        function getCurrentTimeHM() {
+            const now = new Date();
+            return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-800 border-slate-700 text-white';
+            if (type === 'success') bgClass = 'bg-emerald-900/95 border-emerald-700 text-emerald-100';
+            if (type === 'error') bgClass = 'bg-rose-900/95 border-rose-700 text-rose-100';
+
+            toast.className = `${bgClass} border px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ==================== 9. 啟動系統 ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderAll();
+            updateClockAndTimer();
+            setInterval(updateClockAndTimer, 1000);
+        });
+    </script>
+</body>
+</html>
