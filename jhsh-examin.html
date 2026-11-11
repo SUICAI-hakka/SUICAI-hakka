@@ -1,1589 +1,1103 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" class="dark">
+<html lang="zh-TW" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>段考考務即時管理系統 (Exam Control Center)</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts: Inter & Noto Sans TC -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
-                    },
-                    animation: {
-                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'marquee': 'marquee 25s linear infinite',
-                    },
-                    keyframes: {
-                        marquee: {
-                            '0%': { transform: 'translateX(100%)' },
-                            '100%': { transform: 'translateX(-100%)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        /* 自定義捲軸樣式，適合大螢幕深色背景 */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155; 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569; 
-        }
-        /* 數位時鐘等寬數字防抖動 */
-        .tabular-nums {
-            font-variant-numeric: tabular-nums;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>段考考務即時看板</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #090d16;
+      color: #f8fafc;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    @keyframes pulse-urgent {
+      0%, 100% { border-color: #ef4444; box-shadow: 0 0 24px rgba(239, 68, 68, 0.25); }
+      50% { border-color: #fca5a5; box-shadow: 0 0 8px rgba(239, 68, 68, 0.1); }
+    }
+    .urgent-card { animation: pulse-urgent 1.5s infinite; }
+    .active-col-header {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.28) 0%, rgba(16, 185, 129, 0.1) 100%);
+      border-top: 3px solid #10b981;
+      border-left: 2px solid rgba(16, 185, 129, 0.5);
+      border-right: 2px solid rgba(16, 185, 129, 0.5);
+    }
+    .active-col-cell {
+      background-color: rgba(16, 185, 129, 0.08);
+      border-left: 2px solid rgba(16, 185, 129, 0.45);
+      border-right: 2px solid rgba(16, 185, 129, 0.45);
+    }
+    .rest-col-header {
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.08) 100%);
+      border-top: 3px solid #f59e0b;
+      border-left: 2px solid rgba(245, 158, 11, 0.5);
+      border-right: 2px solid rgba(245, 158, 11, 0.5);
+    }
+    .rest-col-cell {
+      background-color: rgba(245, 158, 11, 0.06);
+      border-left: 2px solid rgba(245, 158, 11, 0.4);
+      border-right: 2px solid rgba(245, 158, 11, 0.4);
+    }
+    .cell-editable:hover {
+      background-color: rgba(56, 189, 248, 0.15);
+      outline: 1px dashed #38bdf8;
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-    <!-- 試務廣播與公告橫幅 (Exam Broadcast & Alerts) -->
-    <div id="broadcastBanner" class="bg-blue-600 text-white px-4 py-2.5 shadow-md transition-colors duration-300 flex items-center justify-between gap-3 z-30">
-        <div class="flex items-center gap-2.5 shrink-0 font-bold tracking-wide">
-            <span id="broadcastBadge" class="bg-white/20 px-2 py-0.5 rounded text-xs uppercase flex items-center gap-1">
-                <i data-lucide="megaphone" class="w-4 h-4"></i> 試務公告
-            </span>
+  <!-- 1. 頂部標題、常用超連結與即時時鐘 -->
+  <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-md">
+    <div class="max-w-[1680px] mx-auto px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 shrink-0">
+          <i data-lucide="monitor-check" class="w-6 h-6 text-white"></i>
         </div>
-        <div class="flex-1 overflow-hidden relative h-6 flex items-center">
-            <p id="broadcastText" class="font-medium text-sm md:text-base whitespace-nowrap truncate">
-                請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl lg:text-2xl font-black tracking-wide text-white">段考考務即時看板</h1>
+            <span class="px-2 py-0.5 text-xs font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">試務中心</span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-0.5 group">
+            <p id="examTitleDisplay" onclick="editExamTitle()" title="點擊修改段考名稱" class="text-xs lg:text-sm text-slate-400 hover:text-sky-300 cursor-pointer transition flex items-center gap-1.5">
+              <span>115學年度第一學期 第一次定期評量</span>
+              <i data-lucide="pencil" class="w-3 h-3 opacity-60 group-hover:opacity-100"></i>
             </p>
+          </div>
         </div>
-        <button onclick="openBroadcastModal()" class="shrink-0 bg-black/25 hover:bg-black/40 text-white text-xs md:text-sm px-3 py-1 rounded-lg font-medium transition flex items-center gap-1.5 border border-white/15">
-            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-            <span>發布/修改廣播</span>
+      </div>
+
+      <!-- 常用超連結與時鐘 -->
+      <div class="flex flex-wrap items-center gap-2.5 lg:gap-4">
+        <div id="quickLinksContainer" class="flex flex-wrap items-center gap-2"></div>
+        <button onclick="openLinksModal()" title="設定常用超連結" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium">
+          <i data-lucide="link" class="w-4 h-4 text-sky-400"></i>
+          <span class="hidden sm:inline">設定連結</span>
         </button>
+
+        <div class="h-8 w-px bg-slate-800 hidden sm:block"></div>
+
+        <!-- 數位時鐘 -->
+        <div class="flex items-center gap-3 bg-slate-950 px-4 py-1.5 rounded-xl border border-slate-800">
+          <div class="text-right">
+            <div id="clockDate" class="text-[11px] text-slate-400 font-medium">2026/11/11 (週三)</div>
+            <div class="flex items-center gap-1.5">
+              <span id="timeModeBadge" class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">模擬中</span>
+              <span id="clockTime" class="font-mono-num text-2xl lg:text-3xl font-extrabold text-white tracking-wider">13:18:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </header>
 
-    <!-- 頂部狀態列 (Header) -->
-    <header class="bg-slate-900 border-b border-slate-800 px-4 lg:px-6 py-4 shadow-xl z-20">
-        <div class="max-w-[1800px] mx-auto flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
-            
-            <!-- 左側：系統標題與即時數位時鐘 -->
-            <div class="flex flex-wrap items-center justify-between xl:justify-start gap-4 lg:gap-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 border border-indigo-400/30">
-                        <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg md:text-xl font-black tracking-tight text-white leading-tight">
-                            段考考務即時管理系統
-                        </h1>
-                        <p class="text-xs text-slate-400 font-mono tracking-wider">EXAM CONTROL CENTER</p>
-                    </div>
-                </div>
-
-                <!-- 數位時鐘 -->
-                <div class="bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-2 flex items-center gap-3 shadow-inner">
-                    <i data-lucide="clock" class="w-5 h-5 text-indigo-400"></i>
-                    <div>
-                        <div id="liveClock" class="text-xl md:text-2xl font-mono font-bold text-white tabular-nums leading-none">00:00:00</div>
-                        <div id="liveDate" class="text-[11px] text-slate-400 mt-1 font-medium">2026/11/11 (週三)</div>
-                    </div>
-                </div>
+  <main class="flex-1 max-w-[1680px] w-full mx-auto px-4 lg:px-6 py-5 space-y-6">
+    <!-- 2. 上半部：倒數計時器 + 橫向考程表 -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <!-- 左側：即時倒數看板 (5欄) -->
+      <div id="countdownCard" class="lg:col-span-5 bg-slate-900 border-2 border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl transition-all">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span id="phaseBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+              休息 / 預備時間
+            </span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="toggleTimeMode()" id="toggleModeBtn" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                切換為真實時間
+              </button>
+              <button onclick="openSimModal()" id="simJumpBtn" class="text-xs px-2.5 py-1 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 transition">
+                調整模擬時間
+              </button>
             </div>
+          </div>
 
-            <!-- 中間：當前節次選擇與考場倒數計時器 -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-slate-800/60 p-2.5 rounded-2xl border border-slate-700/80">
-                <!-- 節次切換 -->
-                <div class="flex items-center gap-2">
-                    <div class="relative flex-1 sm:flex-initial">
-                        <select id="sessionSelector" onchange="changeSession(this.value)" class="w-full sm:w-64 appearance-none bg-slate-900 border border-slate-700 hover:border-indigo-500 text-white font-bold text-sm md:text-base rounded-xl pl-3.5 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition cursor-pointer">
-                            <!-- 動態生成節次選項 -->
-                        </select>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    </div>
-                    <button onclick="openSessionModal()" title="編輯節次與時間" class="p-2.5 bg-slate-900 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
-                    </button>
-                </div>
-
-                <!-- 倒數計時與狀態指示器 -->
-                <div class="flex items-center justify-between sm:justify-start gap-4 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 min-w-[260px]">
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2">
-                            <span id="timerStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                            <span id="timerStatusText" class="text-xs font-bold text-emerald-400 tracking-wide">考試進行中</span>
-                        </div>
-                        <div class="w-32 bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                            <div id="timerProgressBar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 65%"></div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-[10px] text-slate-400 uppercase font-semibold">剩餘時間</div>
-                        <div id="countdownDisplay" class="text-xl md:text-2xl font-mono font-extrabold text-amber-400 tabular-nums leading-none mt-0.5">45:00</div>
-                    </div>
-                    <!-- 模擬時間測試小按鈕 (方便試務人員預覽不同時段效果) -->
-                    <button onclick="toggleSimulationMode()" id="simBtn" title="切換「即時系統時間」或「模擬考試中倒數」" class="text-[11px] px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                        模擬中
-                    </button>
-                </div>
+          <!-- 當前節次與科目顯示區 -->
+          <div class="bg-slate-950/80 border border-slate-800/90 rounded-xl p-4 mb-4">
+            <div class="flex items-baseline justify-between gap-2 mb-1">
+              <span id="currentSessionLabel" class="text-sm font-bold text-slate-400">第四節 休息時間</span>
+              <span id="currentRangeText" class="font-mono-num text-sm font-bold text-sky-400">13:00 ~ 13:30</span>
             </div>
-
-            <!-- 右側：資料管理操作按鈕 -->
-            <div class="flex items-center justify-end gap-2">
-                <button onclick="exportCSV()" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-900/30 transition flex items-center justify-center gap-2">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                    <span>匯出報表 (CSV)</span>
-                </button>
-                <button onclick="openResetConfirmModal()" class="bg-slate-800 hover:bg-rose-950/80 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-800 font-medium text-sm px-3.5 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5" title="重置所有考場為預設模擬資料">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">重置資料</span>
-                </button>
+            <div id="currentSubjectBox" class="text-lg lg:text-xl font-black text-white whitespace-pre-line leading-snug mt-1">
+              地科(101~105)
+化學(106~109)
             </div>
+          </div>
         </div>
 
-        <!-- 全校總體統計看板 (KPI Bar) -->
-        <div class="max-w-[1800px] mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-4 pt-4 border-t border-slate-800/80">
-            <!-- 應到總人數 -->
-            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-slate-400 font-medium">應到總人數</p>
-                    <p id="statExpected" class="text-2xl font-black text-white tabular-nums mt-0.5">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-300">
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                </div>
-            </div>
-
-            <!-- 實到總人數 -->
-            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-slate-400 font-medium">實到總人數</p>
-                    <p id="statActual" class="text-2xl font-black text-emerald-400 tabular-nums mt-0.5">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-emerald-950/60 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
-                    <i data-lucide="user-check" class="w-5 h-5"></i>
-                </div>
-            </div>
-
-            <!-- 缺考總人數 -->
-            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-slate-400 font-medium">缺考總人數</p>
-                    <p id="statAbsent" class="text-2xl font-black text-amber-400 tabular-nums mt-0.5">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-amber-950/60 border border-amber-800/40 flex items-center justify-center text-amber-400">
-                    <i data-lucide="user-x" class="w-5 h-5"></i>
-                </div>
-            </div>
-
-            <!-- 異常通報件數 -->
-            <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-slate-400 font-medium">待處理異常通報</p>
-                    <p id="statIncidents" class="text-2xl font-black text-rose-400 tabular-nums mt-0.5">0</p>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-rose-950/60 border border-rose-800/40 flex items-center justify-center text-rose-400">
-                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                </div>
-            </div>
-
-            <!-- 試卷回收完成率 -->
-            <div class="col-span-2 sm:col-span-1 bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex flex-col justify-between">
-                <div class="flex items-center justify-between">
-                    <p class="text-xs text-slate-400 font-medium">試卷回收完成率</p>
-                    <span id="statCollectionText" class="text-xs font-mono text-indigo-300 font-bold">0/0 班</span>
-                </div>
-                <div class="flex items-end justify-between gap-3 mt-1">
-                    <p id="statCollectionRate" class="text-2xl font-black text-indigo-400 tabular-nums leading-none">0%</p>
-                    <div class="flex-1 bg-slate-800 h-2.5 rounded-full overflow-hidden mb-1">
-                        <div id="statCollectionBar" class="bg-indigo-500 h-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
+        <!-- 大型倒數數字與進度條 -->
+        <div>
+          <div class="flex items-baseline justify-between mb-1">
+            <span id="countdownHint" class="text-xs font-bold text-slate-400">距離考試開始還有</span>
+            <span id="progressPercent" class="font-mono-num text-xs font-bold text-slate-400">60%</span>
+          </div>
+          <div id="countdownTimer" class="font-mono-num text-5xl lg:text-6xl font-black tracking-tight text-amber-400 my-1">
+            00:12:00
+          </div>
+          <div class="w-full h-3.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 mt-3">
+            <div id="progressBar" class="h-full bg-amber-500 transition-all duration-500 rounded-full" style="width: 60%"></div>
+          </div>
         </div>
-    </header>
+      </div>
 
-    <!-- 主內容區：左側考場網格 + 右側即時通報紀錄 -->
-    <main class="flex-1 max-w-[1800px] w-full mx-auto p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6">
-        
-        <!-- 左側：考場教室即時監控網格 (佔 8 或 9 欄) -->
-        <section class="xl:col-span-8 2xl:col-span-9 flex flex-col gap-4">
-            <!-- 篩選與操作工具列 -->
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <!-- 年級篩選 -->
-                    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-                        <button onclick="setGradeFilter('ALL')" data-grade="ALL" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition">全部年級</button>
-                        <button onclick="setGradeFilter('7')" data-grade="7" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">七年級</button>
-                        <button onclick="setGradeFilter('8')" data-grade="8" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">八年級</button>
-                        <button onclick="setGradeFilter('9')" data-grade="9" class="grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">九年級</button>
-                    </div>
-
-                    <!-- 狀態篩選 -->
-                    <select id="statusFilter" onchange="setStatusFilter(this.value)" class="bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500">
-                        <option value="ALL">所有狀態</option>
-                        <option value="INCIDENT">⚠️ 異常狀況</option>
-                        <option value="ABSENT">👤 有缺考通報</option>
-                        <option value="UNCOLLECTED">📝 尚未領卷</option>
-                        <option value="TESTING">✍️ 考試進行中</option>
-                        <option value="COMPLETED">✅ 已交卷完成</option>
-                    </select>
-                </div>
-
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                    <!-- 搜尋框 -->
-                    <div class="relative flex-1 sm:w-48">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" id="searchInput" oninput="renderClassrooms()" placeholder="搜尋班級或監考老師..." class="w-full bg-slate-950 border border-slate-800 text-sm text-white rounded-xl pl-9 pr-3 py-1.5 focus:outline-none focus:border-indigo-500">
-                    </div>
-
-                    <!-- 新增考場按鈕 -->
-                    <button onclick="openAddRoomModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-md shadow-indigo-950">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span>新增考場</span>
-                    </button>
-                </div>
+      <!-- 右側：段考考程時間表 (7欄) -->
+      <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-xl">
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h2 class="text-base lg:text-lg font-black text-white">當日段考考程表</h2>
+                <p class="text-xs text-slate-400">點擊任意儲存格可直接修改，或直接從 Excel 貼上 3 列橫向考程</p>
+              </div>
             </div>
 
-            <!-- 狀態圖例說明 -->
-            <div class="flex flex-wrap items-center gap-4 px-2 text-xs text-slate-400">
-                <span class="font-semibold text-slate-300">狀態燈號說明：</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>未領卷</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>考試中 (正常)</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>缺考通報</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>突發異常</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>已交卷完成</span>
+            <div class="flex items-center gap-2">
+              <button onclick="openSchedulePasteModal()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 transition flex items-center gap-1.5">
+                <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
+                貼上考程 Excel
+              </button>
+              <button onclick="resetDefaultSchedule()" title="恢復範例考程" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-700 transition">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              </button>
             </div>
+          </div>
 
-            <!-- 考場卡片網格 -->
-            <div id="classroomGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-                <!-- 由 JS 動態渲染考場卡片 -->
-            </div>
-        </section>
-
-        <!-- 右側：即時異常與缺考通報紀錄 (佔 4 或 3 欄) -->
-        <aside class="xl:col-span-4 2xl:col-span-3 flex flex-col gap-4">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-full max-h-[calc(100vh-240px)] min-h-[500px] shadow-xl">
-                <!-- 面板標題 -->
-                <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="relative flex h-3 w-3">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                        </span>
-                        <h2 class="font-bold text-base text-white">即時異常與缺考動態</h2>
-                    </div>
-                    <button onclick="openQuickLogModal()" class="bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1">
-                        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> 試務備忘
-                    </button>
-                </div>
-
-                <!-- 篩選小標籤 -->
-                <div class="px-4 py-2 bg-slate-950/50 border-b border-slate-800/80 flex items-center justify-between text-xs">
-                    <div class="flex gap-2">
-                        <button onclick="setLogFilter('ALL')" id="logFilterAll" class="font-bold text-indigo-400">全部紀錄</button>
-                        <span class="text-slate-700">|</span>
-                        <button onclick="setLogFilter('UNRESOLVED')" id="logFilterUnresolved" class="text-slate-400 hover:text-white">僅看待處理</button>
-                    </div>
-                    <span id="logCountBadge" class="text-slate-400 font-mono">0 筆</span>
-                </div>
-
-                <!-- 時間軸列表 -->
-                <div id="incidentTimeline" class="flex-1 overflow-y-auto p-4 space-y-3">
-                    <!-- 由 JS 動態渲染時間軸項目 -->
-                </div>
-            </div>
-        </aside>
-
-    </main>
-
-    <!-- ==================== MODALS (彈出視窗) ==================== -->
-
-    <!-- 1. 考場詳情與回報 Modal -->
-    <div id="roomDetailModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden my-8">
-            <!-- Modal Header -->
-            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <span id="modalRoomBadge" class="text-xl font-black bg-indigo-600 text-white px-3 py-1 rounded-xl">701</span>
-                    <div>
-                        <h3 class="text-lg font-bold text-white">考場即時回報與管理</h3>
-                        <p id="modalRoomSub" class="text-xs text-slate-400">監考老師：王大明</p>
-                    </div>
-                </div>
-                <button onclick="closeModal('roomDetailModal')" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-                <input type="hidden" id="editRoomId">
-
-                <!-- 基本資訊與試卷狀態 -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1.5">監考老師姓名</label>
-                        <input type="text" id="editProctor" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1.5">試卷收發狀態</label>
-                        <select id="editPaperStatus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white font-bold focus:border-indigo-500 focus:outline-none">
-                            <option value="UNCOLLECTED">⚪ 尚未領卷</option>
-                            <option value="TESTING">🟢 考試進行中</option>
-                            <option value="COMPLETED">🔵 已交卷完成</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 人數統計區 -->
-                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                        <i data-lucide="users" class="w-4 h-4 text-indigo-400"></i> 考場人數清點
-                    </h4>
-                    <div class="grid grid-cols-3 gap-3 text-center">
-                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                            <label class="block text-xs text-slate-400 mb-1">應到人數</label>
-                            <input type="number" id="editExpected" min="1" max="60" oninput="recalcModalAttendance()" class="w-full text-center bg-slate-950 border border-slate-700 rounded-lg py-1.5 text-lg font-mono font-bold text-white">
-                        </div>
-                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                            <label class="block text-xs text-emerald-400 mb-1">實到人數</label>
-                            <div id="displayActual" class="py-1.5 text-xl font-mono font-black text-emerald-400">30</div>
-                        </div>
-                        <div class="bg-slate-900 p-3 rounded-xl border border-slate-800">
-                            <label class="block text-xs text-amber-400 mb-1">缺考人數</label>
-                            <div id="displayAbsentCount" class="py-1.5 text-xl font-mono font-black text-amber-400">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 缺考學生登錄區 -->
-                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <i data-lucide="user-x" class="w-4 h-4"></i> 缺考學生登錄明細
-                        </h4>
-                    </div>
-                    
-                    <!-- 新增缺考表單列 -->
-                    <div class="grid grid-cols-12 gap-2">
-                        <input type="text" id="newAbsentSeat" placeholder="座號 (例:05)" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
-                        <input type="text" id="newAbsentName" placeholder="學生姓名" class="col-span-4 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
-                        <select id="newAbsentReason" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none">
-                            <option value="病假">病假</option>
-                            <option value="事假">事假</option>
-                            <option value="公假">公假</option>
-                            <option value="曠考">曠考</option>
-                            <option value="遲到未入場">遲到未入場</option>
-                        </select>
-                        <button type="button" onclick="addAbsentStudentToModal()" class="col-span-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition flex items-center justify-center">
-                            新增
-                        </button>
-                    </div>
-
-                    <!-- 已登錄缺考名單列表 -->
-                    <div id="modalAbsentList" class="space-y-1.5 pt-1">
-                        <!-- 動態渲染 -->
-                    </div>
-                </div>
-
-                <!-- 突發異常狀況回報區 -->
-                <div class="bg-slate-950/80 border border-rose-900/50 rounded-xl p-4 space-y-3">
-                    <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i data-lucide="alert-octagon" class="w-4 h-4"></i> 突發異常狀況回報 (選填)
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <select id="newIncidentType" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:border-rose-500 focus:outline-none">
-                            <option value="">-- 選擇異常類型 --</option>
-                            <option value="缺試卷/印刷瑕疵">缺試卷 / 印刷瑕疵</option>
-                            <option value="學生身體不適">學生身體不適 / 保健室</option>
-                            <option value="考場違規情事">考場違規 / 手機聲響</option>
-                            <option value="鐘聲/廣播異常">鐘聲 / 廣播系統異常</option>
-                            <option value="其他突發狀況">其他突發狀況</option>
-                        </select>
-                        <input type="text" id="newIncidentNote" placeholder="輸入詳細說明 (例如：缺數學試卷2份，請派員補送)..." class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:border-rose-500 focus:outline-none">
-                    </div>
-                    <p class="text-[11px] text-slate-400">* 若填寫異常狀況並儲存，系統將自動推送至右側「即時異常動態」並將該考場標記為異常警示。</p>
-                </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="px-6 py-4 bg-slate-800/80 border-t border-slate-700 flex items-center justify-between">
-                <button type="button" onclick="deleteRoomFromModal()" class="text-xs text-rose-400 hover:text-rose-300 font-medium flex items-center gap-1 px-2 py-1 rounded hover:bg-rose-950/50 transition">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 刪除此考場
-                </button>
-                <div class="flex items-center gap-3">
-                    <button type="button" onclick="closeModal('roomDetailModal')" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-700 transition">取消</button>
-                    <button type="button" onclick="saveRoomDetails()" class="px-5 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/40 transition flex items-center gap-1.5">
-                        <i data-lucide="check" class="w-4 h-4"></i> 儲存並更新狀態
-                    </button>
-                </div>
-            </div>
+          <!-- 橫向三列式考程表格 -->
+          <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr id="scheduleTableHead" class="bg-slate-900/90 border-b border-slate-800 text-xs text-slate-400"></tr>
+              </thead>
+              <tbody id="scheduleTableBody" class="divide-y divide-slate-800/80 text-sm"></tbody>
+            </table>
+          </div>
         </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-800/80 text-xs text-slate-400">
+          <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> 休息 / 預備時間</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span> 考試進行中</span>
+          </div>
+          <span>提示：點擊考程欄位可快速跳轉模擬時間測試</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 下半部：各考場各節次監考老師總表 -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-white">各考場各節次監考老師總表</h2>
+            <p class="text-xs text-slate-400">點擊教師姓名可原地修改；當前進行中節次自動高亮標示</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- 年級快速篩選 -->
+          <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-bold">
+            <button onclick="setGradeFilter('ALL')" data-filter="ALL" class="grade-filter-btn px-2.5 py-1 rounded-md bg-indigo-600 text-white transition">全部</button>
+            <button onclick="setGradeFilter('1')" data-filter="1" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高一</button>
+            <button onclick="setGradeFilter('2')" data-filter="2" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高二</button>
+            <button onclick="setGradeFilter('3')" data-filter="3" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高三</button>
+          </div>
+
+          <!-- 搜尋教師或考場 -->
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input id="proctorSearchInput" oninput="renderProctorTable()" type="text" placeholder="搜尋教師或考場..." class="pl-9 pr-7 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 w-44 sm:w-52" />
+            <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <button onclick="openProctorPasteModal()" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+            <i data-lucide="table" class="w-3.5 h-3.5"></i>
+            貼上監考表 Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- 監考矩陣表格 -->
+      <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/70 max-h-[620px]">
+        <table class="w-full text-left border-collapse">
+          <thead id="proctorTableHead" class="sticky top-0 z-20 bg-slate-900 border-b border-slate-800 shadow-sm"></thead>
+          <tbody id="proctorTableBody" class="divide-y divide-slate-800/70 text-sm"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal 1: 貼上橫向考程 Excel -->
+  <div id="schedulePasteModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="clipboard-paste" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-lg font-black text-white">貼上橫向考程 Excel 資料</h3>
+        </div>
+        <button onclick="closeModal('schedulePasteModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 space-y-1.5">
+        <p class="font-bold text-emerald-400">請直接從 Excel 框選「3 列 × 多欄」複製並貼入下方：</p>
+        <ul class="list-disc list-inside text-slate-400 space-y-0.5">
+          <li><strong>第 1 列（休息時間）</strong>：例如 <code class="text-amber-300">08:10~08:25</code> 或 <code class="text-amber-300">自習13:00~13:30</code></li>
+          <li><strong>第 2 列（考試科目）</strong>：支援儲存格內換行（如 <code class="text-sky-300">地科(101~105)</code> 換行 <code class="text-sky-300">化學(106~109)</code>）</li>
+          <li><strong>第 3 列（考試時間）</strong>：例如 <code class="text-emerald-300">08:25~09:25</code></li>
+        </ul>
+      </div>
+
+      <textarea id="schedulePasteInput" oninput="previewSchedulePaste()" rows="6" placeholder="在此按 Ctrl+V 貼上 Excel 複製的 3 列橫向考程..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"></textarea>
+
+      <div>
+        <div class="text-xs font-bold text-slate-400 mb-1.5">即時解析預覽：</div>
+        <div id="schedulePastePreview" class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs text-slate-400">
+          尚未貼上資料
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2.5 pt-2">
+        <button onclick="closeModal('schedulePasteModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">取消</button>
+        <button onclick="applySchedulePaste()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20">套用更新考程</button>
+      </div>
     </div>
+  </div>
 
-    <!-- 2. 新增考場 Modal -->
-    <div id="addRoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i data-lucide="plus-square" class="w-5 h-5 text-indigo-400"></i> 新增考場教室
-                </h3>
-                <button onclick="closeModal('addRoomModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">考場 / 班級編號 *</label>
-                    <input type="text" id="addRoomCode" placeholder="例如：706 或 備用考場1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">所屬年級</label>
-                        <select id="addRoomGrade" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
-                            <option value="7">七年級 (高一)</option>
-                            <option value="8">八年級 (高二)</option>
-                            <option value="9">九年級 (高三)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">應到人數</label>
-                        <input type="number" id="addRoomExpected" value="30" min="1" max="60" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">監考老師姓名</label>
-                    <input type="text" id="addRoomProctor" placeholder="例如：陳雅婷" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white">
-                </div>
-            </div>
-            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-end gap-2">
-                <button onclick="closeModal('addRoomModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
-                <button onclick="confirmAddRoom()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">確認新增</button>
-            </div>
+  <!-- Modal 2: 貼上監考表 Excel -->
+  <div id="proctorPasteModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <i data-lucide="table" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-lg font-black text-white">貼上監考老師 Excel 資料</h3>
         </div>
-    </div>
+        <button onclick="closeModal('proctorPasteModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
 
-    <!-- 3. 發布試務廣播 Modal -->
-    <div id="broadcastModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
-            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i data-lucide="megaphone" class="w-5 h-5 text-amber-400"></i> 發布全校試務廣播公告
-                </h3>
-                <button onclick="closeModal('broadcastModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1.5">公告緊急程度</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="cursor-pointer">
-                            <input type="radio" name="broadcastLevel" value="normal" checked class="peer sr-only">
-                            <div class="p-3 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-blue-500 peer-checked:bg-blue-950/40 text-center transition">
-                                <span class="text-sm font-bold text-blue-400 block">🔵 一般試務通知</span>
-                                <span class="text-[11px] text-slate-400">常規提醒與流程廣播</span>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="broadcastLevel" value="urgent" class="peer sr-only">
-                            <div class="p-3 rounded-xl border border-slate-700 bg-slate-950 peer-checked:border-rose-500 peer-checked:bg-rose-950/40 text-center transition">
-                                <span class="text-sm font-bold text-rose-400 block">🔴 緊急試題勘誤/警示</span>
-                                <span class="text-[11px] text-slate-400">高對比紅色醒目提示</span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1.5">廣播公告內容</label>
-                    <textarea id="broadcastInput" rows="3" placeholder="例如：數學科第5題題幹勘誤，請各監考老師提醒學生將選項(B)改為 25..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:border-indigo-500 focus:outline-none"></textarea>
-                </div>
-                <div class="flex flex-wrap gap-1.5">
-                    <span class="text-[11px] text-slate-400 w-full">快速範本：</span>
-                    <button type="button" onclick="fillBroadcastTemplate('請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。', 'normal')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">發卷提醒</button>
-                    <button type="button" onclick="fillBroadcastTemplate('【題幹勘誤】本節試卷第 5 題選項 (B) 印刷有誤，請各考場監考老師口頭更正。', 'urgent')" class="text-[11px] bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 px-2.5 py-1 rounded-lg">試題勘誤</button>
-                    <button type="button" onclick="fillBroadcastTemplate('距離本節考試結束還有 10 分鐘，請提醒學生注意作答時間並檢查答案卡劃記。', 'normal')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">結束前10分</button>
-                </div>
-            </div>
-            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-end gap-2">
-                <button onclick="closeModal('broadcastModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
-                <button onclick="saveBroadcast()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">立即發布</button>
-            </div>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        請從 Excel 框選 <strong class="text-white">「考場（第1欄）」與「各節次監考老師（第2欄起）」</strong> 直接複製貼上（若第一列為標題列如「考場、第一節...」會自動略過）：
+      </p>
+
+      <textarea id="proctorPasteInput" rows="9" placeholder="範例格式（直接從 Excel 複製貼上）：
+101	王大明	李小華	陳志豪	林佳穎	張雅婷
+102	周杰倫	蔡依林	林俊傑	張惠妹	蕭敬騰" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-sky-500"></textarea>
+
+      <div class="flex justify-end gap-2.5 pt-2">
+        <button onclick="closeModal('proctorPasteModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">取消</button>
+        <button onclick="applyProctorPaste()" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-lg shadow-sky-600/20">覆蓋更新監考表</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: 常用超連結設定 -->
+  <div id="linksModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-black text-white">設定頂部常用超連結</h3>
+        <button onclick="closeModal('linksModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="linksEditorList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
+      <button onclick="addLinkRow()" class="w-full py-2 rounded-lg border border-dashed border-slate-700 hover:border-sky-500 text-xs font-bold text-slate-400 hover:text-sky-400 transition">
+        + 新增一組超連結按鈕
+      </button>
+      <div class="flex justify-end gap-2.5 pt-2">
+        <button onclick="closeModal('linksModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">取消</button>
+        <button onclick="saveLinks()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">儲存設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: 模擬時間設定 -->
+  <div id="simModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-black text-white">調整模擬測試時間</h3>
+        <button onclick="closeModal('simModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">指定時間（HH:MM:SS）</label>
+          <input id="simTimeInput" type="time" step="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono-num" />
         </div>
-    </div>
-
-    <!-- 4. 編輯考試節次與時間 Modal -->
-    <div id="sessionModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden">
-            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i data-lucide="calendar-clock" class="w-5 h-5 text-indigo-400"></i> 自訂段考節次與時間表
-                </h3>
-                <button onclick="closeModal('sessionModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-6 space-y-3 max-h-[65vh] overflow-y-auto" id="sessionEditorList">
-                <!-- 動態渲染節次編輯列表 -->
-            </div>
-            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-between items-center">
-                <button onclick="addNewSessionRow()" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-                    <i data-lucide="plus" class="w-4 h-4"></i> 新增節次
-                </button>
-                <div class="flex gap-2">
-                    <button onclick="closeModal('sessionModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
-                    <button onclick="saveSessionsConfig()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">儲存時間表</button>
-                </div>
-            </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1.5">快速跳轉至各節次：</label>
+          <div id="simQuickJumpList" class="grid grid-cols-2 gap-2"></div>
         </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('simModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold">關閉</button>
+        <button onclick="applySimTime()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold">套用時間</button>
+      </div>
     </div>
+  </div>
 
-    <!-- 5. 快速新增試務備忘 Modal -->
-    <div id="quickLogModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-            <div class="px-6 py-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
-                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i data-lucide="clipboard-edit" class="w-5 h-5 text-indigo-400"></i> 新增試務中心備忘 / 通報
-                </h3>
-                <button onclick="closeModal('quickLogModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+  <script>
+    const STORAGE_KEY = 'exam_dashboard_v4_horizontal';
+
+    const DEFAULT_SCHEDULE = [
+      { id: 1, name: '第一節', restRaw: '08:10~08:25', subject: '數學', examRaw: '08:25~09:25' },
+      { id: 2, name: '第二節', restRaw: '09:25~09:40', subject: '自習', examRaw: '09:40~10:40' },
+      { id: 3, name: '第三節', restRaw: '10:40~10:55', subject: '英文', examRaw: '10:55~11:55' },
+      { id: 4, name: '第四節', restRaw: '自習13:00~13:30', subject: '地科(101~105)\n化學(106~109)', examRaw: '13:30~14:30' },
+      { id: 5, name: '第五節', restRaw: '14:30~14:50', subject: '公民', examRaw: '14:50~15:50' }
+    ];
+
+    const DEFAULT_LINKS = [
+      { label: '教師分機表', url: 'https://example.edu.tw/ext', color: 'sky' },
+      { label: '全校總課表', url: 'https://example.edu.tw/timetable', color: 'emerald' },
+      { label: '段考監考須知', url: 'https://example.edu.tw/rules', color: 'amber' }
+    ];
+
+    function buildDefaultProctors() {
+      const teachers = [
+        '陳建宏','林佳穎','黃志明','張雅婷','李宗翰','王怡君','吳冠宇','劉淑芬','蔡佩珊','楊承翰',
+        '許家豪','鄭雅文','謝明哲','郭郁婷','洪偉倫','曾筱涵','邱俊傑','廖婉君','徐子翔','周欣怡',
+        '葉柏翰','蘇琬婷','莊家銘','呂佳蓉','江宇軒','何佩琪','羅文傑','高雅雯','蕭宇辰','潘詩涵'
+      ];
+      const rooms = [];
+      for (let g = 1; g <= 3; g++) {
+        for (let c = 1; c <= 9; c++) {
+          const roomCode = `${g}0${c}`;
+          let label = roomCode;
+          if (roomCode === '203') label = '203 (文/理)';
+          const idx = (g - 1) * 9 + (c - 1);
+          rooms.push({
+            room: label,
+            grade: String(g),
+            proctors: [
+              teachers[idx % teachers.length],
+              teachers[(idx + 3) % teachers.length],
+              teachers[(idx + 7) % teachers.length],
+              teachers[(idx + 11) % teachers.length],
+              teachers[(idx + 15) % teachers.length]
+            ]
+          });
+        }
+      }
+      return rooms;
+    }
+
+    let state = {
+      title: '115學年度第一學期 第一次定期評量',
+      schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),
+      links: JSON.parse(JSON.stringify(DEFAULT_LINKS)),
+      proctors: buildDefaultProctors(),
+      gradeFilter: 'ALL',
+      isSimMode: true,
+      simSeconds: 13 * 3600 + 18 * 60 + 0 // 預設模擬 13:18:00 (自習13:00~13:30 階段)
+    };
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state = { ...state, ...parsed };
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) { console.error(e); }
+    }
+
+    // 解析時間字串，支援 "自習13:00~13:30" 或 "08:25-09:25"
+    function parseTimeRange(rawStr) {
+      if (!rawStr) return null;
+      const match = rawStr.match(/(\d{1,2}:\d{2})\s*[~\-–—至]\s*(\d{1,2}:\d{2})/);
+      if (!match) return null;
+      const toSec = (t) => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 3600 + m * 60;
+      };
+      const startSec = toSec(match[1]);
+      const endSec = toSec(match[2]);
+      const prefix = rawStr.slice(0, match.index).trim();
+      return {
+        startSec,
+        endSec,
+        rangeText: `${match[1]}~${match[2]}`,
+        prefix
+      };
+    }
+
+    function formatSeconds(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+      const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+      const ss = String(s % 60).padStart(2, '0');
+      return `${hh}:${mm}:${ss}`;
+    }
+
+    function getCurrentSeconds() {
+      if (state.isSimMode) return state.simSeconds;
+      const now = new Date();
+      return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    }
+
+    let lastActiveKey = '';
+
+    function updateDashboardClockAndTimer() {
+      const now = new Date();
+      const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+      document.getElementById('clockDate').textContent =
+        `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} (${days[now.getDay()]})`;
+
+      const curSec = getCurrentSeconds();
+      document.getElementById('clockTime').textContent = formatSeconds(curSec);
+
+      const modeBadge = document.getElementById('timeModeBadge');
+      const toggleBtn = document.getElementById('toggleModeBtn');
+      const jumpBtn = document.getElementById('simJumpBtn');
+      if (state.isSimMode) {
+        modeBadge.textContent = '模擬中';
+        modeBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold';
+        toggleBtn.textContent = '切換為真實時間';
+        jumpBtn.classList.remove('hidden');
+      } else {
+        modeBadge.textContent = '系統時間';
+        modeBadge.className = 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold';
+        toggleBtn.textContent = '切換為模擬測試';
+        jumpBtn.classList.add('hidden');
+      }
+
+      // 比對當前節次狀態
+      let activeSessionIdx = -1;
+      let activePhase = 'IDLE'; // REST | EXAM | IDLE
+      let targetStart = 0;
+      let targetEnd = 0;
+      let rangeDisplay = '';
+      let phasePrefix = '';
+
+      for (let i = 0; i < state.schedule.length; i++) {
+        const item = state.schedule[i];
+        const rest = parseTimeRange(item.restRaw);
+        const exam = parseTimeRange(item.examRaw);
+
+        if (rest && curSec >= rest.startSec && curSec < rest.endSec) {
+          activeSessionIdx = i;
+          activePhase = 'REST';
+          targetStart = rest.startSec;
+          targetEnd = rest.endSec;
+          rangeDisplay = rest.rangeText;
+          phasePrefix = rest.prefix;
+          break;
+        }
+        if (exam && curSec >= exam.startSec && curSec < exam.endSec) {
+          activeSessionIdx = i;
+          activePhase = 'EXAM';
+          targetStart = exam.startSec;
+          targetEnd = exam.endSec;
+          rangeDisplay = exam.rangeText;
+          break;
+        }
+      }
+
+      const card = document.getElementById('countdownCard');
+      const badge = document.getElementById('phaseBadge');
+      const sessionLabel = document.getElementById('currentSessionLabel');
+      const rangeText = document.getElementById('currentRangeText');
+      const subjectBox = document.getElementById('currentSubjectBox');
+      const hint = document.getElementById('countdownHint');
+      const timerEl = document.getElementById('countdownTimer');
+      const bar = document.getElementById('progressBar');
+      const pctEl = document.getElementById('progressPercent');
+
+      card.classList.remove('urgent-card');
+
+      if (activeSessionIdx !== -1) {
+        const item = state.schedule[activeSessionIdx];
+        const remaining = targetEnd - curSec;
+        const total = Math.max(1, targetEnd - targetStart);
+        const pct = Math.min(100, Math.max(0, Math.round(((curSec - targetStart) / total) * 100)));
+
+        rangeText.textContent = rangeDisplay;
+        subjectBox.textContent = item.subject || '（未填寫科目）';
+        timerEl.textContent = formatSeconds(remaining);
+        bar.style.width = `${pct}%`;
+        pctEl.textContent = `${pct}%`;
+
+        if (activePhase === 'REST') {
+          const labelTitle = phasePrefix ? `${item.name}・${phasePrefix}` : `${item.name} 休息 / 預備`;
+          sessionLabel.textContent = labelTitle;
+          badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> ${phasePrefix || '休息 / 預備時間'}`;
+          hint.textContent = '距離本節考試開始還有';
+          timerEl.className = 'font-mono-num text-5xl lg:text-6xl font-black tracking-tight text-amber-400 my-1';
+          bar.className = 'h-full bg-amber-500 transition-all duration-500 rounded-full';
+        } else {
+          sessionLabel.textContent = `${item.name} 考試進行中`;
+          hint.textContent = '距離本節考試結束還有';
+
+          if (remaining <= 300) {
+            card.classList.add('urgent-card');
+            badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/50';
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> 最後 5 分鐘警示`;
+            timerEl.className = 'font-mono-num text-5xl lg:text-6xl font-black tracking-tight text-red-400 my-1';
+            bar.className = 'h-full bg-red-500 transition-all duration-500 rounded-full';
+          } else if (remaining <= 600) {
+            badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> 最後 10 分鐘`;
+            timerEl.className = 'font-mono-num text-5xl lg:text-6xl font-black tracking-tight text-amber-300 my-1';
+            bar.className = 'h-full bg-amber-400 transition-all duration-500 rounded-full';
+          } else {
+            badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 考試進行中`;
+            timerEl.className = 'font-mono-num text-5xl lg:text-6xl font-black tracking-tight text-emerald-400 my-1';
+            bar.className = 'h-full bg-emerald-500 transition-all duration-500 rounded-full';
+          }
+        }
+      } else {
+        // 尋找下一節次
+        let nextItem = null;
+        let nextStartSec = Infinity;
+        for (const item of state.schedule) {
+          const r = parseTimeRange(item.restRaw);
+          const e = parseTimeRange(item.examRaw);
+          const cand = r ? r.startSec : (e ? e.startSec : Infinity);
+          if (cand > curSec && cand < nextStartSec) {
+            nextStartSec = cand;
+            nextItem = item;
+          }
+        }
+
+        if (nextItem) {
+          badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/40';
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-sky-400"></span> 等待下一節次`;
+          sessionLabel.textContent = `下一節：${nextItem.name}`;
+          rangeText.textContent = nextItem.restRaw || nextItem.examRaw;
+          subjectBox.textContent = nextItem.subject;
+          hint.textContent = '距離下一時段開始還有';
+          timerEl.textContent = formatSeconds(nextStartSec - curSec);
+          timerEl.className = 'font-mono-num text-5xl lg:text-6xl font-black tracking-tight text-sky-400 my-1';
+          bar.style.width = '0%';
+          pctEl.textContent = '--';
+        } else {
+          badge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700';
+          badge.innerHTML = `今日考程已結束`;
+          sessionLabel.textContent = '全天考試結束';
+          rangeText.textContent = '--:--';
+          subjectBox.textContent = '今日所有段考節次皆已完成';
+          hint.textContent = '狀態';
+          timerEl.textContent = '00:00:00';
+          timerEl.className = 'font-mono-num text-5xl lg:text-6xl font-black tracking-tight text-slate-500 my-1';
+          bar.style.width = '100%';
+          bar.className = 'h-full bg-slate-700 rounded-full';
+          pctEl.textContent = '100%';
+        }
+      }
+
+      const activeKey = `${activeSessionIdx}-${activePhase}`;
+      if (activeKey !== lastActiveKey) {
+        lastActiveKey = activeKey;
+        renderScheduleTable(activeSessionIdx, activePhase);
+        renderProctorTable(activeSessionIdx, activePhase);
+      }
+    }
+
+    // 渲染橫向三列式考程表
+    function renderScheduleTable(activeIdx = -1, activePhase = 'IDLE') {
+      const head = document.getElementById('scheduleTableHead');
+      const body = document.getElementById('scheduleTableBody');
+
+      let headHtml = `<th class="py-2.5 px-3 font-bold text-slate-400 w-24 shrink-0 border-r border-slate-800">項目 \\ 節次</th>`;
+      state.schedule.forEach((item, idx) => {
+        const isCur = idx === activeIdx;
+        const badge = isCur
+          ? (activePhase === 'REST'
+              ? `<span class="ml-1.5 px-1.5 py-0.5 text-[10px] rounded bg-amber-500 text-slate-950 font-black">休息中</span>`
+              : `<span class="ml-1.5 px-1.5 py-0.5 text-[10px] rounded bg-emerald-500 text-slate-950 font-black">考試中</span>`)
+          : '';
+        headHtml += `
+          <th class="py-2.5 px-3 font-bold text-slate-200 min-w-[135px] ${isCur ? (activePhase === 'REST' ? 'bg-amber-500/15 text-amber-300' : 'bg-emerald-500/15 text-emerald-300') : ''}">
+            <div class="flex items-center justify-between">
+              <span>${escapeHtml(item.name)}${badge}</span>
+              <button onclick="jumpToSession(${idx})" title="模擬跳轉至此節" class="text-[10px] text-slate-500 hover:text-sky-400">▶</button>
             </div>
-            <div class="p-6 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">相關考場/單位</label>
-                        <input type="text" id="quickLogRoom" value="試務中心" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 mb-1">事件類型</label>
-                        <select id="quickLogCategory" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
-                            <option value="INCIDENT">⚠️ 突發異常</option>
-                            <option value="MEMO">📌 試務備忘</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1">紀錄內容 *</label>
-                    <textarea id="quickLogText" rows="3" placeholder="輸入試務處理紀錄或全校性備忘..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white"></textarea>
-                </div>
-            </div>
-            <div class="px-6 py-3.5 bg-slate-800/80 border-t border-slate-700 flex justify-end gap-2">
-                <button onclick="closeModal('quickLogModal')" class="px-4 py-2 rounded-xl text-sm text-slate-300 hover:bg-slate-700">取消</button>
-                <button onclick="confirmQuickLog()" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white">新增紀錄</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 6. 重置確認 Modal (取代 confirm()) -->
-    <div id="resetConfirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full shadow-2xl p-6 text-center space-y-4">
-            <div class="w-12 h-12 rounded-full bg-rose-950 border border-rose-800 text-rose-400 flex items-center justify-center mx-auto">
-                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <h3 class="text-lg font-bold text-white">確定要重置所有資料嗎？</h3>
-                <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">此操作將清除目前所有的缺考登錄、試卷狀態與異常通報紀錄，並還原為預設模擬資料。</p>
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button onclick="closeModal('resetConfirmModal')" class="flex-1 py-2.5 rounded-xl text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition">取消</button>
-                <button onclick="executeResetData()" class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-500 text-white transition">確認重置</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast 提示訊息 -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-    <script>
-        // ==================== 1. 預設資料與狀態管理 ====================
-        const STORAGE_KEY = 'exam_control_center_v1';
-
-        const defaultSessions = [
-            { id: 's1', name: '第一節 國文', start: '08:10', end: '09:00' },
-            { id: 's2', name: '第二節 數學', start: '09:20', end: '10:10' },
-            { id: 's3', name: '第三節 英文', start: '10:30', end: '11:20' },
-            { id: 's4', name: '第四節 自然', start: '13:10', end: '14:00' },
-            { id: 's5', name: '第五節 社會', start: '14:20', end: '15:10' }
-        ];
-
-        const defaultRooms = [
-            { id: 'r701', code: '701', grade: '7', proctor: '林建宏', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [] },
-            { id: 'r702', code: '702', grade: '7', proctor: '陳淑芬', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [{ seat: '08', name: '張家豪', reason: '病假' }] },
-            { id: 'r703', code: '703', grade: '7', proctor: '王志明', expected: 29, paperStatus: 'TESTING', hasIncident: true, absents: [] },
-            { id: 'r704', code: '704', grade: '7', proctor: '黃雅琪', expected: 30, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
-            { id: 'r705', code: '705', grade: '7', proctor: '李俊傑', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [] },
-
-            { id: 'r801', code: '801', grade: '8', proctor: '張美玲', expected: 31, paperStatus: 'TESTING', hasIncident: false, absents: [] },
-            { id: 'r802', code: '802', grade: '8', proctor: '劉冠宇', expected: 31, paperStatus: 'TESTING', hasIncident: false, absents: [{ seat: '14', name: '林宥嘉', reason: '公假' }, { seat: '22', name: '吳承翰', reason: '事假' }] },
-            { id: 'r803', code: '803', grade: '8', proctor: '吳佳穎', expected: 30, paperStatus: 'UNCOLLECTED', hasIncident: false, absents: [] },
-            { id: 'r804', code: '804', grade: '8', proctor: '蔡宗翰', expected: 31, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
-            { id: 'r805', code: '805', grade: '8', proctor: '鄭宇軒', expected: 30, paperStatus: 'TESTING', hasIncident: false, absents: [] },
-
-            { id: 'r901', code: '901', grade: '9', proctor: '許文傑', expected: 32, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
-            { id: 'r902', code: '902', grade: '9', proctor: '謝欣怡', expected: 32, paperStatus: 'TESTING', hasIncident: false, absents: [{ seat: '03', name: '周子瑜', reason: '病假' }] },
-            { id: 'r903', code: '903', grade: '9', proctor: '郭明哲', expected: 31, paperStatus: 'TESTING', hasIncident: false, absents: [] },
-            { id: 'r904', code: '904', grade: '9', proctor: '周佩珊', expected: 32, paperStatus: 'COMPLETED', hasIncident: false, absents: [] },
-            { id: 'r905', code: '905', grade: '9', proctor: '徐志偉', expected: 32, paperStatus: 'TESTING', hasIncident: false, absents: [] }
-        ];
-
-        const defaultLogs = [
-            { id: 'l1', time: '09:28', room: '703', type: 'INCIDENT', title: '缺試卷/印刷瑕疵', detail: '703考場反映數學科試卷短少 1 份，請機動組派員補送。', resolved: false },
-            { id: 'l2', time: '09:25', room: '802', type: 'ABSENT', title: '缺考登錄 (2人)', detail: '14號 林宥嘉 (公假)、22號 吳承翰 (事假)', resolved: true },
-            { id: 'l3', time: '09:23', room: '702', type: 'ABSENT', title: '缺考登錄 (1人)', detail: '08號 張家豪 (病假)', resolved: true },
-            { id: 'l4', time: '09:21', room: '902', type: 'ABSENT', title: '缺考登錄 (1人)', detail: '03號 周子瑜 (病假)', resolved: true }
-        ];
-
-        // 應用程式狀態
-        let appState = {
-            sessions: JSON.parse(JSON.stringify(defaultSessions)),
-            currentSessionId: 's2',
-            rooms: JSON.parse(JSON.stringify(defaultRooms)),
-            logs: JSON.parse(JSON.stringify(defaultLogs)),
-            broadcast: {
-                text: '請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。',
-                level: 'normal' // 'normal' | 'urgent'
-            }
-        };
-
-        // 篩選器與暫存變數
-        let currentGradeFilter = 'ALL';
-        let currentStatusFilter = 'ALL';
-        let currentLogFilter = 'ALL';
-        let tempModalAbsents = []; // 編輯 Modal 中的暫存缺考名單
-        let simulationMode = true; // 預設開啟模擬倒數 (讓任何時間打開網頁都能看到生動的倒數計時器)
-        let simSecondsRemaining = 38 * 60 + 42; // 模擬剩餘 38 分 42 秒
-
-        // ==================== 2. 初始化與 LocalStorage ====================
-        function loadState() {
-            try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    appState = { ...appState, ...parsed };
-                }
-            } catch (e) {
-                console.error('讀取 LocalStorage 失敗:', e);
-            }
-        }
-
-        function saveState() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-            } catch (e) {
-                console.error('儲存 LocalStorage 失敗:', e);
-            }
-        }
-
-        // ==================== 3. 時鐘與考場倒數計時器 ====================
-        function updateClockAndTimer() {
-            const now = new Date();
-            
-            // 更新數位時鐘
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('liveClock').textContent = `${hours}:${minutes}:${seconds}`;
-
-            const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} (${days[now.getDay()]})`;
-            document.getElementById('liveDate').textContent = dateStr;
-
-            // 更新節次倒數計時
-            const session = appState.sessions.find(s => s.id === appState.currentSessionId) || appState.sessions[0];
-            if (!session) return;
-
-            const statusDot = document.getElementById('timerStatusDot');
-            const statusText = document.getElementById('timerStatusText');
-            const countdownEl = document.getElementById('countdownDisplay');
-            const progressBar = document.getElementById('timerProgressBar');
-
-            if (simulationMode) {
-                // 模擬模式：持續倒數，展示試務中心運作效果
-                if (simSecondsRemaining > 0) simSecondsRemaining--;
-                const m = String(Math.floor(simSecondsRemaining / 60)).padStart(2, '0');
-                const s = String(simSecondsRemaining % 60).padStart(2, '0');
-                countdownEl.textContent = `${m}:${s}`;
-                countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-amber-400 tabular-nums leading-none mt-0.5';
-                statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping';
-                statusText.textContent = '考試進行中 (模擬)';
-                statusText.className = 'text-xs font-bold text-emerald-400 tracking-wide';
-                const pct = Math.min(100, Math.max(5, (simSecondsRemaining / (50 * 60)) * 100));
-                progressBar.style.width = `${pct}%`;
-                progressBar.className = 'bg-emerald-500 h-full transition-all duration-500';
-            } else {
-                // 真實系統時間比對
-                const [sh, sm] = session.start.split(':').map(Number);
-                const [eh, em] = session.end.split(':').map(Number);
-
-                const startTime = new Date(now); startTime.setHours(sh, sm, 0, 0);
-                const endTime = new Date(now); endTime.setHours(eh, em, 0, 0);
-                const prepTime = new Date(startTime.getTime() - 5 * 60000); // 考前5分鐘預備鈴
-
-                if (now < prepTime) {
-                    // 尚未開始
-                    const diffSec = Math.floor((startTime - now) / 1000);
-                    const hrs = Math.floor(diffSec / 3600);
-                    const mins = Math.floor((diffSec % 3600) / 60);
-                    const secs = diffSec % 60;
-                    countdownEl.textContent = hrs > 0 
-                        ? `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`
-                        : `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-                    countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-slate-300 tabular-nums leading-none mt-0.5';
-                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
-                    statusText.textContent = '尚未開始';
-                    statusText.className = 'text-xs font-bold text-slate-400 tracking-wide';
-                    progressBar.style.width = '0%';
-                } else if (now >= prepTime && now < startTime) {
-                    // 預備鈴階段
-                    const diffSec = Math.floor((startTime - now) / 1000);
-                    const mins = String(Math.floor(diffSec / 60)).padStart(2, '0');
-                    const secs = String(diffSec % 60).padStart(2, '0');
-                    countdownEl.textContent = `${mins}:${secs}`;
-                    countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-sky-400 tabular-nums leading-none mt-0.5';
-                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping';
-                    statusText.textContent = '預備鈴 (發卷中)';
-                    statusText.className = 'text-xs font-bold text-sky-400 tracking-wide';
-                    progressBar.style.width = '100%';
-                    progressBar.className = 'bg-sky-400 h-full transition-all duration-500';
-                } else if (now >= startTime && now <= endTime) {
-                    // 考試進行中
-                    const totalSec = (endTime - startTime) / 1000;
-                    const diffSec = Math.floor((endTime - now) / 1000);
-                    const mins = String(Math.floor(diffSec / 60)).padStart(2, '0');
-                    const secs = String(diffSec % 60).padStart(2, '0');
-                    countdownEl.textContent = `${mins}:${secs}`;
-                    
-                    const isLast5Min = diffSec <= 300;
-                    countdownEl.className = `text-xl md:text-2xl font-mono font-extrabold ${isLast5Min ? 'text-rose-400 animate-pulse' : 'text-amber-400'} tabular-nums leading-none mt-0.5`;
-                    statusDot.className = `w-2.5 h-2.5 rounded-full ${isLast5Min ? 'bg-rose-500' : 'bg-emerald-500'} animate-ping`;
-                    statusText.textContent = isLast5Min ? '即將收卷 (最後5分)' : '考試進行中';
-                    statusText.className = `text-xs font-bold ${isLast5Min ? 'text-rose-400' : 'text-emerald-400'} tracking-wide`;
-                    
-                    const pct = Math.max(0, Math.min(100, (diffSec / totalSec) * 100));
-                    progressBar.style.width = `${pct}%`;
-                    progressBar.className = `${isLast5Min ? 'bg-rose-500' : 'bg-emerald-500'} h-full transition-all duration-500`;
-                } else {
-                    // 已結束
-                    countdownEl.textContent = '00:00';
-                    countdownEl.className = 'text-xl md:text-2xl font-mono font-extrabold text-indigo-400 tabular-nums leading-none mt-0.5';
-                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-indigo-500';
-                    statusText.textContent = '本節考試已結束';
-                    statusText.className = 'text-xs font-bold text-indigo-400 tracking-wide';
-                    progressBar.style.width = '0%';
-                }
-            }
-        }
-
-        function toggleSimulationMode() {
-            simulationMode = !simulationMode;
-            const btn = document.getElementById('simBtn');
-            if (simulationMode) {
-                simSecondsRemaining = 38 * 60 + 42;
-                btn.textContent = '模擬中';
-                btn.classList.add('text-amber-300', 'border-amber-700');
-                showToast('已切換為「模擬考試倒數」模式');
-            } else {
-                btn.textContent = '即時鐘';
-                btn.classList.remove('text-amber-300', 'border-amber-700');
-                showToast('已切換為「真實系統時間」比對模式');
-            }
-            updateClockAndTimer();
-        }
-
-        // ==================== 4. 渲染畫面邏輯 ====================
-        function renderAll() {
-            renderBroadcast();
-            renderSessionSelector();
-            renderKPIs();
-            renderClassrooms();
-            renderTimeline();
-            lucide.createIcons();
-        }
-
-        // 渲染頂部廣播橫幅
-        function renderBroadcast() {
-            const banner = document.getElementById('broadcastBanner');
-            const badge = document.getElementById('broadcastBadge');
-            const textEl = document.getElementById('broadcastText');
-
-            textEl.textContent = appState.broadcast.text;
-            if (appState.broadcast.level === 'urgent') {
-                banner.className = 'bg-rose-600 text-white px-4 py-2.5 shadow-lg shadow-rose-950/50 transition-colors duration-300 flex items-center justify-between gap-3 z-30';
-                badge.innerHTML = `<i data-lucide="alert-octagon" class="w-4 h-4 animate-bounce"></i> 緊急試務通報`;
-            } else {
-                banner.className = 'bg-blue-600 text-white px-4 py-2.5 shadow-md transition-colors duration-300 flex items-center justify-between gap-3 z-30';
-                badge.innerHTML = `<i data-lucide="megaphone" class="w-4 h-4"></i> 試務公告`;
-            }
-        }
-
-        // 渲染節次下拉選單
-        function renderSessionSelector() {
-            const selector = document.getElementById('sessionSelector');
-            selector.innerHTML = appState.sessions.map(s => `
-                <option value="${s.id}" ${s.id === appState.currentSessionId ? 'selected' : ''}>
-                    ${s.name} (${s.start}-${s.end})
-                </option>
-            `).join('');
-        }
-
-        // 渲染全校總體 KPI 統計
-        function renderKPIs() {
-            let totalExpected = 0;
-            let totalAbsent = 0;
-            let completedRooms = 0;
-
-            appState.rooms.forEach(room => {
-                totalExpected += Number(room.expected) || 0;
-                totalAbsent += (room.absents ? room.absents.length : 0);
-                if (room.paperStatus === 'COMPLETED') completedRooms++;
-            });
-
-            const totalActual = Math.max(0, totalExpected - totalAbsent);
-            const unresolvedIncidents = appState.logs.filter(l => l.type === 'INCIDENT' && !l.resolved).length;
-            const totalRooms = appState.rooms.length;
-            const collectionRate = totalRooms > 0 ? Math.round((completedRooms / totalRooms) * 100) : 0;
-
-            document.getElementById('statExpected').textContent = totalExpected;
-            document.getElementById('statActual').textContent = totalActual;
-            document.getElementById('statAbsent').textContent = totalAbsent;
-            document.getElementById('statIncidents').textContent = unresolvedIncidents;
-            document.getElementById('statCollectionRate').textContent = `${collectionRate}%`;
-            document.getElementById('statCollectionText').textContent = `${completedRooms}/${totalRooms} 班`;
-            document.getElementById('statCollectionBar').style.width = `${collectionRate}%`;
-        }
-
-        // 渲染考場卡片網格
-        function renderClassrooms() {
-            const grid = document.getElementById('classroomGrid');
-            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-
-            const filteredRooms = appState.rooms.filter(room => {
-                // 年級篩選
-                if (currentGradeFilter !== 'ALL' && room.grade !== currentGradeFilter) return false;
-                
-                // 狀態篩選
-                const absentCount = room.absents ? room.absents.length : 0;
-                if (currentStatusFilter === 'INCIDENT' && !room.hasIncident) return false;
-                if (currentStatusFilter === 'ABSENT' && absentCount === 0) return false;
-                if (currentStatusFilter === 'UNCOLLECTED' && room.paperStatus !== 'UNCOLLECTED') return false;
-                if (currentStatusFilter === 'TESTING' && room.paperStatus !== 'TESTING') return false;
-                if (currentStatusFilter === 'COMPLETED' && room.paperStatus !== 'COMPLETED') return false;
-
-                // 關鍵字搜尋
-                if (keyword) {
-                    const matchCode = room.code.toLowerCase().includes(keyword);
-                    const matchProctor = room.proctor.toLowerCase().includes(keyword);
-                    if (!matchCode && !matchProctor) return false;
-                }
-                return true;
-            });
-
-            if (filteredRooms.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full bg-slate-900/50 border border-dashed border-slate-800 rounded-2xl p-12 text-center">
-                        <i data-lucide="inbox" class="w-10 h-10 text-slate-600 mx-auto mb-2"></i>
-                        <p class="text-slate-400 font-medium">沒有符合篩選條件的考場教室</p>
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
-
-            grid.innerHTML = filteredRooms.map(room => {
-                const absentCount = room.absents ? room.absents.length : 0;
-                const actualCount = Math.max(0, room.expected - absentCount);
-
-                // 決定卡片視覺狀態樣式
-                let cardBorder = 'border-slate-800 hover:border-slate-600';
-                let cardBg = 'bg-slate-900';
-                let statusBadge = '';
-
-                if (room.hasIncident) {
-                    cardBorder = 'border-rose-500/80 ring-1 ring-rose-500/40';
-                    cardBg = 'bg-rose-950/20';
-                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1 animate-pulse"><i data-lucide="alert-triangle" class="w-3 h-3"></i> 異常通報</span>`;
-                } else if (room.paperStatus === 'COMPLETED') {
-                    cardBorder = 'border-indigo-500/50 hover:border-indigo-400';
-                    cardBg = 'bg-indigo-950/15';
-                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> 已交卷</span>`;
-                } else if (absentCount > 0) {
-                    cardBorder = 'border-amber-500/50 hover:border-amber-400';
-                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"><i data-lucide="user-x" class="w-3 h-3"></i> 缺考 ${absentCount} 人</span>`;
-                } else if (room.paperStatus === 'UNCOLLECTED') {
-                    cardBorder = 'border-slate-700 border-dashed';
-                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">未領卷</span>`;
-                } else {
-                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 考試中</span>`;
-                }
-
-                // 缺考座號標籤
-                const absentBadgesHtml = absentCount > 0 
-                    ? `<div class="mt-2.5 pt-2 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
-                        <span class="text-[11px] text-amber-400/90 font-semibold">缺考座號：</span>
-                        ${room.absents.map(a => `<span class="text-[11px] font-mono font-bold bg-amber-950/80 text-amber-300 border border-amber-800/60 px-1.5 py-0.5 rounded" title="${a.name} (${a.reason})">${a.seat}號(${a.reason})</span>`).join('')}
-                       </div>`
-                    : `<div class="mt-2.5 pt-2 border-t border-slate-800/60 text-[11px] text-slate-500 flex items-center justify-between">
-                        <span>全員到齊無缺考</span>
-                        <span class="text-slate-600">點擊編輯詳情</span>
-                       </div>`;
-
-                // 試卷狀態快速切換按鈕樣式
-                let nextPaperLabel = '';
-                let nextPaperStyle = '';
-                if (room.paperStatus === 'UNCOLLECTED') {
-                    nextPaperLabel = '領卷開始考試';
-                    nextPaperStyle = 'bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white border-slate-700';
-                } else if (room.paperStatus === 'TESTING') {
-                    nextPaperLabel = '標記已交卷';
-                    nextPaperStyle = 'bg-emerald-950/60 hover:bg-indigo-600 text-emerald-300 hover:text-white border-emerald-800/60';
-                } else {
-                    nextPaperLabel = '已交卷 (點擊重設)';
-                    nextPaperStyle = 'bg-indigo-600/30 hover:bg-slate-800 text-indigo-200 border-indigo-500/40';
-                }
-
-                return `
-                    <div onclick="openRoomDetailModal('${room.id}')" class="${cardBg} border ${cardBorder} rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 shadow-lg flex flex-col justify-between group">
-                        <div>
-                            <!-- 卡片頂部：班級編號與狀態 -->
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-2xl font-black text-white tracking-tight group-hover:text-indigo-300 transition">${room.code}</span>
-                                        <span class="text-xs text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">監考：${room.proctor}</span>
-                                    </div>
-                                </div>
-                                ${statusBadge}
-                            </div>
-
-                            <!-- 人數統計三欄 -->
-                            <div class="grid grid-cols-3 gap-2 mt-3.5 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80 text-center">
-                                <div>
-                                    <div class="text-[10px] text-slate-400">應到</div>
-                                    <div class="text-base font-mono font-bold text-slate-200 tabular-nums">${room.expected}</div>
-                                </div>
-                                <div class="border-x border-slate-800">
-                                    <div class="text-[10px] text-emerald-400">實到</div>
-                                    <div class="text-base font-mono font-black text-emerald-400 tabular-nums">${actualCount}</div>
-                                </div>
-                                <div>
-                                    <div class="text-[10px] text-amber-400">缺考</div>
-                                    <div class="text-base font-mono font-black ${absentCount > 0 ? 'text-amber-400' : 'text-slate-500'} tabular-nums">${absentCount}</div>
-                                </div>
-                            </div>
-
-                            <!-- 缺考明細 -->
-                            ${absentBadgesHtml}
-                        </div>
-
-                        <!-- 卡片底部快速操作列 (阻止事件冒泡避免觸發 Modal) -->
-                        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2" onclick="event.stopPropagation()">
-                            <button onclick="cyclePaperStatus('${room.id}')" class="flex-1 text-xs font-bold py-1.5 px-2.5 rounded-lg border transition flex items-center justify-center gap-1.5 ${nextPaperStyle}">
-                                <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
-                                <span>${nextPaperLabel}</span>
-                            </button>
-                            <button onclick="openRoomDetailModal('${room.id}')" title="缺考與異常回報" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            lucide.createIcons();
-        }
-
-        // 渲染右側即時異常與缺考時間軸
-        function renderTimeline() {
-            const container = document.getElementById('incidentTimeline');
-            const filteredLogs = appState.logs.filter(log => {
-                if (currentLogFilter === 'UNRESOLVED' && log.resolved) return false;
-                return true;
-            });
-
-            document.getElementById('logCountBadge').textContent = `${filteredLogs.length} 筆`;
-
-            if (filteredLogs.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-10 text-slate-500 text-xs">
-                        <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-slate-700"></i>
-                        目前沒有符合條件的動態紀錄
-                    </div>
-                `;
-                lucide.createIcons();
-                return;
-            }
-
-            container.innerHTML = filteredLogs.map(log => {
-                const isIncident = log.type === 'INCIDENT';
-                const isMemo = log.type === 'MEMO';
-                
-                let badgeColor = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
-                let iconName = 'user-x';
-                if (isIncident) {
-                    badgeColor = log.resolved 
-                        ? 'bg-slate-800 text-slate-400 border-slate-700' 
-                        : 'bg-rose-500/20 text-rose-300 border-rose-500/40';
-                    iconName = 'alert-triangle';
-                } else if (isMemo) {
-                    badgeColor = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
-                    iconName = 'pin';
-                }
-
-                return `
-                    <div class="bg-slate-950/90 border ${!log.resolved && isIncident ? 'border-rose-500/50' : 'border-slate-800'} rounded-xl p-3 transition">
-                        <div class="flex items-center justify-between gap-2 mb-1.5">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-mono font-bold text-slate-400">${log.time}</span>
-                                <span class="text-xs font-black bg-slate-800 text-white px-2 py-0.5 rounded">${log.room}</span>
-                                <span class="text-[11px] font-bold px-2 py-0.5 rounded border ${badgeColor} flex items-center gap-1">
-                                    <i data-lucide="${iconName}" class="w-3 h-3"></i> ${log.title}
-                                </span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-slate-300 leading-relaxed mb-2.5">${log.detail}</p>
-                        <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
-                            <button onclick="toggleLogResolved('${log.id}')" class="text-[11px] font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1 ${
-                                log.resolved 
-                                ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-800/50 hover:bg-emerald-900/50' 
-                                : 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm'
-                            }">
-                                <i data-lucide="${log.resolved ? 'check-circle-2' : 'clock'}" class="w-3 h-3"></i>
-                                <span>${log.resolved ? '已處理完成' : '標記為已處理'}</span>
-                            </button>
-                            <button onclick="deleteLog('${log.id}')" class="text-slate-600 hover:text-slate-400 p-1" title="刪除此紀錄">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            lucide.createIcons();
-        }
-
-        // ==================== 5. 考場互動與操作邏輯 ====================
-        function setGradeFilter(grade) {
-            currentGradeFilter = grade;
-            document.querySelectorAll('.grade-filter-btn').forEach(btn => {
-                if (btn.dataset.grade === grade) {
-                    btn.className = 'grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white transition';
-                } else {
-                    btn.className = 'grade-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition';
-                }
-            });
-            renderClassrooms();
-        }
-
-        function setStatusFilter(status) {
-            currentStatusFilter = status;
-            renderClassrooms();
-        }
-
-        function setLogFilter(filter) {
-            currentLogFilter = filter;
-            document.getElementById('logFilterAll').className = filter === 'ALL' ? 'font-bold text-indigo-400' : 'text-slate-400 hover:text-white';
-            document.getElementById('logFilterUnresolved').className = filter === 'UNRESOLVED' ? 'font-bold text-indigo-400' : 'text-slate-400 hover:text-white';
-            renderTimeline();
-        }
-
-        // 一鍵切換試卷狀態：未領卷 -> 考試中 -> 已交卷 -> 考試中
-        function cyclePaperStatus(roomId) {
-            const room = appState.rooms.find(r => r.id === roomId);
-            if (!room) return;
-
-            if (room.paperStatus === 'UNCOLLECTED') {
-                room.paperStatus = 'TESTING';
-                showToast(`${room.code} 考場已領卷，開始考試`);
-            } else if (room.paperStatus === 'TESTING') {
-                room.paperStatus = 'COMPLETED';
-                showToast(`${room.code} 考場試卷已全數回收完成！`, 'success');
-            } else {
-                room.paperStatus = 'TESTING';
-                showToast(`${room.code} 考場狀態重設為「考試中」`);
-            }
-
-            saveState();
-            renderAll();
-        }
-
-        // 開啟考場詳情與回報 Modal
-        function openRoomDetailModal(roomId) {
-            const room = appState.rooms.find(r => r.id === roomId);
-            if (!room) return;
-
-            document.getElementById('editRoomId').value = room.id;
-            document.getElementById('modalRoomBadge').textContent = room.code;
-            document.getElementById('modalRoomSub').textContent = `監考老師：${room.proctor}`;
-            document.getElementById('editProctor').value = room.proctor;
-            document.getElementById('editPaperStatus').value = room.paperStatus;
-            document.getElementById('editExpected').value = room.expected;
-
-            // 清空異常輸入欄位
-            document.getElementById('newIncidentType').value = '';
-            document.getElementById('newIncidentNote').value = '';
-            document.getElementById('newAbsentSeat').value = '';
-            document.getElementById('newAbsentName').value = '';
-
-            // 複製一份缺考名單供編輯
-            tempModalAbsents = JSON.parse(JSON.stringify(room.absents || []));
-            renderModalAbsentList();
-            recalcModalAttendance();
-
-            openModal('roomDetailModal');
-            lucide.createIcons();
-        }
-
-        function recalcModalAttendance() {
-            const expected = parseInt(document.getElementById('editExpected').value) || 0;
-            const absentCount = tempModalAbsents.length;
-            const actual = Math.max(0, expected - absentCount);
-            document.getElementById('displayActual').textContent = actual;
-            document.getElementById('displayAbsentCount').textContent = absentCount;
-        }
-
-        function renderModalAbsentList() {
-            const listEl = document.getElementById('modalAbsentList');
-            if (tempModalAbsents.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-slate-500 py-1">目前無登錄缺考學生</p>`;
-                return;
-            }
-
-            listEl.innerHTML = tempModalAbsents.map((item, idx) => `
-                <div class="flex items-center justify-between bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-xs">
-                    <div class="flex items-center gap-2.5">
-                        <span class="font-mono font-bold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded">${item.seat} 號</span>
-                        <span class="font-bold text-white">${item.name}</span>
-                        <span class="text-slate-400 bg-slate-800 px-2 py-0.5 rounded">${item.reason}</span>
-                    </div>
-                    <button type="button" onclick="removeAbsentFromModal(${idx})" class="text-rose-400 hover:text-rose-300 p-1">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function addAbsentStudentToModal() {
-            const seat = document.getElementById('newAbsentSeat').value.trim();
-            const name = document.getElementById('newAbsentName').value.trim();
-            const reason = document.getElementById('newAbsentReason').value;
-
-            if (!seat || !name) {
-                showToast('請輸入缺考學生的座號與姓名', 'error');
-                return;
-            }
-
-            tempModalAbsents.push({ seat, name, reason });
-            document.getElementById('newAbsentSeat').value = '';
-            document.getElementById('newAbsentName').value = '';
-            
-            renderModalAbsentList();
-            recalcModalAttendance();
-        }
-
-        function removeAbsentFromModal(index) {
-            tempModalAbsents.splice(index, 1);
-            renderModalAbsentList();
-            recalcModalAttendance();
-        }
-
-        // 儲存考場詳情
-        function saveRoomDetails() {
-            const roomId = document.getElementById('editRoomId').value;
-            const room = appState.rooms.find(r => r.id === roomId);
-            if (!room) return;
-
-            const oldAbsentCount = room.absents ? room.absents.length : 0;
-            room.proctor = document.getElementById('editProctor').value.trim() || room.proctor;
-            room.paperStatus = document.getElementById('editPaperStatus').value;
-            room.expected = parseInt(document.getElementById('editExpected').value) || room.expected;
-            room.absents = JSON.parse(JSON.stringify(tempModalAbsents));
-
-            const nowStr = getCurrentTimeHM();
-
-            // 若有新增缺考人數，自動產生時間軸紀錄
-            if (room.absents.length > oldAbsentCount) {
-                const summary = room.absents.map(a => `${a.seat}號 ${a.name}(${a.reason})`).join('、');
-                appState.logs.unshift({
-                    id: 'log_' + Date.now(),
-                    time: nowStr,
-                    room: room.code,
-                    type: 'ABSENT',
-                    title: `缺考更新 (${room.absents.length}人)`,
-                    detail: summary,
-                    resolved: true
-                });
-            }
-
-            // 檢查是否有填寫突發異常狀況
-            const incType = document.getElementById('newIncidentType').value;
-            const incNote = document.getElementById('newIncidentNote').value.trim();
-            if (incType || incNote) {
-                room.hasIncident = true;
-                appState.logs.unshift({
-                    id: 'inc_' + Date.now(),
-                    time: nowStr,
-                    room: room.code,
-                    type: 'INCIDENT',
-                    title: incType || '突發狀況通報',
-                    detail: incNote || `${room.code} 考場回報異常狀況，請試務人員前往協助。`,
-                    resolved: false
-                });
-                showToast(`已發布 ${room.code} 考場異常通報！`, 'error');
-            } else {
-                showToast(`${room.code} 考場資料已儲存更新`, 'success');
-            }
-
-            saveState();
-            closeModal('roomDetailModal');
-            renderAll();
-        }
-
-        function deleteRoomFromModal() {
-            const roomId = document.getElementById('editRoomId').value;
-            appState.rooms = appState.rooms.filter(r => r.id !== roomId);
-            saveState();
-            closeModal('roomDetailModal');
-            renderAll();
-            showToast('已移除該考場');
-        }
-
-        // ==================== 6. 新增考場、廣播、節次編輯、時間軸操作 ====================
-        function openAddRoomModal() {
-            document.getElementById('addRoomCode').value = '';
-            document.getElementById('addRoomProctor').value = '';
-            openModal('addRoomModal');
-        }
-
-        function confirmAddRoom() {
-            const code = document.getElementById('addRoomCode').value.trim();
-            const grade = document.getElementById('addRoomGrade').value;
-            const expected = parseInt(document.getElementById('addRoomExpected').value) || 30;
-            const proctor = document.getElementById('addRoomProctor').value.trim() || '待指派';
-
-            if (!code) {
-                showToast('請輸入考場或班級編號', 'error');
-                return;
-            }
-
-            appState.rooms.push({
-                id: 'r_' + Date.now(),
-                code,
-                grade,
-                proctor,
-                expected,
-                paperStatus: 'UNCOLLECTED',
-                hasIncident: false,
-                absents: []
-            });
-
-            saveState();
-            closeModal('addRoomModal');
-            renderAll();
-            showToast(`已新增 ${code} 考場`, 'success');
-        }
-
-        // 試務廣播
-        function openBroadcastModal() {
-            document.getElementById('broadcastInput').value = appState.broadcast.text;
-            const radios = document.getElementsByName('broadcastLevel');
-            radios.forEach(r => r.checked = (r.value === appState.broadcast.level));
-            openModal('broadcastModal');
-        }
-
-        function fillBroadcastTemplate(text, level) {
-            document.getElementById('broadcastInput').value = text;
-            const radios = document.getElementsByName('broadcastLevel');
-            radios.forEach(r => r.checked = (r.value === level));
-        }
-
-        function saveBroadcast() {
-            const text = document.getElementById('broadcastInput').value.trim();
-            if (!text) {
-                showToast('廣播內容不能為空', 'error');
-                return;
-            }
-            const level = document.querySelector('input[name="broadcastLevel"]:checked').value;
-            appState.broadcast = { text, level };
-            saveState();
-            closeModal('broadcastModal');
-            renderAll();
-            showToast('全校試務廣播已更新發布', 'success');
-        }
-
-        // 節次切換與編輯
-        function changeSession(sessionId) {
-            appState.currentSessionId = sessionId;
-            if (simulationMode) simSecondsRemaining = 50 * 60; // 重設模擬倒數為 50 分鐘
-            saveState();
-            updateClockAndTimer();
-            const s = appState.sessions.find(item => item.id === sessionId);
-            if (s) showToast(`已切換至：${s.name}`);
-        }
-
-        function openSessionModal() {
-            renderSessionEditorList();
-            openModal('sessionModal');
-        }
-
-        function renderSessionEditorList() {
-            const container = document.getElementById('sessionEditorList');
-            container.innerHTML = appState.sessions.map((s, idx) => `
-                <div class="grid grid-cols-12 gap-2 items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800 session-edit-row" data-id="${s.id}">
-                    <input type="text" value="${s.name}" class="col-span-5 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold session-name">
-                    <input type="time" value="${s.start}" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-start">
-                    <input type="time" value="${s.end}" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-end">
-                    <button type="button" onclick="this.closest('.session-edit-row').remove()" class="col-span-1 text-rose-400 hover:text-rose-300 flex justify-center">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function addNewSessionRow() {
-            const container = document.getElementById('sessionEditorList');
-            const newId = 's_' + Date.now();
-            const div = document.createElement('div');
-            div.className = 'grid grid-cols-12 gap-2 items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800 session-edit-row';
-            div.dataset.id = newId;
-            div.innerHTML = `
-                <input type="text" value="第六節 自習/補考" class="col-span-5 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold session-name">
-                <input type="time" value="15:30" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-start">
-                <input type="time" value="16:20" class="col-span-3 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono session-end">
-                <button type="button" onclick="this.closest('.session-edit-row').remove()" class="col-span-1 text-rose-400 hover:text-rose-300 flex justify-center">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-            `;
-            container.appendChild(div);
-            lucide.createIcons();
-        }
-
-        function saveSessionsConfig() {
-            const rows = document.querySelectorAll('.session-edit-row');
-            const updated = [];
-            rows.forEach(row => {
-                const name = row.querySelector('.session-name').value.trim();
-                const start = row.querySelector('.session-start').value;
-                const end = row.querySelector('.session-end').value;
-                if (name && start && end) {
-                    updated.push({ id: row.dataset.id, name, start, end });
-                }
-            });
-
-            if (updated.length === 0) {
-                showToast('請至少保留一個考試節次', 'error');
-                return;
-            }
-
-            appState.sessions = updated;
-            if (!appState.sessions.some(s => s.id === appState.currentSessionId)) {
-                appState.currentSessionId = appState.sessions[0].id;
-            }
-            saveState();
-            closeModal('sessionModal');
-            renderAll();
-            updateClockAndTimer();
-            showToast('考試節次時間表已更新', 'success');
-        }
-
-        // 時間軸事件處理
-        function toggleLogResolved(logId) {
-            const log = appState.logs.find(l => l.id === logId);
-            if (!log) return;
-            log.resolved = !log.resolved;
-
-            // 若該考場的所有異常都已處理，自動解除考場卡片的紅色異常警示
-            if (log.type === 'INCIDENT') {
-                const room = appState.rooms.find(r => r.code === log.room);
-                if (room) {
-                    const stillHasUnresolved = appState.logs.some(l => l.room === room.code && l.type === 'INCIDENT' && !l.resolved);
-                    room.hasIncident = stillHasUnresolved;
-                }
-            }
-
-            saveState();
-            renderAll();
-        }
-
-        function deleteLog(logId) {
-            const target = appState.logs.find(l => l.id === logId);
-            appState.logs = appState.logs.filter(l => l.id !== logId);
-            if (target && target.type === 'INCIDENT') {
-                const room = appState.rooms.find(r => r.code === target.room);
-                if (room) {
-                    room.hasIncident = appState.logs.some(l => l.room === room.code && l.type === 'INCIDENT' && !l.resolved);
-                }
-            }
-            saveState();
-            renderAll();
-        }
-
-        function openQuickLogModal() {
-            document.getElementById('quickLogText').value = '';
-            openModal('quickLogModal');
-        }
-
-        function confirmQuickLog() {
-            const room = document.getElementById('quickLogRoom').value.trim() || '試務中心';
-            const type = document.getElementById('quickLogCategory').value;
-            const detail = document.getElementById('quickLogText').value.trim();
-
-            if (!detail) {
-                showToast('請輸入紀錄內容', 'error');
-                return;
-            }
-
-            appState.logs.unshift({
-                id: 'ql_' + Date.now(),
-                time: getCurrentTimeHM(),
-                room,
-                type,
-                title: type === 'INCIDENT' ? '突發異常通報' : '試務中心備忘',
-                detail,
-                resolved: type !== 'INCIDENT'
-            });
-
-            // 如果填寫的考場存在且為異常，同步標記考場
-            if (type === 'INCIDENT') {
-                const targetRoom = appState.rooms.find(r => r.code === room);
-                if (targetRoom) targetRoom.hasIncident = true;
-            }
-
-            saveState();
-            closeModal('quickLogModal');
-            renderAll();
-            showToast('已新增試務紀錄', 'success');
-        }
-
-        // ==================== 7. 資料匯出 (CSV) 與重置 ====================
-        function exportCSV() {
-            const session = appState.sessions.find(s => s.id === appState.currentSessionId) || { name: '段考' };
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-
-            // 加上 BOM (\uFEFF) 確保 Excel 開啟繁體中文不亂碼
-            let csvContent = '\uFEFF';
-            csvContent += `段考考務即時統計報表 - ${session.name} (${dateStr})\n`;
-            csvContent += `考場編號,年級,監考老師,試卷狀態,應到人數,實到人數,缺考人數,缺考學生明細,是否有未處理異常\n`;
-
-            const paperStatusMap = {
-                'UNCOLLECTED': '尚未領卷',
-                'TESTING': '考試進行中',
-                'COMPLETED': '已交卷完成'
-            };
-
-            appState.rooms.forEach(r => {
-                const absentCount = r.absents ? r.absents.length : 0;
-                const actual = Math.max(0, r.expected - absentCount);
-                const absentDetail = absentCount > 0 
-                    ? r.absents.map(a => `${a.seat}號${a.name}(${a.reason})`).join('；') 
-                    : '無';
-                const row = [
-                    r.code,
-                    `${r.grade}年級`,
-                    r.proctor,
-                    paperStatusMap[r.paperStatus] || r.paperStatus,
-                    r.expected,
-                    actual,
-                    absentCount,
-                    `"${absentDetail}"`,
-                    r.hasIncident ? '是' : '否'
-                ];
-                csvContent += row.join(',') + '\n';
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `段考考務報表_${session.name}_${dateStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            showToast('考務統計報表 (CSV) 已匯出下載！', 'success');
-        }
-
-        function openResetConfirmModal() {
-            openModal('resetConfirmModal');
-        }
-
-        function executeResetData() {
-            localStorage.removeItem(STORAGE_KEY);
-            appState = {
-                sessions: JSON.parse(JSON.stringify(defaultSessions)),
-                currentSessionId: 's2',
-                rooms: JSON.parse(JSON.stringify(defaultRooms)),
-                logs: JSON.parse(JSON.stringify(defaultLogs)),
-                broadcast: {
-                    text: '請各監考老師於預備鈴響時準時發卷，提醒學生檢查試卷頁數與印刷是否清晰。',
-                    level: 'normal'
-                }
-            };
-            saveState();
-            closeModal('resetConfirmModal');
-            renderAll();
-            showToast('已重置為預設模擬資料', 'success');
-        }
-
-        // ==================== 8. 通用工具函式 ====================
-        function openModal(id) {
-            const el = document.getElementById(id);
-            el.classList.remove('hidden');
-            el.classList.add('flex');
-        }
-
-        function closeModal(id) {
-            const el = document.getElementById(id);
-            el.classList.add('hidden');
-            el.classList.remove('flex');
-        }
-
-        function getCurrentTimeHM() {
-            const now = new Date();
-            return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        }
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            
-            let bgClass = 'bg-slate-800 border-slate-700 text-white';
-            if (type === 'success') bgClass = 'bg-emerald-900/95 border-emerald-700 text-emerald-100';
-            if (type === 'error') bgClass = 'bg-rose-900/95 border-rose-700 text-rose-100';
-
-            toast.className = `${bgClass} border px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 transition-all duration-300 translate-y-2 opacity-0`;
-            toast.innerHTML = `<span>${message}</span>`;
-            container.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            });
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // ==================== 9. 啟動系統 ====================
-        window.addEventListener('DOMContentLoaded', () => {
-            loadState();
-            renderAll();
-            updateClockAndTimer();
-            setInterval(updateClockAndTimer, 1000);
+          </th>`;
+      });
+      head.innerHTML = headHtml;
+
+      // 三列：休息時間、科目、考試時間
+      const rows = [
+        { key: 'restRaw', label: '休息時間', labelClass: 'text-amber-400', cellClass: 'font-mono-num text-xs text-amber-200/90' },
+        { key: 'subject', label: '考試科目', labelClass: 'text-white', cellClass: 'font-bold text-sm text-white whitespace-pre-line leading-snug' },
+        { key: 'examRaw', label: '考試時間', labelClass: 'text-emerald-400', cellClass: 'font-mono-num text-xs text-emerald-300 font-bold' }
+      ];
+
+      body.innerHTML = rows.map(r => {
+        let rowHtml = `<td class="py-2.5 px-3 font-bold text-xs ${r.labelClass} bg-slate-900/60 border-r border-slate-800">${r.label}</td>`;
+        state.schedule.forEach((item, idx) => {
+          const isCur = idx === activeIdx;
+          const highlight = isCur
+            ? (activePhase === 'REST' && r.key === 'restRaw' ? 'bg-amber-500/20 ring-1 ring-inset ring-amber-400/50'
+              : activePhase === 'EXAM' && r.key === 'examRaw' ? 'bg-emerald-500/20 ring-1 ring-inset ring-emerald-400/50'
+              : 'bg-slate-800/40')
+            : '';
+          rowHtml += `
+            <td onclick="editScheduleCell(${idx}, '${r.key}')" class="py-2.5 px-3 cell-editable ${highlight} ${r.cellClass} align-top">
+              ${escapeHtml(item[r.key] || '-')}
+            </td>`;
         });
-    </script>
+        return `<tr>${rowHtml}</tr>`;
+      }).join('');
+    }
+
+    // 渲染監考老師總表
+    function renderProctorTable(forcedIdx = null, forcedPhase = null) {
+      let activeIdx = forcedIdx;
+      let activePhase = forcedPhase;
+      if (activeIdx === null) {
+        const parts = lastActiveKey.split('-');
+        activeIdx = parts.length === 2 ? Number(parts[0]) : -1;
+        activePhase = parts[1] || 'IDLE';
+      }
+
+      const head = document.getElementById('proctorTableHead');
+      const body = document.getElementById('proctorTableBody');
+      const search = document.getElementById('proctorSearchInput').value.trim().toLowerCase();
+      document.getElementById('clearSearchBtn').classList.toggle('hidden', !search);
+
+      // 表頭同步顯示各節次時間與科目
+      let headHtml = `<th class="py-3 px-4 text-xs font-black text-slate-300 w-32 border-r border-slate-800 bg-slate-900">考場</th>`;
+      state.schedule.forEach((item, idx) => {
+        const isCur = idx === activeIdx;
+        const headerHighlight = isCur ? (activePhase === 'REST' ? 'rest-col-header' : 'active-col-header') : '';
+        headHtml += `
+          <th class="py-2.5 px-3 text-left min-w-[150px] ${headerHighlight}">
+            <div class="flex items-center justify-between text-xs font-bold ${isCur ? 'text-white' : 'text-slate-400'}">
+              <span>${escapeHtml(item.name)}</span>
+              <span class="font-mono-num text-[11px] ${isCur ? 'text-emerald-300' : 'text-slate-500'}">${escapeHtml(item.examRaw)}</span>
+            </div>
+            <div class="text-xs font-black text-sky-300 whitespace-pre-line mt-1 leading-tight">
+              ${escapeHtml(item.subject)}
+            </div>
+          </th>`;
+      });
+      head.innerHTML = `<tr>${headHtml}</tr>`;
+
+      // 過濾考場
+      const filtered = state.proctors.filter(row => {
+        if (state.gradeFilter !== 'ALL' && row.grade !== state.gradeFilter) return false;
+        if (!search) return true;
+        const inRoom = row.room.toLowerCase().includes(search);
+        const inProctor = row.proctors.some(p => (p || '').toLowerCase().includes(search));
+        return inRoom || inProctor;
+      });
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="${state.schedule.length + 1}" class="py-10 text-center text-slate-500 text-sm">找不到符合「${escapeHtml(search)}」的考場或監考教師</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = filtered.map(row => {
+        const realIdx = state.proctors.indexOf(row);
+        const isMixed = row.room.includes('203');
+        let cellsHtml = `
+          <td class="py-2.5 px-4 font-mono-num font-black text-white bg-slate-900/50 border-r border-slate-800 whitespace-nowrap">
+            <div class="flex items-center gap-2">
+              <span>${escapeHtml(row.room)}</span>
+              ${isMixed ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-sans">跨組</span>' : ''}
+            </div>
+          </td>`;
+
+        state.schedule.forEach((_, sIdx) => {
+          const teacher = row.proctors[sIdx] || '';
+          const isMatch = search && teacher.toLowerCase().includes(search);
+          const isCur = sIdx === activeIdx;
+          const colHighlight = isCur ? (activePhase === 'REST' ? 'rest-col-cell' : 'active-col-cell') : '';
+          cellsHtml += `
+            <td onclick="editProctorCell(${realIdx}, ${sIdx})" class="py-2.5 px-3 cell-editable ${colHighlight}">
+              <span class="${isMatch ? 'px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-black' : 'text-slate-200 font-medium'}">
+                ${escapeHtml(teacher || '—')}
+              </span>
+            </td>`;
+        });
+        return `<tr class="hover:bg-slate-800/35 transition">${cellsHtml}</tr>`;
+      }).join('');
+    }
+
+    // 解析 Excel 橫向 3 列資料（支援雙引號內的儲存格換行）
+    function parseExcelTSV(rawText) {
+      const rows = [];
+      let curRow = [];
+      let curCell = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < rawText.length; i++) {
+        const ch = rawText[i];
+        const next = rawText[i + 1];
+
+        if (ch === '"') {
+          if (inQuotes && next === '"') {
+            curCell += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === '\t' && !inQuotes) {
+          curRow.push(curCell.trim());
+          curCell = '';
+        } else if ((ch === '\n' || (ch === '\r' && next === '\n')) && !inQuotes) {
+          if (ch === '\r') i++;
+          curRow.push(curCell.trim());
+          if (curRow.some(c => c !== '')) rows.push(curRow);
+          curRow = [];
+          curCell = '';
+        } else {
+          curCell += ch;
+        }
+      }
+      if (curCell.length > 0 || curRow.length > 0) {
+        curRow.push(curCell.trim());
+        if (curRow.some(c => c !== '')) rows.push(curRow);
+      }
+      return rows;
+    }
+
+    let parsedScheduleDraft = null;
+
+    function openSchedulePasteModal() {
+      document.getElementById('schedulePasteInput').value = '';
+      document.getElementById('schedulePastePreview').innerHTML = '尚未貼上資料';
+      parsedScheduleDraft = null;
+      document.getElementById('schedulePasteModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('schedulePasteInput').focus(), 50);
+    }
+
+    function previewSchedulePaste() {
+      const raw = document.getElementById('schedulePasteInput').value;
+      const previewEl = document.getElementById('schedulePastePreview');
+      if (!raw.trim()) {
+        previewEl.innerHTML = '尚未貼上資料';
+        parsedScheduleDraft = null;
+        return;
+      }
+
+      const matrix = parseExcelTSV(raw);
+      if (matrix.length < 3) {
+        previewEl.innerHTML = `<span class="text-amber-400">偵測到 ${matrix.length} 列資料，請確保一次複製完整的「3 列」（第1列休息時間、第2列科目、第3列考試時間）。</span>`;
+        parsedScheduleDraft = null;
+        return;
+      }
+
+      const restRow = matrix[0];
+      const subjRow = matrix[1];
+      const examRow = matrix[2];
+      const colCount = Math.max(restRow.length, subjRow.length, examRow.length);
+      const sectionNames = ['第一節', '第二節', '第三節', '第四節', '第五節', '第六節', '第七節', '第八節'];
+
+      const draft = [];
+      for (let c = 0; c < colCount; c++) {
+        if (!restRow[c] && !subjRow[c] && !examRow[c]) continue;
+        draft.push({
+          id: c + 1,
+          name: sectionNames[c] || `第${c + 1}節`,
+          restRaw: restRow[c] || '',
+          subject: subjRow[c] || '',
+          examRaw: examRow[c] || ''
+        });
+      }
+
+      parsedScheduleDraft = draft;
+      let html = `<table class="w-full text-left border-collapse"><thead><tr class="border-b border-slate-800 text-slate-400">`;
+      draft.forEach(d => { html += `<th class="py-1.5 px-2">${d.name}</th>`; });
+      html += `</tr></thead><tbody class="divide-y divide-slate-800">`;
+      html += `<tr>${draft.map(d => `<td class="py-1.5 px-2 text-amber-300 font-mono-num">${escapeHtml(d.restRaw)}</td>`).join('')}</tr>`;
+      html += `<tr>${draft.map(d => `<td class="py-1.5 px-2 text-white font-bold whitespace-pre-line">${escapeHtml(d.subject)}</td>`).join('')}</tr>`;
+      html += `<tr>${draft.map(d => `<td class="py-1.5 px-2 text-emerald-300 font-mono-num">${escapeHtml(d.examRaw)}</td>`).join('')}</tr>`;
+      html += `</tbody></table>`;
+      previewEl.innerHTML = html;
+    }
+
+    function applySchedulePaste() {
+      if (!parsedScheduleDraft || parsedScheduleDraft.length === 0) {
+        alert('請先貼上有效的 3 列橫向考程資料！');
+        return;
+      }
+      state.schedule = parsedScheduleDraft;
+      saveState();
+      lastActiveKey = '';
+      updateDashboardClockAndTimer();
+      closeModal('schedulePasteModal');
+    }
+
+    function resetDefaultSchedule() {
+      if (!confirm('確定要恢復為預設的 5 節範例考程嗎？')) return;
+      state.schedule = JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
+      saveState();
+      lastActiveKey = '';
+      updateDashboardClockAndTimer();
+    }
+
+    // 貼上監考表 Excel
+    function openProctorPasteModal() {
+      document.getElementById('proctorPasteInput').value = '';
+      document.getElementById('proctorPasteModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('proctorPasteInput').focus(), 50);
+    }
+
+    function applyProctorPaste() {
+      const raw = document.getElementById('proctorPasteInput').value;
+      const matrix = parseExcelTSV(raw);
+      if (matrix.length === 0) {
+        alert('請先貼上監考表資料！');
+        return;
+      }
+
+      const newList = [];
+      matrix.forEach((cols, idx) => {
+        const roomStr = (cols[0] || '').trim();
+        if (!roomStr) return;
+        if (idx === 0 && (roomStr.includes('考場') || roomStr.includes('班級'))) return;
+        const gradeMatch = roomStr.match(/^([123])/);
+        newList.push({
+          room: roomStr,
+          grade: gradeMatch ? gradeMatch[1] : '1',
+          proctors: cols.slice(1)
+        });
+      });
+
+      if (newList.length === 0) {
+        alert('無法解析有效的考場資料列，請確認第 1 欄為考場名稱。');
+        return;
+      }
+
+      state.proctors = newList;
+      saveState();
+      renderProctorTable();
+      closeModal('proctorPasteModal');
+    }
+
+    // 原地編輯考程與監考儲存格
+    function editScheduleCell(idx, key) {
+      const labels = { restRaw: '休息時間', subject: '考試科目（換行請用 \\n）', examRaw: '考試時間' };
+      const curVal = (state.schedule[idx][key] || '').replace(/\n/g, '\\n');
+      const nextVal = prompt(`修改【${state.schedule[idx].name} - ${labels[key]}】：`, curVal);
+      if (nextVal === null) return;
+      state.schedule[idx][key] = nextVal.replace(/\\n/g, '\n').trim();
+      saveState();
+      lastActiveKey = '';
+      updateDashboardClockAndTimer();
+    }
+
+    function editProctorCell(rowIdx, secIdx) {
+      const row = state.proctors[rowIdx];
+      const secName = state.schedule[secIdx]?.name || `第${secIdx + 1}節`;
+      const curVal = row.proctors[secIdx] || '';
+      const nextVal = prompt(`修改【${row.room} 考場 - ${secName}】監考老師：`, curVal);
+      if (nextVal === null) return;
+      row.proctors[secIdx] = nextVal.trim();
+      saveState();
+      renderProctorTable();
+    }
+
+    function editExamTitle() {
+      const next = prompt('修改段考標題名稱：', state.title);
+      if (next && next.trim()) {
+        state.title = next.trim();
+        document.querySelector('#examTitleDisplay span').textContent = state.title;
+        saveState();
+      }
+    }
+
+    // 常用超連結管理
+    function renderQuickLinks() {
+      const container = document.getElementById('quickLinksContainer');
+      const colorMap = {
+        sky: 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border-sky-500/35',
+        emerald: 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/35',
+        amber: 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-500/35',
+        violet: 'bg-violet-500/15 hover:bg-violet-500/25 text-violet-300 border-violet-500/35'
+      };
+      container.innerHTML = state.links.map(link => `
+        <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer"
+           class="px-3 py-1.5 rounded-lg border text-xs font-bold transition flex items-center gap-1.5 ${colorMap[link.color] || colorMap.sky}">
+          <span>${escapeHtml(link.label)}</span>
+          <i data-lucide="external-link" class="w-3 h-3 opacity-80"></i>
+        </a>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function openLinksModal() {
+      const list = document.getElementById('linksEditorList');
+      list.innerHTML = state.links.map((l, i) => `
+        <div class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 link-edit-row">
+          <input type="text" value="${escapeHtml(l.label)}" placeholder="按鈕名稱" class="link-label bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white w-28" />
+          <input type="text" value="${escapeHtml(l.url)}" placeholder="https://..." class="link-url bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-300 flex-1" />
+          <select class="link-color bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-white">
+            <option value="sky" ${l.color === 'sky' ? 'selected' : ''}>藍色</option>
+            <option value="emerald" ${l.color === 'emerald' ? 'selected' : ''}>綠色</option>
+            <option value="amber" ${l.color === 'amber' ? 'selected' : ''}>琥珀</option>
+            <option value="violet" ${l.color === 'violet' ? 'selected' : ''}>紫色</option>
+          </select>
+          <button onclick="this.parentElement.remove()" class="p-1.5 text-slate-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+      document.getElementById('linksModal').classList.remove('hidden');
+    }
+
+    function addLinkRow() {
+      const list = document.getElementById('linksEditorList');
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 link-edit-row';
+      div.innerHTML = `
+        <input type="text" value="" placeholder="按鈕名稱" class="link-label bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-white w-28" />
+        <input type="text" value="https://" placeholder="https://..." class="link-url bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-300 flex-1" />
+        <select class="link-color bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs text-white">
+          <option value="sky">藍色</option>
+          <option value="emerald">綠色</option>
+          <option value="amber">琥珀</option>
+          <option value="violet">紫色</option>
+        </select>
+        <button onclick="this.parentElement.remove()" class="p-1.5 text-slate-500 hover:text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+      `;
+      list.appendChild(div);
+      lucide.createIcons();
+    }
+
+    function saveLinks() {
+      const rows = document.querySelectorAll('.link-edit-row');
+      const updated = [];
+      rows.forEach(r => {
+        const label = r.querySelector('.link-label').value.trim();
+        const url = r.querySelector('.link-url').value.trim();
+        const color = r.querySelector('.link-color').value;
+        if (label && url) updated.push({ label, url, color });
+      });
+      state.links = updated;
+      saveState();
+      renderQuickLinks();
+      closeModal('linksModal');
+    }
+
+    // 篩選與搜尋
+    function setGradeFilter(grade) {
+      state.gradeFilter = grade;
+      document.querySelectorAll('.grade-filter-btn').forEach(btn => {
+        const active = btn.dataset.filter === grade;
+        btn.className = active
+          ? 'grade-filter-btn px-2.5 py-1 rounded-md bg-indigo-600 text-white transition'
+          : 'grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition';
+      });
+      renderProctorTable();
+    }
+
+    function clearSearch() {
+      document.getElementById('proctorSearchInput').value = '';
+      renderProctorTable();
+    }
+
+    // 模擬時間控制
+    function toggleTimeMode() {
+      state.isSimMode = !state.isSimMode;
+      saveState();
+      lastActiveKey = '';
+      updateDashboardClockAndTimer();
+    }
+
+    function jumpToSession(idx) {
+      const item = state.schedule[idx];
+      if (!item) return;
+      const r = parseTimeRange(item.restRaw);
+      const e = parseTimeRange(item.examRaw);
+      state.isSimMode = true;
+      state.simSeconds = r ? r.startSec : (e ? e.startSec : state.simSeconds);
+      lastActiveKey = '';
+      updateDashboardClockAndTimer();
+    }
+
+    function openSimModal() {
+      document.getElementById('simTimeInput').value = formatSeconds(state.simSeconds);
+      const list = document.getElementById('simQuickJumpList');
+      list.innerHTML = state.schedule.map((item, idx) => {
+        const r = parseTimeRange(item.restRaw);
+        const e = parseTimeRange(item.examRaw);
+        return `
+          <div class="bg-slate-950 border border-slate-800 rounded-lg p-2 space-y-1">
+            <div class="text-xs font-bold text-white">${escapeHtml(item.name)}</div>
+            <div class="flex gap-1.5">
+              ${r ? `<button onclick="setSimSeconds(${r.startSec + 60})" class="flex-1 py-1 rounded bg-amber-500/20 text-amber-300 text-[11px] font-bold hover:bg-amber-500/30">休息中</button>` : ''}
+              ${e ? `<button onclick="setSimSeconds(${e.startSec + 60})" class="flex-1 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[11px] font-bold hover:bg-emerald-500/30">考試中</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('simModal').classList.remove('hidden');
+    }
+
+    function setSimSeconds(sec) {
+      state.isSimMode = true;
+      state.simSeconds = sec;
+      lastActiveKey = '';
+      updateDashboardClockAndTimer();
+      closeModal('simModal');
+    }
+
+    function applySimTime() {
+      const val = document.getElementById('simTimeInput').value;
+      if (!val) return;
+      const parts = val.split(':').map(Number);
+      state.isSimMode = true;
+      state.simSeconds = (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+      lastActiveKey = '';
+      updateDashboardClockAndTimer();
+      closeModal('simModal');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // 初始化
+    loadState();
+    document.querySelector('#examTitleDisplay span').textContent = state.title;
+    renderQuickLinks();
+    renderScheduleTable();
+    renderProctorTable();
+    updateDashboardClockAndTimer();
+    lucide.createIcons();
+
+    setInterval(() => {
+      if (state.isSimMode) {
+        state.simSeconds = (state.simSeconds + 1) % 86400;
+      }
+      updateDashboardClockAndTimer();
+    }, 1000);
+  </script>
 </body>
 </html>
