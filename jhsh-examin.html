@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>段考考務即時看板（雙時間軸版）</title>
+  <title>段考考務即時看板（雙時間軸 30 班完整版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -224,10 +224,10 @@
         <div class="flex flex-wrap items-center gap-2.5">
           <!-- 年級快速篩選 -->
           <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-bold">
-            <button onclick="setGradeFilter('ALL')" data-filter="ALL" class="grade-filter-btn px-2.5 py-1 rounded-md bg-indigo-600 text-white transition">全部</button>
-            <button onclick="setGradeFilter('1')" data-filter="1" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高一</button>
-            <button onclick="setGradeFilter('2')" data-filter="2" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高二</button>
-            <button onclick="setGradeFilter('3')" data-filter="3" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高三</button>
+            <button onclick="setGradeFilter('ALL')" data-filter="ALL" class="grade-filter-btn px-2.5 py-1 rounded-md bg-indigo-600 text-white transition">全部 (30班)</button>
+            <button onclick="setGradeFilter('1')" data-filter="1" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高一 (101~110)</button>
+            <button onclick="setGradeFilter('2')" data-filter="2" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高二 (201~210)</button>
+            <button onclick="setGradeFilter('3')" data-filter="3" class="grade-filter-btn px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">高三 (301~310)</button>
           </div>
 
           <!-- 搜尋教師或考場 -->
@@ -287,7 +287,7 @@
         <p class="font-bold text-emerald-400">請直接從 Excel 框選「3 列 × 多欄」複製並貼入下方：</p>
         <ul class="list-disc list-inside text-slate-400 space-y-0.5">
           <li><strong>第 1 列（休息時間）</strong>：例如 <code class="text-amber-300">08:10~08:25</code> 或 <code class="text-amber-300">自習13:00~13:30</code></li>
-          <li><strong>第 2 列（考試科目）</strong>：支援儲存格內換行（如 <code class="text-sky-300">地科(101~105)</code> 換行 <code class="text-sky-300">化學(106~109)</code>）</li>
+          <li><strong>第 2 列（考試科目）</strong>：支援儲存格內換行（如 <code class="text-sky-300">地科(101~105)</code> 換行 <code class="text-sky-300">化學(106~110)</code>）</li>
           <li><strong>第 3 列（考試時間）</strong>：例如 <code class="text-emerald-300">08:25~09:25</code></li>
         </ul>
       </div>
@@ -322,12 +322,12 @@
       </div>
 
       <p class="text-xs text-slate-400 leading-relaxed">
-        請直接從 Excel 框選 <strong class="text-white">「考場/班級（第1欄）」與「第一節～第七節隨堂教師（第2～8欄）」</strong> 複製貼上（若第一列為標題列如「考場、第一節...」會自動略過）：
+        請直接從 Excel 或自動抓取書籤剪貼簿貼入 <strong class="text-white">「考場/班級（第1欄）」與「第一節～第七節隨堂教師（第2～8欄）」</strong>（支援 101～110、201～210、301～310 共 30 班；若第一列為標題列會自動略過）：
       </p>
 
-      <textarea id="proctorPasteInput" rows="9" placeholder="範例格式（直接從 Excel 複製貼上 1 欄考場 + 7 欄教師）：
+      <textarea id="proctorPasteInput" rows="9" placeholder="範例格式（1 欄考場 + 7 欄教師）：
 101	王大明	李小華	陳志豪	林佳穎	張雅婷	周杰倫	蔡依林
-102	林俊傑	張惠妹	蕭敬騰	吳冠宇	劉淑芬	蔡佩珊	楊承翰" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-sky-500"></textarea>
+110	林俊傑	張惠妹	蕭敬騰	吳冠宇	劉淑芬	蔡佩珊	楊承翰" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-sky-500"></textarea>
 
       <div class="flex justify-end gap-2.5 pt-2">
         <button onclick="closeModal('proctorPasteModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">取消</button>
@@ -414,14 +414,14 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'exam_dashboard_v5_dual_timeline';
+    const STORAGE_KEY = 'exam_dashboard_v6_30classes';
 
     // 段考考程時間軸（5 節）
     const DEFAULT_SCHEDULE = [
       { id: 1, name: '第一考節', restRaw: '08:10~08:25', subject: '數學', examRaw: '08:25~09:25' },
       { id: 2, name: '第二考節', restRaw: '09:25~09:40', subject: '自習', examRaw: '09:40~10:40' },
       { id: 3, name: '第三考節', restRaw: '10:40~10:55', subject: '英文', examRaw: '10:55~11:55' },
-      { id: 4, name: '第四考節', restRaw: '自習13:00~13:30', subject: '地科(101~105)\n化學(106~109)', examRaw: '13:30~14:30' },
+      { id: 4, name: '第四考節', restRaw: '自習13:00~13:30', subject: '地科(101~105)\n化學(106~110)', examRaw: '13:30~14:30' },
       { id: 5, name: '第五考節', restRaw: '14:30~14:50', subject: '公民', examRaw: '14:50~15:50' }
     ];
 
@@ -442,6 +442,7 @@
       { label: '段考監考須知', url: 'https://example.edu.tw/rules', color: 'amber' }
     ];
 
+    // 建立 101~110、201~210、301~310 共 30 個高中班級預設監考表
     function buildDefaultProctors() {
       const teachers = [
         '陳建宏','林佳穎','黃志明','張雅婷','李宗翰','王怡君','吳冠宇','劉淑芬','蔡佩珊','楊承翰',
@@ -450,10 +451,10 @@
       ];
       const rooms = [];
       for (let g = 1; g <= 3; g++) {
-        for (let c = 1; c <= 9; c++) {
-          const roomCode = `${g}0${c}`;
+        for (let c = 1; c <= 10; c++) {
+          const roomCode = `${g}${String(c).padStart(2, '0')}`;
           const label = roomCode === '203' ? '203 (文/理)' : roomCode;
-          const idx = (g - 1) * 9 + (c - 1);
+          const idx = (g - 1) * 10 + (c - 1);
           rooms.push({
             room: label,
             grade: String(g),
@@ -528,7 +529,7 @@
       let currentPeriodIdx = -1;
       let handoverPeriodIdx = -1;
       let statusText = '非上課時段';
-      let statusType = 'IDLE'; // ACTIVE | HANDOVER_SOON | BETWEEN | IDLE
+      let statusType = 'IDLE';
 
       const parsedPeriods = state.periods.map(p => parseTimeRange(p.range));
 
@@ -536,7 +537,6 @@
         const p = parsedPeriods[i];
         if (!p) continue;
 
-        // 落在該原課表節次內
         if (curSec >= p.startSec && curSec < p.endSec) {
           currentPeriodIdx = i;
           const remainToEnd = p.endSec - curSec;
@@ -551,7 +551,6 @@
           return { currentPeriodIdx, handoverPeriodIdx, statusText, statusType };
         }
 
-        // 落在兩節原課表之間的下課交接空檔（或開學前 15 分鐘內）
         const prevEnd = i === 0 ? p.startSec - 900 : (parsedPeriods[i - 1]?.endSec ?? p.startSec - 900);
         if (curSec >= prevEnd && curSec < p.startSec) {
           handoverPeriodIdx = i;
@@ -572,7 +571,6 @@
       state.schedule.forEach(item => {
         const e = parseTimeRange(item.examRaw);
         if (!e) return;
-        // 判斷時間區間是否重疊
         if (Math.max(p.startSec, e.startSec) < Math.min(p.endSec, e.endSec)) {
           const shortSubj = (item.subject || '').replace(/\n/g, ' / ');
           let note = '';
@@ -1055,7 +1053,7 @@
     // 原始課表鐘點設定
     function openPeriodConfigModal() {
       const list = document.getElementById('periodEditorList');
-      list.innerHTML = state.periods.map((p, idx) => `
+      list.innerHTML = state.periods.map(p => `
         <div class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 period-edit-row">
           <input type="text" value="${escapeHtml(p.name)}" class="period-name bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs font-bold text-white w-24" />
           <input type="text" value="${escapeHtml(p.range)}" placeholder="08:10-09:00" class="period-range font-mono-num bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-sky-300 flex-1" />
