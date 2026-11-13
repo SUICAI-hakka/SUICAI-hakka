@@ -738,7 +738,7 @@
 
       .timeline-time-row {
         position: relative;
-        transition: transform 160ms ease-out, filter 160ms ease-out;
+        transition: transform 160ms ease-out;
         transform-origin: left center;
       }
 
@@ -781,25 +781,6 @@
         border-left-color: var(--wakatake);
         background: #f6fbf3;
         padding: 9px 14px;
-      }
-
-      .card-blur-veil {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 150ms ease;
-      }
-
-      .timeline-time-row:hover .card-blur-veil,
-      .timeline-time-row:focus-within .card-blur-veil,
-      .timeline-time-row.timeline-current .card-blur-veil {
-        opacity: 0 !important;
-      }
-
-      .timeline-time-row:hover,
-      .timeline-time-row:focus-within {
-        filter: none !important;
       }
 
       .card-top-row {
@@ -2925,7 +2906,6 @@
                 '" tabindex="0" data-edit-seg="' +
                 seg.id +
                 '">' +
-                '<div class="card-blur-veil"></div>' +
                 '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:0.82rem; font-weight:800;">' +
                 "<span>" +
                 (isPureWalk ? "🚶 純步行移動" : "🚃 " + seg.modeLabel) +
@@ -2970,7 +2950,6 @@
             '" tabindex="0" data-edit-event="' +
             ev.id +
             '">' +
-            '<div class="card-blur-veil"></div>' +
             '<div class="card-top-row">' +
             '<div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">' +
             '<span class="card-time-chip">' +
@@ -3059,30 +3038,10 @@
 
         const focusRect = rows[focusIdx].getBoundingClientRect();
         const focusCenterY = focusRect.top + focusRect.height / 2;
-        const maxDist = viewHeight * 0.55;
 
         rows.forEach((row, i) => {
           row.classList.toggle("timeline-current", i === focusIdx);
-          const veil = row.querySelector(".card-blur-veil");
-          if (i === focusIdx) {
-            row.style.filter = "none";
-            if (veil) veil.style.opacity = "0";
-          } else {
-            const r = row.getBoundingClientRect();
-            const rCenter = r.top + r.height / 2;
-            const signedDelta = rCenter - focusCenterY;
-            const strength = Math.min(1, Math.abs(signedDelta) / Math.max(1, maxDist));
-            const blurPx = (0.15 + strength * 1.6).toFixed(2);
-            const alpha = (strength * 0.58).toFixed(2);
-            row.style.filter = "blur(" + blurPx + "px)";
-            if (veil) {
-              veil.style.opacity = "1";
-              veil.style.background =
-                signedDelta < 0
-                  ? "linear-gradient(to bottom, rgba(255,252,246," + alpha + "), rgba(255,252,246,0.08))"
-                  : "linear-gradient(to top, rgba(255,252,246," + alpha + "), rgba(255,252,246,0.08))";
-            }
-          }
+          row.style.filter = "none";
         });
 
         let dotPct = Number(rows[focusIdx].dataset.normPos || 0) * 100;
