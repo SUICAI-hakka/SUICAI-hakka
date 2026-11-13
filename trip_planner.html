@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>京都冬日之旅｜古都雪見與抹茶散步 (2027/1/28 - 2027/2/2)</title>
+  <title>京都冬日之旅｜古都雪見與抹茶散步 (2027/1/28 - 2/2)</title>
 
-  <!-- Google Fonts: 粉圓體 Huninn 與 思源黑體 Noto Sans TC -->
+  <!-- Google Fonts: Huninn (粉圓體) 與 Noto Sans TC -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -18,7 +18,7 @@
       --bg-washi: #FFFCF6;
       --bg-card: #FFFFFF;
       --ink: #3E3A39;
-      --ink-soft: #6D6664;
+      --ink-soft: #6C6563;
       --yellow-yamabuki: #F6D27A;
       --gold-deep: #8C5D00;
       --pink-coral: #F2A497;
@@ -39,7 +39,7 @@
 
       --border-thick: 3px solid var(--ink);
       --border-thin: 2px solid var(--ink);
-      --radius-lg: 18px;
+      --radius-lg: 20px;
       --radius-md: 14px;
       --radius-pill: 999px;
       --shadow-book: 4px 4px 0px var(--ink);
@@ -59,7 +59,7 @@
       background-size: 20px 20px;
       color: var(--ink);
       line-height: 1.5;
-      padding-bottom: 100px;
+      padding-bottom: 105px;
       overflow-x: hidden;
     }
 
@@ -81,7 +81,7 @@
        2. 共用頁首與品牌橫幅動畫
        ========================================================================== */
     .app-header {
-      max-width: 1380px;
+      max-width: 1400px;
       margin: 14px auto;
       padding: 0 14px;
     }
@@ -126,7 +126,7 @@
     }
 
     .trip-meta-title h1 {
-      font-size: 1.32rem;
+      font-size: 1.3rem;
       letter-spacing: 0.02em;
     }
 
@@ -191,7 +191,7 @@
        3. 主工作區與斷點佈局 (workspace)
        ========================================================================== */
     .page-container {
-      max-width: 1380px;
+      max-width: 1400px;
       margin: 0 auto;
       padding: 0 14px;
     }
@@ -378,6 +378,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 8px;
+      cursor: pointer;
     }
 
     /* ==========================================================================
@@ -414,7 +415,7 @@
     .toolbar-month-label {
       font-size: 0.82rem;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.78);
+      background: rgba(255, 255, 255, 0.8);
       padding: 2px 9px;
       border-radius: var(--radius-pill);
       border: 1.5px solid var(--ink);
@@ -422,7 +423,7 @@
 
     .calendar-viewtoggle {
       display: inline-flex;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.72);
       border: var(--border-thin);
       border-radius: var(--radius-pill);
       padding: 2px;
@@ -587,8 +588,8 @@
       gap: 9px;
       padding: 12px 12px 16px 9px;
       height: 60vh;
-      min-height: 450px;
-      max-height: 660px;
+      min-height: 460px;
+      max-height: 670px;
     }
 
     .day-time-scale {
@@ -738,9 +739,9 @@
       cursor: pointer;
     }
 
-    .cat-sightseeing { border-left-color: var(--yellow-yamabuki); }
+    .cat-attraction { border-left-color: var(--yellow-yamabuki); }
     .cat-food { border-left-color: var(--pink-coral); }
-    .cat-hotel { border-left-color: var(--blue-mizu); }
+    .cat-stay { border-left-color: var(--blue-mizu); }
     .cat-transport { border-left-color: var(--green-wakatake); }
 
     .card-top-row {
@@ -769,9 +770,9 @@
       border: 1.5px solid var(--ink);
     }
 
-    .bg-sightseeing { background: var(--yellow-yamabuki); }
+    .bg-attraction { background: var(--yellow-yamabuki); }
     .bg-food { background: var(--pink-coral); }
-    .bg-hotel { background: var(--blue-mizu); }
+    .bg-stay { background: var(--blue-mizu); }
     .bg-transport { background: var(--green-wakatake); }
 
     .currency-badge-twd {
@@ -869,7 +870,7 @@
     }
 
     /* ==========================================================================
-       7. 週行事曆視圖 (支援雙擊、3秒長按拖移、底部把手調時長)
+       7. 週行事曆視圖 (單擊預覽、雙擊編輯、按住3秒拖移、底部把手調時長)
        ========================================================================== */
     .week-view-wrapper {
       padding: 11px;
@@ -921,8 +922,6 @@
 
     .week-event-block {
       position: absolute;
-      left: 3px;
-      right: 3px;
       border: 2px solid var(--ink);
       border-radius: 9px;
       padding: 2px 5px 8px;
@@ -961,11 +960,11 @@
     }
 
     /* ==========================================================================
-       8. 費用總覽頁 (expensespage - 雙幣別統計 + 圓餅圖)
+       8. 費用總覽頁 (#expensespage - 精確雙幣別統計 + SVG 圓餅圖)
        ========================================================================== */
     .expenses-layout {
       display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
+      grid-template-columns: 1.12fr 0.88fr;
       gap: 16px;
       margin-bottom: 16px;
     }
@@ -1026,7 +1025,7 @@
     }
 
     .rate-input {
-      width: 88px;
+      width: 96px;
       padding: 4px 8px;
       border: var(--border-thin);
       border-radius: 8px;
@@ -1048,7 +1047,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      min-width: 190px;
+      min-width: 195px;
     }
 
     .pie-legend-row {
@@ -1069,7 +1068,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
-      min-width: 720px;
+      min-width: 740px;
     }
 
     .expense-table th, .expense-table td {
@@ -1083,12 +1082,21 @@
       font-weight: 800;
     }
 
+    .expense-table tbody tr {
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+
+    .expense-table tbody tr:hover {
+      background: rgba(185, 218, 165, 0.25);
+    }
+
     .row-food-tint {
-      background: rgba(242, 164, 151, 0.14);
+      background: rgba(242, 164, 151, 0.16);
     }
 
     /* ==========================================================================
-       9. 攜帶用品頁 (packingpage)
+       9. 攜帶用品頁 (#packingpage)
        ========================================================================== */
     .packing-toolbar {
       background: #FFFFFF;
@@ -1121,7 +1129,7 @@
 
     .packing-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(315px, 1fr));
       gap: 15px;
     }
 
@@ -1161,17 +1169,25 @@
 
     .pack-item-row {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
       padding: 6px 8px;
       border-radius: 10px;
       background: var(--bg-washi);
       border: 1.5px solid #E2D8C7;
+    }
+
+    .pack-item-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      flex: 1;
       cursor: pointer;
     }
 
-    .pack-item-row.checked {
-      opacity: 0.6;
+    .pack-item-row.checked .pack-item-text {
+      opacity: 0.58;
       text-decoration: line-through;
     }
 
@@ -1199,7 +1215,7 @@
       display: flex;
       flex-direction: column;
       gap: 7px;
-      min-width: 245px;
+      min-width: 255px;
     }
 
     .dock-menu.hidden {
@@ -1251,7 +1267,7 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(62, 58, 57, 0.5);
+      background: rgba(62, 58, 57, 0.52);
       z-index: 1000;
       display: flex;
       align-items: center;
@@ -1269,7 +1285,7 @@
       border-radius: var(--radius-lg);
       box-shadow: 6px 6px 0 var(--ink);
       width: 100%;
-      max-width: 520px;
+      max-width: 530px;
       max-height: 88vh;
       overflow-y: auto;
       padding: 18px 20px;
@@ -1379,35 +1395,35 @@
   <header class="app-header">
     <div class="header-card">
       <div class="brand-zone">
-        <!-- 原創品牌橫幅 SVG (251 x 66 viewBox)：京都五重塔、鳥居、渡月橋與可微動的嵐山/HARUKA列車 -->
+        <!-- 原創品牌橫幅 SVG (251 x 66 viewBox)：城郭、4秒循環輕移 3px 的列車、日式鳥居與山景 -->
         <div class="brand-svg-box" aria-label="京都冬日之旅品牌插圖">
-          <svg width="218" height="58" viewBox="0 0 251 66" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 52 C35 24, 65 24, 92 52 Z" fill="#B9DAA5" stroke="#3E3A39" stroke-width="2.6" stroke-linejoin="round"/>
-            <path d="M58 52 C88 20, 122 20, 152 52 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2.6" stroke-linejoin="round"/>
-            <circle cx="34" cy="18" r="7" fill="#F6D27A" stroke="#3E3A39" stroke-width="2.5"/>
-            <!-- 鳥居 -->
-            <path d="M168 52 V24 M192 52 V24" stroke="#F2A497" stroke-width="5" stroke-linecap="round"/>
-            <path d="M168 52 V24 M192 52 V24" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M160 22 Q180 26 200 22" stroke="#F2A497" stroke-width="5" stroke-linecap="round"/>
-            <path d="M160 22 Q180 26 200 22" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M164 31 H196" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
-            <!-- 五重塔 -->
-            <rect x="215" y="20" width="16" height="32" fill="#F6D27A" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
-            <path d="M209 22 L223 12 L237 22 Z" fill="#F2A497" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
-            <path d="M211 32 L223 24 L235 32 Z" fill="#F2A497" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
-            <path d="M223 12 V6" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
+          <svg width="224" height="58" viewBox="0 0 251 66" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 52 C34 22, 66 22, 94 52 Z" fill="#B9DAA5" stroke="#3E3A39" stroke-width="2.6" stroke-linejoin="round"/>
+            <path d="M58 52 C88 19, 122 19, 152 52 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2.6" stroke-linejoin="round"/>
+            <circle cx="32" cy="17" r="6.5" fill="#F6D27A" stroke="#3E3A39" stroke-width="2.4"/>
+            <!-- 城郭建築 (天守閣風格) -->
+            <rect x="206" y="26" width="28" height="26" fill="#FFFFFF" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M200 26 L220 15 L240 26 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+            <rect x="212" y="10" width="16" height="8" fill="#FFFFFF" stroke="#3E3A39" stroke-width="2.2"/>
+            <path d="M207 11 L220 4 L233 11 Z" fill="#F6D27A" stroke="#3E3A39" stroke-width="2.3" stroke-linejoin="round"/>
+            <!-- 日式鳥居 -->
+            <path d="M166 52 V24 M188 52 V24" stroke="#F2A497" stroke-width="4.8" stroke-linecap="round"/>
+            <path d="M166 52 V24 M188 52 V24" stroke="#3E3A39" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M158 22 Q177 26 196 22" stroke="#F2A497" stroke-width="4.8" stroke-linecap="round"/>
+            <path d="M158 22 Q177 26 196 22" stroke="#3E3A39" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M162 31 H192" stroke="#3E3A39" stroke-width="2.4" stroke-linecap="round"/>
             <!-- 列車群組 (每4秒輕移3px) -->
             <g class="brand-train-group">
-              <rect x="22" y="42" width="118" height="14" rx="6" fill="#FFFFFF" stroke="#3E3A39" stroke-width="3"/>
-              <path d="M126 42 H136 C142 42 146 47 146 52 V56 H126 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
-              <rect x="32" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
-              <rect x="54" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
-              <rect x="76" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
-              <rect x="98" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
-              <circle cx="38" cy="57" r="3" fill="#3E3A39"/>
-              <circle cx="62" cy="57" r="3" fill="#3E3A39"/>
-              <circle cx="104" cy="57" r="3" fill="#3E3A39"/>
-              <circle cx="130" cy="57" r="3" fill="#3E3A39"/>
+              <rect x="18" y="42" width="118" height="14" rx="6" fill="#FFFFFF" stroke="#3E3A39" stroke-width="3"/>
+              <path d="M122 42 H132 C138 42 142 47 142 52 V56 H122 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+              <rect x="28" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <rect x="50" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <rect x="72" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <rect x="94" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <circle cx="34" cy="57" r="3" fill="#3E3A39"/>
+              <circle cx="58" cy="57" r="3" fill="#3E3A39"/>
+              <circle cx="100" cy="57" r="3" fill="#3E3A39"/>
+              <circle cx="126" cy="57" r="3" fill="#3E3A39"/>
             </g>
             <line x1="6" y1="60" x2="245" y2="60" stroke="#3E3A39" stroke-width="3" stroke-linecap="round"/>
           </svg>
@@ -1428,7 +1444,7 @@
         </div>
       </div>
 
-      <!-- 三頁導覽切換 -->
+      <!-- 三大主分頁切換 -->
       <nav class="main-nav" aria-label="主要功能分頁">
         <button type="button" class="nav-tab active" data-page="workspace-page">🗺️ 行程規劃</button>
         <button type="button" class="nav-tab" data-page="expensespage">💰 費用總覽</button>
@@ -1459,7 +1475,7 @@
           <div class="map-legend">
             <div class="legend-items">
               <span class="legend-dot"><span class="legend-line" style="background: var(--route-train);"></span>JR/近鐵/京阪</span>
-              <span class="legend-dot"><span class="legend-line" style="background: var(--route-subway);"></span>地鐵/嵐電</span>
+              <span class="legend-dot"><span class="legend-line" style="background: var(--route-subway);"></span>地鐵</span>
               <span class="legend-dot"><span class="legend-line" style="background: var(--route-bus);"></span>公車</span>
               <span class="legend-dot"><span class="legend-line" style="background: var(--route-walk);"></span>步行</span>
             </div>
@@ -1472,7 +1488,7 @@
         <!-- 可收合的當日交通明細 (routepanel) -->
         <section id="routepanel" class="routepanel" aria-label="當日交通明細">
           <div id="route-panel-toggle" class="summary" role="button" tabindex="0" aria-expanded="true">
-            <strong>🚃 當日交通明細（點擊編輯分段）</strong>
+            <strong>🚃 當日交通明細（雙擊分段可編輯）</strong>
             <span id="route-summary-badge" style="font-size:0.82rem; font-weight:800;">展開中 ▲</span>
           </div>
           <div id="route-segments-list" class="route-body"></div>
@@ -1512,19 +1528,19 @@
         <div id="day-timeline-view" class="timelinepreview">
           <div class="timeline-intro">
             <span id="day-intro-title" style="font-weight:800;">Day 1 · 2027/01/28 (四)</span>
-            <span style="font-size:0.8rem; color:var(--ink-soft);">捲動卡片可自動追蹤左側時間軸</span>
+            <span style="font-size:0.8rem; color:var(--ink-soft);">點擊卡片可編輯精確金額與細節</span>
           </div>
 
           <div class="timeline-list">
             <div class="day-time-scale" aria-label="當日時間比例尺">
               <span id="scale-start-label" class="scale-bound-label">13:10</span>
               <div class="scale-track">
-                <div id="scale-now-marker" class="scale-now-marker" title="京都當地目前時間">
+                <div id="scale-now-marker" class="scale-now-marker" title="京都當地目前時間 (Asia/Tokyo)">
                   <span id="scale-now-badge" class="scale-now-badge">14:00</span>
                 </div>
                 <div id="scale-focus-dot" class="scale-focus-dot" title="目前焦點行程位置"></div>
               </div>
-              <span id="scale-end-label" class="scale-bound-label">21:30</span>
+              <span id="scale-end-label" class="scale-bound-label">21:35</span>
             </div>
 
             <div id="timeline-cards" class="timeline-cards"></div>
@@ -1543,20 +1559,20 @@
   </main>
 
   <!-- ==========================================================================
-       第二頁：費用總覽 (expensespage - 支援 JPY 與 TWD 雙幣別)
+       第二頁：費用總覽 (#expensespage - 精確雙幣別 JPY / TWD 與 SVG 圓餅圖)
        ========================================================================== -->
   <section id="expensespage" class="page-container hidden-page" aria-label="旅程費用總覽">
     <div class="expenses-layout">
-      <!-- 左欄：雙幣別合計與即時匯率換算 -->
+      <!-- 左欄：雙幣別精確合計與即時匯率換算 -->
       <div class="expense-box">
-        <h2 style="font-size:1.12rem;">💰 雙幣別預算與總花費統計（2 位成人）</h2>
+        <h2 style="font-size:1.12rem;">💰 雙幣別精確預算與總花費統計（2 位成人）</h2>
         <div class="expense-kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-label">現地日圓合計 (JPY)</div>
+            <div class="kpi-label">現地日圓精確合計 (JPY)</div>
             <div id="exp-total-jpy" class="kpi-value">¥0</div>
           </div>
           <div class="kpi-card" style="background:#EDF7FC;">
-            <div class="kpi-label">已付台幣合計 (TWD)</div>
+            <div class="kpi-label">已付／預付台幣精確合計 (TWD)</div>
             <div id="exp-direct-twd" class="kpi-value">NT$0</div>
           </div>
           <div class="kpi-card" style="background:#F4FAF0;">
@@ -1564,24 +1580,28 @@
             <div id="exp-grand-twd" class="kpi-value">NT$0</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-label">每人平均分攤 (TWD)</div>
-            <div id="exp-per-person-twd" class="kpi-value">NT$0</div>
+            <div class="kpi-label">目標預算上限 (TWD)</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:3px;">
+              <span>NT$</span>
+              <input type="number" id="budget-target-input" class="rate-input" style="width:110px; font-size:1rem;" step="any" min="0" />
+            </div>
           </div>
         </div>
 
         <div class="rate-control-bar">
           <span>💱 即時匯率：1 JPY =</span>
           <div>
-            <input type="number" id="jpy-rate-input" class="rate-input" step="0.001" min="0.05" max="1" value="0.215" />
+            <input type="number" id="jpy-rate-input" class="rate-input" step="any" min="0.0001" value="0.215" />
             <span>TWD</span>
           </div>
           <span id="exp-est-badge" class="estimate-badge">0 項待確認/估算</span>
+          <span id="exp-budget-diff" style="font-size:0.82rem; font-weight:800;"></span>
         </div>
       </div>
 
       <!-- 右欄：類別支出 SVG 圓餅圖與圖例 -->
       <div class="expense-box">
-        <h2 style="font-size:1.12rem;">📊 各類別支出組成（折合台幣計算）</h2>
+        <h2 style="font-size:1.12rem;">📊 各類別支出佔比（折合台幣計算）</h2>
         <div class="pie-wrapper">
           <svg id="expense-pie-svg" width="185" height="185" viewBox="0 0 200 200" aria-label="支出圓餅圖"></svg>
           <div id="expense-pie-legend" class="pie-legend"></div>
@@ -1589,11 +1609,11 @@
       </div>
     </div>
 
-    <!-- 完整雙幣別明細表 -->
+    <!-- 完整雙幣別明細表（點擊任一列可直接編輯精確金額） -->
     <div class="expense-box">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <h2 style="font-size:1.1rem;">🧾 行程與交通雙幣別明細表</h2>
-        <span style="font-size:0.8rem; color:var(--ink-soft);">※ 支援 JPY 與 TWD 獨立計價；餐飲列以珊瑚粉淡底標示</span>
+        <h2 style="font-size:1.1rem;">🧾 行程與交通雙幣別明細表（點擊任一列修改精確金額）</h2>
+        <span style="font-size:0.8rem; color:var(--ink-soft);">※ 原始金額完全保留精確數值（如 19371），僅日圓換算台幣時取整</span>
       </div>
       <div class="expense-table-wrap">
         <table class="expense-table">
@@ -1602,9 +1622,9 @@
               <th>日期</th>
               <th>類別</th>
               <th>項目名稱</th>
-              <th>原幣金額與基準</th>
+              <th>原幣精確金額與計價基準</th>
               <th>折合台幣 (TWD)</th>
-              <th>付款狀態</th>
+              <th>付款／估算狀態</th>
             </tr>
           </thead>
           <tbody id="expense-table-body"></tbody>
@@ -1614,7 +1634,7 @@
   </section>
 
   <!-- ==========================================================================
-       第三頁：攜帶用品 (packingpage)
+       第三頁：攜帶用品 (#packingpage)
        ========================================================================== -->
   <section id="packingpage" class="page-container hidden-page" aria-label="京都冬日攜帶用品清單">
     <div class="packing-toolbar">
@@ -1627,7 +1647,7 @@
       </div>
 
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-        <input type="search" id="packing-search" class="form-input" placeholder="搜尋物品..." style="width:165px;" />
+        <input type="search" id="packing-search" class="form-input" placeholder="搜尋物品或備註..." style="width:170px;" />
         <label style="font-size:0.84rem; font-weight:700; display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
           <input type="checkbox" id="packing-only-unchecked" /> 只看未完成
         </label>
@@ -1643,11 +1663,12 @@
   <div class="floating-dock">
     <div id="dock-menu" class="dock-menu hidden" role="menu">
       <button type="button" id="tool-add-event" class="dock-menu-btn">➕ 新增行程項目</button>
+      <button type="button" id="tool-budget-rate" class="dock-menu-btn">💱 匯率與預算上限設定</button>
       <button type="button" id="tool-export-json" class="dock-menu-btn">📤 匯出 JSON 旅程備份</button>
       <button type="button" id="tool-import-json" class="dock-menu-btn">📥 匯入 JSON 旅程資料</button>
       <button type="button" id="tool-export-ics" class="dock-menu-btn">📆 匯出 ICS 行事曆 (Asia/Tokyo)</button>
       <button type="button" id="tool-assumptions" class="dock-menu-btn">📋 假設與待查項目清單</button>
-      <button type="button" id="tool-reset-default" class="dock-menu-btn" style="color:#9E2A1C;">🔄 重置為預設京都行程</button>
+      <button type="button" id="tool-reset-default" class="dock-menu-btn" style="color:#9E2A1C;">🔄 重設預設京都行程</button>
     </div>
 
     <button type="button" id="dock-fab" class="dock-fab" aria-expanded="false" aria-controls="dock-menu" aria-label="開啟旅程工具箱">
@@ -1670,7 +1691,7 @@
 
   <script>
     /* ==========================================================================
-       一、核心旅程資料層 (TRIP_DATA) - 含雙幣別 JPY/TWD 與已確認 MM024/MM027 航班
+       一、核心旅程資料層 (TRIP_DATA) - 與 UI 完全分離，精確金額不自動四捨五入
        ========================================================================== */
     const DEFAULT_TRIP_DATA = {
       meta: {
@@ -1683,7 +1704,8 @@
         travelers: { adults: 2, children: 0, label: "2 位成人" },
         localCurrency: "JPY",
         settleCurrency: "TWD",
-        exchangeRate: 0.215
+        exchangeRate: 0.215,
+        budgetTargetTwd: 75000
       },
       days: [
         { dayIndex: 0, date: "2027-01-28", shortDate: "1/28", weekday: "四", theme: "抵達京都", mascotType: "plane" },
@@ -1701,7 +1723,7 @@
           startTime: "13:10",
           durationMin: 75,
           category: "transport",
-          name: "樂桃航空 MM024 抵達關西機場 KIX T2",
+          name: "樂桃航空 MM024 抵達關西國際機場 KIX T2",
           address: "関西国際空港 第2ターミナル",
           mapX: 85,
           mapY: 365,
@@ -1711,49 +1733,49 @@
           costAmount: 18600,
           costScope: "group",
           isPaid: true,
-          isEstimated: true,
+          isEstimated: false,
           locked: true,
-          notes: "已確認 13:10 抵達關西機場 T2；預留入境審查、領行李與搭接駁巴士前往 T1 JR 車站換票。含來回機票已付台幣估算。"
+          notes: "已確認 13:10 抵達關西機場 T2；預留入境審查、領行李並搭接駁巴士前往 T1 JR 車站換票。含來回機票已付台幣金額（可點擊修改實際刷卡金額）。"
         },
         {
           id: "evt-d1-2",
           dayIndex: 0,
           startTime: "16:00",
           durationMin: 45,
-          category: "hotel",
-          name: "RESI STAY MAYU 辦理入住手續",
-          address: "京都市下京區五條烏丸一帶 (RESI STAY MAYU)",
+          category: "stay",
+          name: "RESI STAY MAYU 入住登記",
+          address: "京都市下京區五條／河原町五條 (RESI STAY MAYU)",
           mapX: 255,
           mapY: 205,
           lat: 34.9965,
           lng: 135.7628,
           currency: "TWD",
-          costAmount: 22500,
+          costAmount: 19371,
           costScope: "group",
           isPaid: true,
-          isEstimated: true,
+          isEstimated: false,
           locked: true,
-          notes: "連住 5 晚雙人房總房費（已付台幣估算，請依實際刷卡帳單修改）。16:00 進房放行李稍作休息。"
+          notes: "5 晚連住總房費（已付台幣金額，可自由編輯任意精確整數或小數）。16:00 進房放行李稍作休息。"
         },
         {
           id: "evt-d1-3",
           dayIndex: 0,
           startTime: "17:15",
           durationMin: 90,
-          category: "sightseeing",
-          name: "錦市場與新京極商店街散步",
-          address: "京都市中京區錦小路通・新京極通",
-          mapX: 270,
-          mapY: 165,
-          lat: 35.0050,
-          lng: 135.7649,
+          category: "attraction",
+          name: "河原町新京極商店街散步",
+          address: "京都市中京區新京極通・四條河原町",
+          mapX: 274,
+          mapY: 166,
+          lat: 35.0042,
+          lng: 135.7676,
           currency: "JPY",
-          costAmount: 2500,
+          costAmount: 2000,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "錦市場部分店鋪 17:30 陸續打烊，可接續逛有遮雨棚的新京極與寺町京極商店街。"
+          notes: "有遮雨棚的商店街，藥妝店與伴手禮店林立，傍晚逛街輕鬆暖身。"
         },
         {
           id: "evt-d1-4",
@@ -1773,15 +1795,15 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "石板小巷與燈籠極有京都韻味，享用京野菜與暖胃鍋物。"
+          notes: "石板小巷與燈籠極具京都風情，享用京野菜與暖胃鍋物。"
         },
         {
           id: "evt-d1-5",
           dayIndex: 0,
           startTime: "20:45",
           durationMin: 50,
-          category: "sightseeing",
-          name: "鴨川四條大橋散步",
+          category: "attraction",
+          name: "鴨川四條大橋夜色散步",
           address: "京都市中京區四條大橋",
           mapX: 296,
           mapY: 175,
@@ -1793,16 +1815,16 @@
           isPaid: false,
           isEstimated: false,
           locked: false,
-          notes: "餐後沿鴨川河畔散步吹風，順道去便利商店買隔日早餐。"
+          notes: "餐後沿鴨川河畔散步吹風，順道購買隔日早餐與熱飲。"
         },
 
-        // Day 2: 2027-01-29 (嵐山)
+        // Day 2: 2027-01-29 (嵐山 + 金閣寺)
         {
           id: "evt-d2-1",
           dayIndex: 1,
           startTime: "08:30",
-          durationMin: 95,
-          category: "sightseeing",
+          durationMin: 85,
+          category: "attraction",
           name: "嵐山竹林小徑與野宮神社",
           address: "京都市右京區嵯峨野宮町1",
           mapX: 115,
@@ -1815,15 +1837,15 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "清晨竹林人潮最少，野宮神社黑木鳥居與苔庭非常清幽（御守預算估算）。"
+          notes: "清晨竹林人潮最少，野宮神社黑木鳥居與苔庭清幽（御守預算估算）。"
         },
         {
           id: "evt-d2-2",
           dayIndex: 1,
-          startTime: "10:15",
-          durationMin: 90,
-          category: "sightseeing",
-          name: "天龍寺庭園",
+          startTime: "10:05",
+          durationMin: 80,
+          category: "attraction",
+          name: "天龍寺曹源池庭園",
           address: "京都市右京區嵯峨天龍寺芒ノ馬場町68",
           mapX: 122,
           mapY: 135,
@@ -1835,73 +1857,73 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "世界遺產曹源池庭園 ¥500 + 諸堂參拜 ¥300（2027票價待確認）。"
+          notes: "世界遺產庭園 ¥500 + 諸堂參拜 ¥300（2027 票價待確認）。"
         },
         {
           id: "evt-d2-3",
           dayIndex: 1,
-          startTime: "12:00",
-          durationMin: 90,
+          startTime: "11:40",
+          durationMin: 85,
           category: "food",
-          name: "嵐山湯豆腐午餐",
+          name: "渡月橋與嵐山湯豆腐午餐",
           address: "京都市右京區嵯峨天龍寺造路町",
-          mapX: 132,
-          mapY: 142,
-          lat: 35.0156,
-          lng: 135.6768,
+          mapX: 130,
+          mapY: 152,
+          lat: 35.0142,
+          lng: 135.6772,
           currency: "JPY",
-          costAmount: 3600,
+          costAmount: 3500,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "冬日嵐山必吃手工湯豆腐與胡麻豆腐料理。"
+          notes: "欣賞桂川與渡月橋冬景，享用京都名物手工湯豆腐套餐。"
         },
         {
           id: "evt-d2-4",
           dayIndex: 1,
-          startTime: "14:00",
-          durationMin: 120,
-          category: "sightseeing",
-          name: "渡月橋與嵐山大街抹茶甜點",
-          address: "京都市右京區嵯峨中之島町",
-          mapX: 128,
-          mapY: 158,
-          lat: 35.0129,
-          lng: 135.6777,
+          startTime: "13:15",
+          durationMin: 65,
+          category: "food",
+          name: "嵐山大街抹茶甜點巡禮",
+          address: "京都市右京區嵯峨天龍寺造路町20",
+          mapX: 136,
+          mapY: 144,
+          lat: 35.0152,
+          lng: 135.6775,
           currency: "JPY",
-          costAmount: 1800,
+          costAmount: 1400,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "漫步渡月橋欣賞桂川冬景，品嚐 % Arabica 或 eX cafe 烤糰子抹茶。"
+          notes: "品嚐 % Arabica 咖啡或 eX cafe 炭烤糰子抹茶。"
         },
         {
           id: "evt-d2-5",
           dayIndex: 1,
-          startTime: "16:30",
-          durationMin: 75,
-          category: "transport",
-          name: "嵐電足湯與返程",
-          address: "京福電鐵嵐山站 駅舎足湯",
-          mapX: 136,
-          mapY: 146,
-          lat: 35.0152,
-          lng: 135.6775,
+          startTime: "15:10",
+          durationMin: 80,
+          category: "attraction",
+          name: "金閣寺（鹿苑寺）",
+          address: "京都市北區金閣寺町1",
+          mapX: 195,
+          mapY: 75,
+          lat: 35.0394,
+          lng: 135.7292,
           currency: "JPY",
-          costAmount: 250,
+          costAmount: 500,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "在嵐電月台旁泡溫泉足湯暖腳（含原創小毛巾），之後搭車返回京都站。"
+          notes: "午後陽光灑落鏡湖池與金閣倒影最耀眼（拜觀券為御守護符）。"
         },
         {
           id: "evt-d2-6",
           dayIndex: 1,
-          startTime: "18:30",
-          durationMin: 80,
+          startTime: "17:45",
+          durationMin: 85,
           category: "food",
           name: "京都站拉麵小路晚餐",
           address: "京都市下京區烏丸通塩小路下ル (京都駅ビル10F)",
@@ -1915,20 +1937,20 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "集結全國名店拉麵，自動售票機點餐。"
+          notes: "集結日本各地名店拉麵，自動售票機點餐。"
         },
 
-        // Day 3: 2027-01-30 (清水寺 & 伏見稻荷夜色)
+        // Day 3: 2027-01-30 (清水寺 → 祇園 → 錦市場 → 晚上伏見稻荷大社)
         {
           id: "evt-d3-1",
           dayIndex: 2,
           startTime: "08:30",
-          durationMin: 150,
-          category: "sightseeing",
-          name: "清水寺與二年坂三年坂",
+          durationMin: 110,
+          category: "attraction",
+          name: "清水寺本堂與音羽瀑布",
           address: "京都市東山區清水1丁目294",
-          mapX: 332,
-          mapY: 202,
+          mapX: 334,
+          mapY: 204,
           lat: 34.9949,
           lng: 135.7850,
           currency: "JPY",
@@ -1937,55 +1959,75 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "早起避開團客登清水舞台，沿三年坂、二年坂逛老街與伴手禮。"
+          notes: "早起避開團客登清水舞台俯瞰京都市景（2027 票價待確認）。"
         },
         {
           id: "evt-d3-2",
           dayIndex: 2,
-          startTime: "11:30",
-          durationMin: 110,
+          startTime: "10:30",
+          durationMin: 75,
+          category: "attraction",
+          name: "二年坂・三年坂老街散策",
+          address: "京都市東山區清水2丁目・桝屋町",
+          mapX: 325,
+          mapY: 192,
+          lat: 34.9985,
+          lng: 135.7808,
+          currency: "JPY",
+          costAmount: 1000,
+          costScope: "per_person",
+          isPaid: false,
+          isEstimated: true,
+          locked: false,
+          notes: "沿石階老街逛八橋點心、清水燒與吉卜力專賣店。"
+        },
+        {
+          id: "evt-d3-3",
+          dayIndex: 2,
+          startTime: "12:00",
+          durationMin: 105,
           category: "food",
-          name: "祇園花見小路與京町家午餐",
+          name: "祇園花見小路與京料理午餐",
           address: "京都市東山區祇園町南側",
           mapX: 312,
           mapY: 180,
           lat: 35.0022,
           lng: 135.7751,
           currency: "JPY",
-          costAmount: 2600,
+          costAmount: 2800,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "花見小路町家建築拍照，品嚐親子丼或京風烏龍麵。"
-        },
-        {
-          id: "evt-d3-3",
-          dayIndex: 2,
-          startTime: "14:00",
-          durationMin: 110,
-          category: "sightseeing",
-          name: "八坂神社與錦天滿宮",
-          address: "京都市東山區祇園町北側625",
-          mapX: 318,
-          mapY: 168,
-          lat: 35.0037,
-          lng: 135.7785,
-          currency: "JPY",
-          costAmount: 800,
-          costScope: "per_person",
-          isPaid: false,
-          isEstimated: true,
-          locked: false,
-          notes: "參拜祇園守護神八坂神社，再過四條大橋至錦天滿宮祈求智慧與平安。"
+          notes: "花見小路町家建築拍照，品嚐親子丼或京風懷石便當。"
         },
         {
           id: "evt-d3-4",
           dayIndex: 2,
-          startTime: "16:30",
-          durationMin: 140,
-          category: "sightseeing",
-          name: "伏見稻荷大社千本鳥居（黃昏至點燈夜色）",
+          startTime: "14:15",
+          durationMin: 100,
+          category: "food",
+          name: "錦市場美食巡禮（京都人的廚房）",
+          address: "京都市中京區錦小路通",
+          mapX: 270,
+          mapY: 165,
+          lat: 35.0050,
+          lng: 135.7649,
+          currency: "JPY",
+          costAmount: 2200,
+          costScope: "per_person",
+          isPaid: false,
+          isEstimated: true,
+          locked: false,
+          notes: "現烤玉子燒、豆乳甜甜圈、鮮魚串燒與京漬物試吃。"
+        },
+        {
+          id: "evt-d3-5",
+          dayIndex: 2,
+          startTime: "16:45",
+          durationMin: 150,
+          category: "attraction",
+          name: "晚上的伏見稻荷大社千本鳥居（黃昏至點燈夜色）",
           address: "京都市伏見區深草藪之内町68",
           mapX: 295,
           mapY: 278,
@@ -1997,36 +2039,16 @@
           isPaid: false,
           isEstimated: false,
           locked: false,
-          notes: "24小時開放！16:30 抵達先看夕陽餘暉，17:30 後燈籠亮起感受夜間千本鳥居奇幻氛圍。"
-        },
-        {
-          id: "evt-d3-5",
-          dayIndex: 2,
-          startTime: "19:30",
-          durationMin: 80,
-          category: "food",
-          name: "伏見站前串燒與烏龍麵晚餐",
-          address: "京都市伏見區深草一ノ坪町 (伏見稻荷站周邊)",
-          mapX: 286,
-          mapY: 284,
-          lat: 34.9668,
-          lng: 135.7695,
-          currency: "JPY",
-          costAmount: 2400,
-          costScope: "per_person",
-          isPaid: false,
-          isEstimated: true,
-          locked: false,
-          notes: "參拜後在車站前暖心吃串燒與狐狸豆皮烏龍麵。"
+          notes: "重點行程！24小時開放，16:45 抵達感受夕陽轉入夜晚燈籠點亮的千本鳥居神秘氛圍，建議走至四ツ辻俯瞰京都夜景。"
         },
 
-        // Day 4: 2027-01-31 (宇治抹茶 + 伏見酒藏)
+        // Day 4: 2027-01-31 (宇治)
         {
           id: "evt-d4-1",
           dayIndex: 3,
-          startTime: "08:30",
+          startTime: "08:45",
           durationMin: 105,
-          category: "sightseeing",
+          category: "attraction",
           name: "宇治平等院鳳凰堂",
           address: "京都府宇治市宇治蓮華116",
           mapX: 342,
@@ -2039,34 +2061,34 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "庭園+鳳翔館 ¥700，鳳凰堂內部拜觀 ¥300（10圓硬幣背面建築）。"
+          notes: "庭園+鳳翔館 ¥700，鳳凰堂內部拜觀 ¥300（日圓 10 元硬幣背面建築）。"
         },
         {
           id: "evt-d4-2",
           dayIndex: 3,
           startTime: "10:45",
-          durationMin: 120,
+          durationMin: 130,
           category: "food",
-          name: "中村藤吉本店抹茶午餐與甜點",
+          name: "宇治表參道抹茶午餐（中村藤吉／伊藤久右衛門）",
           address: "京都府宇治市宇治壱番10",
           mapX: 332,
           mapY: 335,
           lat: 34.8902,
           lng: 135.8012,
           currency: "JPY",
-          costAmount: 2800,
+          costAmount: 2900,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "10:00 抽整理券候位，享用抹茶蕎麥麵與竹筒生茶凍聖代。"
+          notes: "先抽整理券候位，享用抹茶蕎麥麵與竹筒生茶凍聖代，採買宇治玉露與焙茶。"
         },
         {
           id: "evt-d4-3",
           dayIndex: 3,
           startTime: "13:30",
-          durationMin: 90,
-          category: "sightseeing",
+          durationMin: 120,
+          category: "attraction",
           name: "宇治上神社與宇治川散步",
           address: "京都府宇治市宇治山田59",
           mapX: 354,
@@ -2079,35 +2101,15 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "過朝霧橋參拜世界遺產宇治上神社，挑選可愛兔子御神籤。"
+          notes: "過橘橋與朝霧橋參拜日本最古神社建築「宇治上神社」，挑選可愛兔子御神籤。"
         },
         {
           id: "evt-d4-4",
           dayIndex: 3,
-          startTime: "15:30",
-          durationMin: 110,
-          category: "sightseeing",
-          name: "伏見酒藏散步（月桂冠大倉紀念館周邊）",
-          address: "京都市伏見區南浜町247",
-          mapX: 278,
-          mapY: 312,
-          lat: 34.9316,
-          lng: 135.7611,
-          currency: "JPY",
-          costAmount: 600,
-          costScope: "per_person",
-          isPaid: false,
-          isEstimated: true,
-          locked: false,
-          notes: "沿宇治川派流白壁酒藏建築漫步，體驗伏見名水清酒試飲。"
-        },
-        {
-          id: "evt-d4-5",
-          dayIndex: 3,
-          startTime: "18:30",
-          durationMin: 95,
+          startTime: "18:00",
+          durationMin: 100,
           category: "food",
-          name: "河原町壽喜燒晚餐",
+          name: "京都市區黑毛和牛壽喜燒晚餐",
           address: "京都市中京區河原町通三條下ル",
           mapX: 282,
           mapY: 166,
@@ -2119,57 +2121,57 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "品嚐關西風先煎後煮的黑毛和牛壽喜燒。"
+          notes: "返回京都市區享用關西風砂糖先煎和牛壽喜燒。"
         },
 
-        // Day 5: 2027-02-01 (奈良一日游)
+        // Day 5: 2027-02-01 (奈良)
         {
           id: "evt-d5-1",
           dayIndex: 4,
-          startTime: "08:30",
-          durationMin: 130,
-          category: "sightseeing",
-          name: "奈良公園與東大寺大佛殿",
-          address: "奈良市雑司町406-1",
-          mapX: 365,
-          mapY: 410,
-          lat: 34.6890,
-          lng: 135.8398,
+          startTime: "08:45",
+          durationMin: 60,
+          category: "attraction",
+          name: "奈良公園餵鹿散步",
+          address: "奈良市雑司町・奈良公園",
+          mapX: 358,
+          mapY: 404,
+          lat: 34.6851,
+          lng: 135.8430,
           currency: "JPY",
-          costAmount: 1000,
+          costAmount: 200,
           costScope: "per_person",
           isPaid: false,
-          isEstimated: true,
+          isEstimated: false,
           locked: false,
-          notes: "鹿仙貝 ¥200 + 東大寺大佛殿拜觀料 ¥800（2027票價待確認）。"
+          notes: "購買鹿仙貝（¥200）與點頭敬禮的奈良小鹿互動。"
         },
         {
           id: "evt-d5-2",
           dayIndex: 4,
-          startTime: "11:30",
-          durationMin: 95,
-          category: "food",
-          name: "奈良町古民家午餐",
-          address: "奈良市下御門町・ならまち",
-          mapX: 352,
-          mapY: 425,
-          lat: 34.6788,
-          lng: 135.8306,
+          startTime: "09:55",
+          durationMin: 90,
+          category: "attraction",
+          name: "東大寺大佛殿",
+          address: "奈良市雑司町406-1",
+          mapX: 365,
+          mapY: 412,
+          lat: 34.6890,
+          lng: 135.8398,
           currency: "JPY",
-          costAmount: 2400,
+          costAmount: 800,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "在百年町家餐廳享用奈良名物釜飯或柿葉壽司。"
+          notes: "參拜世界最大木造殿堂與盧舍那大佛（2027 拜觀料待確認）。"
         },
         {
           id: "evt-d5-3",
           dayIndex: 4,
-          startTime: "13:45",
-          durationMin: 110,
-          category: "sightseeing",
-          name: "春日大社參道與鹿群散步",
+          startTime: "11:45",
+          durationMin: 90,
+          category: "attraction",
+          name: "春日大社石燈籠參道",
           address: "奈良市春日野町160",
           mapX: 382,
           mapY: 418,
@@ -2181,47 +2183,47 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "穿越原始林與石燈籠參道，特別參拜 ¥700。"
+          notes: "漫步苔蘚石燈籠參道，特別參拜 ¥700。"
         },
         {
           id: "evt-d5-4",
           dayIndex: 4,
-          startTime: "16:30",
+          startTime: "13:35",
           durationMin: 110,
-          category: "sightseeing",
-          name: "返回京都市區・四條百貨伴手禮採買",
-          address: "京都市下京區四條烏丸大丸百貨",
-          mapX: 256,
-          mapY: 175,
-          lat: 35.0036,
-          lng: 135.7615,
+          category: "food",
+          name: "奈良町古民家午餐與中谷堂現搗麻糬",
+          address: "奈良市橋本町29・ならまち",
+          mapX: 350,
+          mapY: 426,
+          lat: 34.6818,
+          lng: 135.8295,
           currency: "JPY",
-          costAmount: 6000,
+          costAmount: 2600,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "採買北山茶之菓、小倉山莊仙貝與宇治抹茶粉。"
+          notes: "享用奈良名物釜飯，回程經三條通買中谷堂艾草紅豆麻糬（¥200/顆）。"
         },
         {
           id: "evt-d5-5",
           dayIndex: 4,
-          startTime: "19:00",
-          durationMin: 95,
-          category: "food",
-          name: "京都塔夜景與居酒屋晚餐",
-          address: "京都市下京區烏丸通七條下ル東塩小路町721-1",
-          mapX: 255,
-          mapY: 222,
-          lat: 34.9875,
-          lng: 135.7593,
+          startTime: "17:00",
+          durationMin: 150,
+          category: "attraction",
+          name: "回京都四條河原町最後購物與晚餐",
+          address: "京都市下京區四條河原町百貨商圈",
+          mapX: 274,
+          mapY: 170,
+          lat: 35.0038,
+          lng: 135.7689,
           currency: "JPY",
-          costAmount: 4500,
+          costAmount: 6500,
           costScope: "per_person",
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "京都最後一晚登京都塔展望室（門票約¥900）並享用居酒屋慶功晚餐。"
+          notes: "高島屋、大丸百貨與藤井大丸採買伴手禮，享用京都最後一晚慶功晚餐。"
         },
 
         // Day 6: 2027-02-02 (賦歸日 - MM027 15:25 離開)
@@ -2230,9 +2232,9 @@
           dayIndex: 5,
           startTime: "08:45",
           durationMin: 30,
-          category: "hotel",
-          name: "RESI STAY MAYU 退房",
-          address: "京都市下京區五條烏丸一帶 (RESI STAY MAYU)",
+          category: "stay",
+          name: "RESI STAY MAYU 退房與整理行李",
+          address: "京都市下京區五條／河原町五條 (RESI STAY MAYU)",
           mapX: 255,
           mapY: 205,
           lat: 34.9965,
@@ -2243,15 +2245,15 @@
           isPaid: true,
           isEstimated: false,
           locked: true,
-          notes: "確認隨身護照、行動電源與鑰匙歸還，拖行李步行向南前往東本願寺。"
+          notes: "確認護照、行動電源與隨身物品，退房後攜帶行李向南步行前往東本願寺（亦可先至京都站置物櫃寄放）。"
         },
         {
           id: "evt-d6-2",
           dayIndex: 5,
-          startTime: "09:15",
-          durationMin: 60,
-          category: "sightseeing",
-          name: "東本願寺晨間參拜",
+          startTime: "09:20",
+          durationMin: 55,
+          category: "attraction",
+          name: "東本願寺晨間散步",
           address: "京都市下京區烏丸通七條上ル",
           mapX: 253,
           mapY: 214,
@@ -2268,10 +2270,10 @@
         {
           id: "evt-d6-3",
           dayIndex: 5,
-          startTime: "10:30",
+          startTime: "10:25",
           durationMin: 55,
           category: "food",
-          name: "京都站前咖啡早午餐與最後伴手禮",
+          name: "京都站早午餐與伴手禮補貨",
           address: "京都市下京區京都站前商圈",
           mapX: 255,
           mapY: 228,
@@ -2283,7 +2285,7 @@
           isPaid: false,
           isEstimated: true,
           locked: false,
-          notes: "享用京都老牌喫茶店厚切吐司與咖啡，11:20 前抵達 JR 京都站 30 號月台。"
+          notes: "享用京都老牌喫茶店早午餐，11:20 前抵達 JR 京都站 30 號月台。"
         },
         {
           id: "evt-d6-4",
@@ -2291,7 +2293,7 @@
           startTime: "13:05",
           durationMin: 140,
           category: "transport",
-          name: "關西機場 T2 報到 → 樂桃 MM027 15:25 返抵台灣",
+          name: "關西國際機場 KIX T2 報到 → 樂桃 MM027 15:25 返台",
           address: "関西国際空港 第2ターミナル",
           mapX: 85,
           mapY: 365,
@@ -2303,44 +2305,43 @@
           isPaid: true,
           isEstimated: false,
           locked: true,
-          notes: "已確認航班：15:25 KIX 起飛返回台灣。13:05 抵達機場預留託運、出境與免稅店時間。"
+          notes: "已確認航班：15:25 KIX T2 起飛返回台灣。13:05 抵達機場預留託運、出境與免稅店採買時間。"
         }
       ],
       segments: [
         // Day 1
         { id: "seg-d1-1", dayIndex: 0, fromEventId: "evt-d1-1", toEventId: "evt-d1-2", mode: "train", modeLabel: "JR HARUKA 特急 + 地鐵烏丸線", durationMin: 95, currency: "JPY", costAmount: 2400, costScope: "per_person", isPaid: false, isEstimated: true, note: "KIX 搭 HARUKA 至京都站(80分)轉地鐵至五條站" },
-        { id: "seg-d1-2", dayIndex: 0, fromEventId: "evt-d1-2", toEventId: "evt-d1-3", mode: "subway", modeLabel: "地鐵烏丸線（五條→四條）+ 步行", durationMin: 15, currency: "JPY", costAmount: 220, costScope: "per_person", isPaid: false, isEstimated: false, note: "搭 1 站至四條站，步行至錦市場入口" },
-        { id: "seg-d1-3", dayIndex: 0, fromEventId: "evt-d1-3", toEventId: "evt-d1-4", mode: "walk", modeLabel: "純步行", durationMin: 8, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "穿過新京極步行至先斗町巷口" },
+        { id: "seg-d1-2", dayIndex: 0, fromEventId: "evt-d1-2", toEventId: "evt-d1-3", mode: "subway", modeLabel: "地鐵烏丸線（五條→四條）+ 步行", durationMin: 15, currency: "JPY", costAmount: 220, costScope: "per_person", isPaid: false, isEstimated: false, note: "搭 1 站至四條站，步行至河原町新京極" },
+        { id: "seg-d1-3", dayIndex: 0, fromEventId: "evt-d1-3", toEventId: "evt-d1-4", mode: "walk", modeLabel: "純步行", durationMin: 7, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "穿過新京極步行至先斗町巷口" },
         { id: "seg-d1-4", dayIndex: 0, fromEventId: "evt-d1-4", toEventId: "evt-d1-5", mode: "walk", modeLabel: "純步行", durationMin: 5, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "步出先斗町即達四條大橋" },
 
         // Day 2
         { id: "seg-d2-1", dayIndex: 1, fromEventId: null, toEventId: "evt-d2-1", fromName: "RESI STAY MAYU", mode: "train", modeLabel: "地鐵 + JR嵯峨野線（京都→嵯峨嵐山）", durationMin: 45, currency: "JPY", costAmount: 460, costScope: "per_person", isPaid: false, isEstimated: false, note: "五條搭地鐵至京都站轉 JR 嵯峨野線快速列車" },
         { id: "seg-d2-2", dayIndex: 1, fromEventId: "evt-d2-1", toEventId: "evt-d2-2", mode: "walk", modeLabel: "純步行", durationMin: 6, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "出竹林小徑北門即接天龍寺北門" },
-        { id: "seg-d2-3", dayIndex: 1, fromEventId: "evt-d2-2", toEventId: "evt-d2-3", mode: "walk", modeLabel: "純步行", durationMin: 5, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "天龍寺正門對面大街餐廳" },
-        { id: "seg-d2-4", dayIndex: 1, fromEventId: "evt-d2-3", toEventId: "evt-d2-4", mode: "walk", modeLabel: "純步行", durationMin: 7, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿嵐山大街步行至渡月橋畔" },
-        { id: "seg-d2-5", dayIndex: 1, fromEventId: "evt-d2-4", toEventId: "evt-d2-5", mode: "walk", modeLabel: "純步行", durationMin: 5, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "前往嵐電嵐山站" },
-        { id: "seg-d2-6", dayIndex: 1, fromEventId: "evt-d2-5", toEventId: "evt-d2-6", mode: "train", modeLabel: "JR 嵯峨野線（嵯峨嵐山→京都站）", durationMin: 25, currency: "JPY", costAmount: 240, costScope: "per_person", isPaid: false, isEstimated: false, note: "快速列車 17 分鐘直達京都站" },
+        { id: "seg-d2-3", dayIndex: 1, fromEventId: "evt-d2-2", toEventId: "evt-d2-3", mode: "walk", modeLabel: "純步行", durationMin: 6, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "天龍寺前大街步行至渡月橋畔餐廳" },
+        { id: "seg-d2-4", dayIndex: 1, fromEventId: "evt-d2-3", toEventId: "evt-d2-4", mode: "walk", modeLabel: "純步行", durationMin: 5, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿嵐山大街散策" },
+        { id: "seg-d2-5", dayIndex: 1, fromEventId: "evt-d2-4", toEventId: "evt-d2-5", mode: "train", modeLabel: "嵐電北野線（嵐山→北野白梅町）+ 市巴", durationMin: 40, currency: "JPY", costAmount: 480, costScope: "per_person", isPaid: false, isEstimated: true, note: "嵐電至北野白梅町轉市營巴士 101/205 至金閣寺道" },
+        { id: "seg-d2-6", dayIndex: 1, fromEventId: "evt-d2-5", toEventId: "evt-d2-6", mode: "bus", modeLabel: "京都市營巴士 205 號（金閣寺道→京都站）", durationMin: 45, currency: "JPY", costAmount: 230, costScope: "per_person", isPaid: false, isEstimated: false, note: "直達京都站前巴士總站" },
 
         // Day 3
         { id: "seg-d3-1", dayIndex: 2, fromEventId: null, toEventId: "evt-d3-1", fromName: "RESI STAY MAYU", mode: "bus", modeLabel: "京都市營巴士 80 / 207 號", durationMin: 28, currency: "JPY", costAmount: 230, costScope: "per_person", isPaid: false, isEstimated: false, note: "河原町五條搭市巴至五條坂，步行上坡 10 分" },
-        { id: "seg-d3-2", dayIndex: 2, fromEventId: "evt-d3-1", toEventId: "evt-d3-2", mode: "walk", modeLabel: "純步行（沿二年坂散步下山）", durationMin: 18, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "經三年坂、二年坂、寧寧之道至花見小路" },
-        { id: "seg-d3-3", dayIndex: 2, fromEventId: "evt-d3-2", toEventId: "evt-d3-3", mode: "walk", modeLabel: "純步行", durationMin: 10, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "花見小路北端即八坂神社，西行達錦天滿宮" },
-        { id: "seg-d3-4", dayIndex: 2, fromEventId: "evt-d3-3", toEventId: "evt-d3-4", mode: "train", modeLabel: "京阪電鐵本線（祇園四條→伏見稻荷）", durationMin: 20, currency: "JPY", costAmount: 220, costScope: "per_person", isPaid: false, isEstimated: false, note: "搭京阪準急/普通列車 9 分鐘抵伏見稻荷站" },
-        { id: "seg-d3-5", dayIndex: 2, fromEventId: "evt-d3-4", toEventId: "evt-d3-5", mode: "walk", modeLabel: "純步行", durationMin: 6, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿裏參道商店街步行至車站前" },
+        { id: "seg-d3-2", dayIndex: 2, fromEventId: "evt-d3-1", toEventId: "evt-d3-2", mode: "walk", modeLabel: "純步行", durationMin: 8, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿清水坂下坡接三年坂" },
+        { id: "seg-d3-3", dayIndex: 2, fromEventId: "evt-d3-2", toEventId: "evt-d3-3", mode: "walk", modeLabel: "純步行", durationMin: 12, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "經二年坂、寧寧之道至花見小路" },
+        { id: "seg-d3-4", dayIndex: 2, fromEventId: "evt-d3-3", toEventId: "evt-d3-4", mode: "walk", modeLabel: "純步行（過四條大橋）", durationMin: 14, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿四條通向西步行至錦市場" },
+        { id: "seg-d3-5", dayIndex: 2, fromEventId: "evt-d3-4", toEventId: "evt-d3-5", mode: "train", modeLabel: "京阪電鐵本線（祇園四條→伏見稻荷）", durationMin: 24, currency: "JPY", costAmount: 220, costScope: "per_person", isPaid: false, isEstimated: false, note: "步行至祇園四條站搭京阪列車 9 分鐘抵伏見稻荷站" },
 
         // Day 4
         { id: "seg-d4-1", dayIndex: 3, fromEventId: null, toEventId: "evt-d4-1", fromName: "RESI STAY MAYU", mode: "train", modeLabel: "地鐵烏丸線 + JR 奈良線（京都→宇治）", durationMin: 42, currency: "JPY", costAmount: 460, costScope: "per_person", isPaid: false, isEstimated: false, note: "五條至京都站轉 JR 奈良線快速列車 17 分鐘達宇治" },
-        { id: "seg-d4-2", dayIndex: 3, fromEventId: "evt-d4-1", toEventId: "evt-d4-2", mode: "walk", modeLabel: "純步行", durationMin: 6, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿平等院表參道步行至本店" },
-        { id: "seg-d4-3", dayIndex: 3, fromEventId: "evt-d4-2", toEventId: "evt-d4-3", mode: "walk", modeLabel: "純步行（過宇治橋與朝霧橋）", durationMin: 14, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "橫跨宇治川前往宇治上神社" },
-        { id: "seg-d4-4", dayIndex: 3, fromEventId: "evt-d4-3", toEventId: "evt-d4-4", mode: "train", modeLabel: "京阪宇治線轉本線（宇治→中書島）", durationMin: 35, currency: "JPY", costAmount: 320, costScope: "per_person", isPaid: false, isEstimated: false, note: "京阪宇治站搭車至中書島站，步行 5 分達酒藏區" },
-        { id: "seg-d4-5", dayIndex: 3, fromEventId: "evt-d4-4", toEventId: "evt-d4-5", mode: "train", modeLabel: "京阪電鐵本線（中書島→祇園四條）", durationMin: 24, currency: "JPY", costAmount: 280, costScope: "per_person", isPaid: false, isEstimated: false, note: "搭京阪特急 12 分鐘直達祇園四條，過橋即河原町" },
+        { id: "seg-d4-2", dayIndex: 3, fromEventId: "evt-d4-1", toEventId: "evt-d4-2", mode: "walk", modeLabel: "純步行", durationMin: 6, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿平等院表參道步行" },
+        { id: "seg-d4-3", dayIndex: 3, fromEventId: "evt-d4-2", toEventId: "evt-d4-3", mode: "walk", modeLabel: "純步行（過橘橋與朝霧橋）", durationMin: 14, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "橫跨宇治川前往宇治上神社" },
+        { id: "seg-d4-4", dayIndex: 3, fromEventId: "evt-d4-3", toEventId: "evt-d4-4", mode: "train", modeLabel: "京阪宇治線轉本線（宇治→祇園四條）", durationMin: 45, currency: "JPY", costAmount: 320, costScope: "per_person", isPaid: false, isEstimated: false, note: "京阪宇治站經中書島轉特急至祇園四條，過橋即河原町" },
 
         // Day 5
-        { id: "seg-d5-1", dayIndex: 4, fromEventId: null, toEventId: "evt-d5-1", fromName: "RESI STAY MAYU", mode: "train", modeLabel: "地鐵烏丸線直通近鐵京都線（五條→近鐵奈良）", durationMin: 58, currency: "JPY", costAmount: 760, costScope: "per_person", isPaid: false, isEstimated: true, note: "五條站搭烏丸線直通近鐵急行至近鐵奈良站" },
-        { id: "seg-d5-2", dayIndex: 4, fromEventId: "evt-d5-1", toEventId: "evt-d5-2", mode: "walk", modeLabel: "純步行", durationMin: 16, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "經興福寺五重塔旁散步至奈良町老街" },
-        { id: "seg-d5-3", dayIndex: 4, fromEventId: "evt-d5-2", toEventId: "evt-d5-3", mode: "walk", modeLabel: "純步行", durationMin: 20, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "穿越奈良公園綠地前往春日大社參道" },
-        { id: "seg-d5-4", dayIndex: 4, fromEventId: "evt-d5-3", toEventId: "evt-d5-4", mode: "train", modeLabel: "奈良公車 + 近鐵直通地鐵（→四條站）", durationMin: 65, currency: "JPY", costAmount: 990, costScope: "per_person", isPaid: false, isEstimated: true, note: "春日大社搭巴士至近鐵奈良站，轉近鐵急行直通四條站" },
-        { id: "seg-d5-5", dayIndex: 4, fromEventId: "evt-d5-4", toEventId: "evt-d5-5", mode: "subway", modeLabel: "地鐵烏丸線（四條→京都站）", durationMin: 8, currency: "JPY", costAmount: 220, costScope: "per_person", isPaid: false, isEstimated: false, note: "搭 2 站 4 分鐘抵達京都站前" },
+        { id: "seg-d5-1", dayIndex: 4, fromEventId: null, toEventId: "evt-d5-1", fromName: "RESI STAY MAYU", mode: "train", modeLabel: "地鐵烏丸線直通近鐵京都線（五條→近鐵奈良）", durationMin: 58, currency: "JPY", costAmount: 760, costScope: "per_person", isPaid: false, isEstimated: true, note: "五條站搭烏丸線直通近鐵急行至近鐵奈良站，步行 8 分達公園" },
+        { id: "seg-d5-2", dayIndex: 4, fromEventId: "evt-d5-1", toEventId: "evt-d5-2", mode: "walk", modeLabel: "純步行", durationMin: 10, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "經南大門步行至東大寺大佛殿" },
+        { id: "seg-d5-3", dayIndex: 4, fromEventId: "evt-d5-2", toEventId: "evt-d5-3", mode: "walk", modeLabel: "純步行", durationMin: 18, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿奈良公園綠地步行至春日大社表參道" },
+        { id: "seg-d5-4", dayIndex: 4, fromEventId: "evt-d5-3", toEventId: "evt-d5-4", mode: "walk", modeLabel: "純步行", durationMin: 20, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "下坡步行至奈良町與三條通中谷堂" },
+        { id: "seg-d5-5", dayIndex: 4, fromEventId: "evt-d5-4", toEventId: "evt-d5-5", mode: "train", modeLabel: "近鐵奈良線直通地鐵烏丸線（→四條站）", durationMin: 58, currency: "JPY", costAmount: 760, costScope: "per_person", isPaid: false, isEstimated: true, note: "近鐵奈良站搭急行直通四條站，步行至河原町" },
 
         // Day 6
         { id: "seg-d6-1", dayIndex: 5, fromEventId: "evt-d6-1", toEventId: "evt-d6-2", mode: "walk", modeLabel: "純步行", durationMin: 8, currency: "JPY", costAmount: 0, costScope: "group", isPaid: false, isEstimated: false, note: "沿烏丸通向南步行即達東本願寺" },
@@ -2406,9 +2407,8 @@
         }
       ],
       assumptions: [
-        "【航班時刻已確認】去程樂桃 MM024 於 2027/01/28 13:10 抵達關西機場 KIX T2；回程 MM027 於 2027/02/02 15:25 離開 KIX T2，兩者皆已設為鎖定不可隨意移動時段。",
-        "【雙幣別記帳機制】樂桃來回機票（估算 TWD 18,600／全團）與 RESI STAY MAYU 5晚連住（估算 TWD 22,500／全團）已設為「台幣 (TWD) 已付」，您可點擊行程卡片輸入實際刷卡金額。",
-        "【現地日圓估算項目】日本當地門票、餐飲與車資（如 HARUKA ¥2,200、天龍寺 ¥800、平等院 ¥1,000、東大寺 ¥800）均以「日圓 (JPY) 估算」計入，並依費用總覽頁的匯率（預設 0.215）即時換算為台幣總預算。",
+        "【航班時刻已鎖定】去程樂桃 MM024 於 2027/01/28 13:10 抵達關西機場 KIX T2；回程 MM027 於 2027/02/02 15:25 離開 KIX T2，兩者皆已設為鎖定時段。",
+        "【精確雙幣別記帳】所有金額與匯率欄位皆不設整十進位限制，可輸入任意精確整數或小數（如 19371）。費用總覽先依幣別分別精確加總，僅在 JPY 乘上匯率換算 TWD 時取整，再與 TWD 精確總和相加。",
         "【2027 票價與班次待查】2027 年 1 月冬季 JR HARUKA 時刻表與各寺院拝観料若有微調，可直接在網站上點擊編輯並匯出 JSON 保存。"
       ]
     };
@@ -2477,7 +2477,7 @@
     }
 
     /* ==========================================================================
-       三、原創 40x30 SVG 日期專屬插圖 (Plane, Arashiyama, Torii, Uji, Nara, Tower)
+       三、原創 40x30 SVG 日期專屬插圖 (飛機、竹林渡月橋、千本鳥居、宇治抹茶、奈良鹿、京都塔)
        ========================================================================== */
     function getMascotSvg(type) {
       const start = `<svg width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${type}">`;
@@ -2490,13 +2490,13 @@
           <line x1="2" y1="24" x2="11" y2="24" stroke="#A8D3E6" stroke-width="1.7" stroke-linecap="round"/>
         `,
         arashiyama: `
-          <rect x="6" y="4" width="3.4" height="19" rx="1.5" fill="#B9DAA5" stroke="#3E3A39" stroke-width="1.7"/>
-          <rect x="11.5" y="6" width="3.4" height="17" rx="1.5" fill="#B9DAA5" stroke="#3E3A39" stroke-width="1.7"/>
-          <rect x="18" y="13" width="17" height="10" rx="3" fill="#F2A497" stroke="#3E3A39" stroke-width="1.7"/>
-          <rect x="21" y="15.5" width="4" height="3.5" rx="0.8" fill="#FFFDF6" stroke="#3E3A39" stroke-width="1.3"/>
-          <rect x="27.5" y="15.5" width="4" height="3.5" rx="0.8" fill="#FFFDF6" stroke="#3E3A39" stroke-width="1.3"/>
-          <circle cx="22" cy="24.5" r="2" fill="#3E3A39"/>
-          <circle cx="31" cy="24.5" r="2" fill="#3E3A39"/>
+          <rect x="6" y="4" width="3.4" height="18" rx="1.5" fill="#B9DAA5" stroke="#3E3A39" stroke-width="1.7"/>
+          <rect x="11.5" y="6" width="3.4" height="16" rx="1.5" fill="#B9DAA5" stroke="#3E3A39" stroke-width="1.7"/>
+          <path d="M17 22 Q26 14 36 22" stroke="#F6D27A" stroke-width="3.2" stroke-linecap="round"/>
+          <path d="M17 22 Q26 14 36 22" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="22" y1="19" x2="22" y2="24" stroke="#3E3A39" stroke-width="1.6"/>
+          <line x1="31" y1="19" x2="31" y2="24" stroke="#3E3A39" stroke-width="1.6"/>
+          <line x1="4" y1="25" x2="36" y2="25" stroke="#A8D3E6" stroke-width="2" stroke-linecap="round"/>
         `,
         torii: `
           <path d="M11 26 V9 M29 26 V9" stroke="#F2A497" stroke-width="3.6" stroke-linecap="round"/>
@@ -2522,20 +2522,16 @@
           <ellipse cx="20" cy="20.5" rx="2.5" ry="1.8" fill="#3E3A39"/>
         `,
         tower_train: `
-          <path d="M10 26 L13 10 L16 26 Z" fill="#FFFFFF" stroke="#3E3A39" stroke-width="1.6" stroke-linejoin="round"/>
-          <line x1="13" y1="4" x2="13" y2="10" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
-          <rect x="18" y="16" width="18" height="9" rx="3.5" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.7"/>
-          <rect x="21" y="18.5" width="4" height="3" rx="0.8" fill="#FFFFFF" stroke="#3E3A39" stroke-width="1.3"/>
-          <rect x="27" y="18.5" width="4" height="3" rx="0.8" fill="#FFFFFF" stroke="#3E3A39" stroke-width="1.3"/>
-          <circle cx="22" cy="26.2" r="1.8" fill="#3E3A39"/>
-          <circle cx="32" cy="26.2" r="1.8" fill="#3E3A39"/>
+          <path d="M8 26 L11 10 L14 26 Z" fill="#FFFFFF" stroke="#3E3A39" stroke-width="1.6" stroke-linejoin="round"/>
+          <line x1="11" y1="4" x2="11" y2="10" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M17 17 L25 15 L30 9 L32 10 L29 15 L36 14 L37 16 L28 18 L30 23 L28 24 L24 19 L18 20 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.5" stroke-linejoin="round"/>
         `
       };
       return start + (shapes[type] || shapes.torii) + end;
     }
 
     /* ==========================================================================
-       四、時間與雙幣別計算工具函式
+       四、時間與雙幣別精確計算工具函式（絕不四捨五入原始輸入數字）
        ========================================================================== */
     function timeToMinutes(hhmm) {
       const [h, m] = (hhmm || "09:00").split(":").map(Number);
@@ -2558,20 +2554,22 @@
 
     function getCategoryMeta(cat) {
       const map = {
-        sightseeing: { label: "景點", cls: "cat-sightseeing", bg: "bg-sightseeing", color: "#F6D27A" },
+        attraction: { label: "景點", cls: "cat-attraction", bg: "bg-attraction", color: "#F6D27A" },
+        sightseeing: { label: "景點", cls: "cat-attraction", bg: "bg-attraction", color: "#F6D27A" },
         food: { label: "餐飲", cls: "cat-food", bg: "bg-food", color: "#F2A497" },
-        hotel: { label: "住宿", cls: "cat-hotel", bg: "bg-hotel", color: "#A8D3E6" },
+        stay: { label: "住宿", cls: "cat-stay", bg: "bg-stay", color: "#A8D3E6" },
+        hotel: { label: "住宿", cls: "cat-stay", bg: "bg-stay", color: "#A8D3E6" },
         transport: { label: "交通/航班", cls: "cat-transport", bg: "bg-transport", color: "#B9DAA5" }
       };
-      return map[cat] || map.sightseeing;
+      return map[cat] || map.attraction;
     }
 
     function getModeMeta(mode) {
       const map = {
         train: { label: "JR / 近鐵 / 京阪", color: "#4678C5" },
-        subway: { label: "地鐵 / 嵐電", color: "#9266C2" },
+        subway: { label: "地鐵", color: "#9266C2" },
         shinkansen: { label: "新幹線", color: "#D8902C" },
-        bus: { label: "市營公車", color: "#3A9B80" },
+        bus: { label: "公車", color: "#3A9B80" },
         walk: { label: "步行", color: "#84909E" },
         taxi: { label: "計程車", color: "#D77968" }
       };
@@ -2588,40 +2586,60 @@
       return tripData.segments.filter(s => s.dayIndex === dayIndex);
     }
 
+    function formatExactNumber(num) {
+      const n = Number(num) || 0;
+      return n.toLocaleString("zh-TW", { maximumFractionDigits: 4 });
+    }
+
+    // 計算單筆項目的原幣精確金額（不四捨五入）
     function calcItemRawTotal(item) {
       const base = Number(item.costAmount) || 0;
-      const people = (tripData.meta.travelers.adults || 2) + (tripData.meta.travelers.children || 0);
+      const people = (Number(tripData.meta.travelers.adults) || 2) + (Number(tripData.meta.travelers.children) || 0);
       return item.costScope === "per_person" ? base * people : base;
     }
 
+    // 單筆折合台幣（TWD 保持原精確數值；JPY 乘上匯率後取整）
     function calcItemTwd(item) {
       const raw = calcItemRawTotal(item);
       const rate = Number(tripData.meta.exchangeRate) || 0.215;
-      return (item.currency || "JPY") === "TWD" ? Math.round(raw) : Math.round(raw * rate);
+      return (item.currency || "JPY") === "TWD" ? raw : Math.round(raw * rate);
     }
 
     function formatMoneyChip(item) {
       const raw = calcItemRawTotal(item);
       if (raw <= 0) return "免費 / 已含";
       const cur = item.currency || "JPY";
-      return cur === "TWD" ? `NT$${raw.toLocaleString()}` : `¥${raw.toLocaleString()}`;
+      return cur === "TWD" ? `NT$${formatExactNumber(raw)}` : `¥${formatExactNumber(raw)}`;
     }
 
+    // 精確雙幣別加總：先依幣別分別精確加總，僅在 JPY 乘上匯率換算為 TWD 時才取整，再與 TWD 精確總和相加
     function calculateAllFinancials() {
-      const byCatTwd = { sightseeing: 0, food: 0, hotel: 0, transport: 0 };
       let totalJpy = 0;
       let directTwd = 0;
       let estimatedCount = 0;
 
-      const processItem = (item, categoryKey) => {
+      const catJpy = { attraction: 0, food: 0, stay: 0, transport: 0 };
+      const catTwd = { attraction: 0, food: 0, stay: 0, transport: 0 };
+
+      const normalizeCat = (c) => {
+        if (c === "sightseeing") return "attraction";
+        if (c === "hotel") return "stay";
+        return catJpy[c] !== undefined ? c : "attraction";
+      };
+
+      const processItem = (item, rawCat) => {
+        const cat = normalizeCat(rawCat);
         const raw = calcItemRawTotal(item);
         const cur = item.currency || "JPY";
+
         if (cur === "TWD") {
           directTwd += raw;
+          catTwd[cat] += raw;
         } else {
           totalJpy += raw;
+          catJpy[cat] += raw;
         }
-        byCatTwd[categoryKey] = (byCatTwd[categoryKey] || 0) + calcItemTwd(item);
+
         if (item.isEstimated && raw > 0) estimatedCount++;
       };
 
@@ -2631,10 +2649,15 @@
       const rate = Number(tripData.meta.exchangeRate) || 0.215;
       const jpyConvertedTwd = Math.round(totalJpy * rate);
       const grandTwd = directTwd + jpyConvertedTwd;
-      const people = Math.max(1, (tripData.meta.travelers.adults || 2) + (tripData.meta.travelers.children || 0));
-      const perPersonTwd = Math.round(grandTwd / people);
 
-      return { byCatTwd, totalJpy, directTwd, grandTwd, perPersonTwd, estimatedCount };
+      const byCatTwd = {
+        attraction: catTwd.attraction + Math.round(catJpy.attraction * rate),
+        food: catTwd.food + Math.round(catJpy.food * rate),
+        stay: catTwd.stay + Math.round(catJpy.stay * rate),
+        transport: catTwd.transport + Math.round(catJpy.transport * rate)
+      };
+
+      return { byCatTwd, totalJpy, directTwd, jpyConvertedTwd, grandTwd, estimatedCount };
     }
 
     /* ==========================================================================
@@ -2653,7 +2676,7 @@
 
       if (showBudget) {
         eyeIcon.textContent = "👁️";
-        budgetText.textContent = `總花費 NT$${fin.grandTwd.toLocaleString()} (含 ¥${fin.totalJpy.toLocaleString()} + NT$${fin.directTwd.toLocaleString()})`;
+        budgetText.textContent = `總花費 NT$${formatExactNumber(fin.grandTwd)} (¥${formatExactNumber(fin.totalJpy)} + NT$${formatExactNumber(fin.directTwd)})`;
       } else {
         eyeIcon.textContent = "🙈";
         budgetText.textContent = "總花費 ••••••";
@@ -2778,7 +2801,7 @@
             <div class="card-title">${ev.name}</div>
             <div class="card-sub-info">
               <span>📍 ${ev.address}</span>
-              ${ev.costAmount > 0 ? `<span>🏷️ ${ev.costScope === "per_person" ? `${cur === "TWD" ? "NT$" : "¥"}${ev.costAmount.toLocaleString()}/人` : "全團金額"}</span>` : ""}
+              ${Number(ev.costAmount) > 0 ? `<span>🏷️ ${ev.costScope === "per_person" ? `${cur === "TWD" ? "NT$" : "¥"}${formatExactNumber(ev.costAmount)}/人` : "全團金額"}</span>` : ""}
             </div>
             ${ev.notes ? `<div class="card-note">${ev.notes}</div>` : ""}
           </article>
@@ -2812,7 +2835,7 @@
       const cur = seg.currency || "JPY";
       const div = document.createElement("div");
       div.className = "transit-connector-card" + (isWalk ? " pure-walk" : "");
-      div.title = "點擊編輯交通方式、時間、費用與幣別";
+      div.title = "點擊編輯交通方式、時間、精確金額與幣別";
       div.innerHTML = `
         <div style="display:flex; align-items:center; gap:6px;">
           <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${mMeta.color}; border:1.5px solid #3E3A39;"></span>
@@ -2923,7 +2946,7 @@
     }
 
     /* ==========================================================================
-       七、渲染週行事曆視圖 (單擊預覽、雙擊編輯、按住3秒拖移、底部把手調時長)
+       七、渲染週行事曆視圖（支援重疊並排、按住 3 秒拖移、底部把手調時長）
        ========================================================================== */
     function renderWeekGrid() {
       const grid = document.getElementById("week-grid");
@@ -2959,16 +2982,36 @@
         col.className = "week-day-column";
         const events = getDayEventsSorted(dayIdx);
 
-        events.forEach(ev => {
+        events.forEach((ev, idx) => {
           const startMin = timeToMinutes(ev.startTime);
+          const endMin = startMin + ev.durationMin;
           const topPx = Math.max(0, (startMin - 7 * 60) * pxPerMin);
           const heightPx = Math.max(24, ev.durationMin * pxPerMin);
           const catMeta = getCategoryMeta(ev.category);
+
+          // 簡易重疊偵測並排計算
+          const overlapping = events.filter(other => {
+            const oStart = timeToMinutes(other.startTime);
+            const oEnd = oStart + other.durationMin;
+            return startMin < oEnd && endMin > oStart;
+          });
+          const overlapCount = overlapping.length;
+          const overlapPos = overlapping.findIndex(o => o.id === ev.id);
 
           const block = document.createElement("div");
           block.className = `week-event-block ${catMeta.bg}`;
           block.style.top = `${topPx}px`;
           block.style.height = `${heightPx}px`;
+
+          if (overlapCount > 1) {
+            const widthPct = 96 / overlapCount;
+            block.style.width = `${widthPct}%`;
+            block.style.left = `${2 + overlapPos * widthPct}%`;
+          } else {
+            block.style.left = "3px";
+            block.style.right = "3px";
+          }
+
           block.title = `${ev.startTime} ${ev.name}（雙擊編輯；按住3秒拖移）`;
           block.innerHTML = `
             <div style="font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
@@ -3087,13 +3130,11 @@
       const targetEvents = mapShowAllDays ? tripData.events : getDayEventsSorted(selectedDayIndex);
       const daySegments = getDaySegments(selectedDayIndex);
 
-      // 同步更新 Google Maps 外部導航連結
       if (targetEvents.length > 0) {
         const coords = targetEvents.slice(0, 8).map(p => `${p.lat},${p.lng}`).join("/");
         document.getElementById("gmaps-day-link").href = `https://www.google.com/maps/dir/${coords}`;
       }
 
-      // 繪製灰階底圖搭配淡藍水域 (#A8D3E6) 的京都—宇治—奈良—關西機場繪本矢量地圖
       let linesSvg = "";
       if (!mapShowAllDays && targetEvents.length > 1) {
         for (let i = 0; i < targetEvents.length - 1; i++) {
@@ -3140,7 +3181,8 @@
           <path d="M105 95 L138 185 L220 330" stroke="#A8D3E6" stroke-width="7" stroke-linecap="round" fill="none" />
           <path d="M405 325 L340 340 L268 320" stroke="#A8D3E6" stroke-width="7" stroke-linecap="round" fill="none" />
           <!-- 區域文字標記 -->
-          <text x="95" y="102" font-size="11" font-weight="800" fill="#7C7772">嵐山・嵯峨野</text>
+          <text x="168" y="62" font-size="11" font-weight="800" fill="#7C7772">金閣寺・北山</text>
+          <text x="88" y="102" font-size="11" font-weight="800" fill="#7C7772">嵐山・嵯峨野</text>
           <text x="225" y="142" font-size="11" font-weight="800" fill="#7C7772">京都市中心・河原町</text>
           <text x="342" y="185" font-size="11" font-weight="800" fill="#7C7772">東山・清水</text>
           <text x="315" y="276" font-size="11" font-weight="800" fill="#7C7772">伏見稻荷</text>
@@ -3184,6 +3226,7 @@
 
         const item = document.createElement("div");
         item.className = "route-segment-item";
+        item.title = "雙擊或點擊編輯按鈕修改分段";
         item.innerHTML = `
           <div>
             <div style="font-size:0.76rem; color:var(--ink-soft);">${fromTitle} → ${toTitle}</div>
@@ -3193,36 +3236,55 @@
             </div>
             ${seg.note ? `<div style="font-size:0.75rem; color:var(--ink-soft); margin-top:2px;">${seg.note}</div>` : ""}
           </div>
-          <div style="text-align:right; min-width:86px;">
+          <div style="text-align:right; min-width:88px;">
             <div style="font-weight:800; font-size:0.85rem;">
               ${rawTotal > 0 ? `<span class="${cur === "TWD" ? "currency-badge-twd" : "currency-badge-jpy"}">${cur}</span> ${formatMoneyChip(seg)}` : "免費"}
             </div>
             <button type="button" class="tool-btn" style="padding:3px 9px; font-size:0.74rem; margin-top:4px;">編輯</button>
           </div>
         `;
-        item.querySelector("button").addEventListener("click", () => openSegmentModal(seg));
+        item.addEventListener("dblclick", () => openSegmentModal(seg));
+        item.querySelector("button").addEventListener("click", (e) => {
+          e.stopPropagation();
+          openSegmentModal(seg);
+        });
         list.appendChild(item);
       });
     }
 
     /* ==========================================================================
-       九、渲染費用總覽頁 (雙幣別 JPY + TWD 與圓餅圖)
+       九、渲染費用總覽頁 (#expensespage - 精確雙幣別統計與 SVG 圓餅圖)
        ========================================================================== */
     function renderExpensesPage() {
       const fin = calculateAllFinancials();
+      const budgetTarget = Number(tripData.meta.budgetTargetTwd) || 0;
 
-      document.getElementById("exp-total-jpy").textContent = `¥${fin.totalJpy.toLocaleString()}`;
-      document.getElementById("exp-direct-twd").textContent = `NT$${fin.directTwd.toLocaleString()}`;
-      document.getElementById("exp-grand-twd").textContent = `NT$${fin.grandTwd.toLocaleString()}`;
-      document.getElementById("exp-per-person-twd").textContent = `NT$${fin.perPersonTwd.toLocaleString()}`;
+      document.getElementById("exp-total-jpy").textContent = `¥${formatExactNumber(fin.totalJpy)}`;
+      document.getElementById("exp-direct-twd").textContent = `NT$${formatExactNumber(fin.directTwd)}`;
+      document.getElementById("exp-grand-twd").textContent = `NT$${formatExactNumber(fin.grandTwd)}`;
+      document.getElementById("budget-target-input").value = budgetTarget;
       document.getElementById("exp-est-badge").textContent = `${fin.estimatedCount} 項待確認/估算`;
+
+      const diffEl = document.getElementById("exp-budget-diff");
+      if (budgetTarget > 0) {
+        const diff = budgetTarget - fin.grandTwd;
+        if (diff >= 0) {
+          diffEl.style.color = "#245E21";
+          diffEl.textContent = `預算尚餘 NT$${formatExactNumber(diff)}`;
+        } else {
+          diffEl.style.color = "#A33C32";
+          diffEl.textContent = `超出預算 NT$${formatExactNumber(Math.abs(diff))}`;
+        }
+      } else {
+        diffEl.textContent = "";
+      }
 
       const pieSvg = document.getElementById("expense-pie-svg");
       const legendEl = document.getElementById("expense-pie-legend");
       pieSvg.innerHTML = "";
       legendEl.innerHTML = "";
 
-      const categories = ["hotel", "transport", "food", "sightseeing"];
+      const categories = ["stay", "transport", "food", "attraction"];
       let currentAngle = -Math.PI / 2;
 
       categories.forEach(catKey => {
@@ -3254,7 +3316,7 @@
             <span style="width:14px; height:14px; border-radius:4px; background:${meta.color}; border:2px solid #3E3A39; display:inline-block;"></span>
             ${meta.label} (${Math.round(pct * 100)}%)
           </span>
-          <span>NT$${valTwd.toLocaleString()}</span>
+          <span>NT$${formatExactNumber(valTwd)}</span>
         `;
         legendEl.appendChild(row);
       });
@@ -3269,7 +3331,8 @@
             day: `Day ${ev.dayIndex + 1} (${tripData.days[ev.dayIndex].shortDate})`,
             category: ev.category,
             name: ev.name,
-            item: ev
+            item: ev,
+            onClick: () => openEventModal(ev)
           });
         }
       });
@@ -3280,7 +3343,8 @@
             day: `Day ${seg.dayIndex + 1} (${tripData.days[seg.dayIndex].shortDate})`,
             category: "transport",
             name: `交通：${seg.modeLabel}`,
-            item: seg
+            item: seg,
+            onClick: () => openSegmentModal(seg)
           });
         }
       });
@@ -3291,6 +3355,7 @@
         const twdVal = calcItemTwd(r.item);
         const tr = document.createElement("tr");
         if (r.category === "food") tr.className = "row-food-tint";
+        tr.title = "點擊修改此筆精確金額";
         tr.innerHTML = `
           <td><strong>${r.day}</strong></td>
           <td><span class="card-cat-tag ${meta.bg}">${meta.label}</span></td>
@@ -3300,18 +3365,19 @@
             <strong>${formatMoneyChip(r.item)}</strong>
             <span style="font-size:0.78rem; color:var(--ink-soft);">(${r.item.costScope === "per_person" ? "每人×2" : "全團"})</span>
           </td>
-          <td><strong>NT$${twdVal.toLocaleString()}</strong></td>
+          <td><strong>NT$${formatExactNumber(twdVal)}</strong></td>
           <td>
-            ${r.item.isPaid ? `<span class="paid-badge">台幣/刷卡已付</span> ` : ""}
+            ${r.item.isPaid ? `<span class="paid-badge">已付</span> ` : ""}
             ${r.item.isEstimated ? `<span class="estimate-badge">估算/待確認</span>` : `<span style="color:#2B6E2A; font-weight:700;">已確認</span>`}
           </td>
         `;
+        tr.addEventListener("click", r.onClick);
         tbody.appendChild(tr);
       });
     }
 
     /* ==========================================================================
-       十、渲染攜帶用品頁 (packingpage)
+       十、渲染攜帶用品頁 (#packingpage)
        ========================================================================== */
     function renderPackingPage() {
       const grid = document.getElementById("packing-grid");
@@ -3357,20 +3423,24 @@
 
         const listEl = card.querySelector(".pack-items-list");
         filteredItems.forEach(it => {
-          const row = document.createElement("label");
+          const row = document.createElement("div");
           row.className = "pack-item-row" + (it.checked ? " checked" : "");
           row.innerHTML = `
-            <input type="checkbox" ${it.checked ? "checked" : ""} style="margin-top:4px; width:16px; height:16px;" />
-            <div>
-              <div style="font-weight:700; font-size:0.88rem;">${it.name} <span style="font-size:0.76rem; color:var(--ink-soft);">(${it.qty})</span></div>
-              ${it.note ? `<div style="font-size:0.75rem; color:var(--ink-soft);">${it.note}</div>` : ""}
-            </div>
+            <label class="pack-item-main">
+              <input type="checkbox" ${it.checked ? "checked" : ""} style="margin-top:4px; width:16px; height:16px;" />
+              <div class="pack-item-text">
+                <div style="font-weight:700; font-size:0.88rem;">${it.name} <span style="font-size:0.76rem; color:var(--ink-soft);">(${it.qty})</span></div>
+                ${it.note ? `<div style="font-size:0.75rem; color:var(--ink-soft);">${it.note}</div>` : ""}
+              </div>
+            </label>
+            <button type="button" class="tool-btn edit-pack-btn" style="padding:2px 8px; font-size:0.72rem;" title="編輯數量與備註">✎</button>
           `;
           row.querySelector("input").addEventListener("change", (e) => {
             it.checked = e.target.checked;
             saveTripData(false);
             renderPackingPage();
           });
+          row.querySelector(".edit-pack-btn").addEventListener("click", () => openPackingItemModal(cat, it));
           listEl.appendChild(row);
         });
 
@@ -3391,8 +3461,58 @@
       });
     }
 
+    function openPackingItemModal(cat, item) {
+      const dialog = document.getElementById("modal-dialog");
+      dialog.innerHTML = `
+        <h3 style="font-size:1.1rem;">🧳 編輯攜帶物品</h3>
+        <form id="pack-edit-form" class="form-grid">
+          <label class="form-field form-full">
+            物品名稱
+            <input type="text" name="name" class="form-input" value="${item.name}" required />
+          </label>
+          <label class="form-field form-full">
+            攜帶數量
+            <input type="text" name="qty" class="form-input" value="${item.qty || ""}" placeholder="例如：2件" />
+          </label>
+          <label class="form-field form-full">
+            備註提醒
+            <textarea name="note" class="form-input" rows="2">${item.note || ""}</textarea>
+          </label>
+          <div class="modal-footer form-full">
+            <button type="button" id="btn-del-pack" class="btn-danger">🗑️ 刪除</button>
+            <div style="display:flex; gap:8px;">
+              <button type="button" id="btn-cancel-pack" class="tool-btn">取消</button>
+              <button type="submit" class="btn-primary">儲存</button>
+            </div>
+          </div>
+        </form>
+      `;
+      document.getElementById("modal-backdrop").classList.remove("hidden");
+      document.getElementById("btn-cancel-pack").addEventListener("click", closeModal);
+      document.getElementById("btn-del-pack").addEventListener("click", () => {
+        saveTripData(true);
+        cat.items = cat.items.filter(i => i.id !== item.id);
+        saveTripData(false);
+        closeModal();
+        renderPackingPage();
+        showToast("已刪除攜帶物品");
+      });
+      document.getElementById("pack-edit-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        saveTripData(true);
+        item.name = fd.get("name").trim();
+        item.qty = fd.get("qty").trim();
+        item.note = fd.get("note").trim();
+        saveTripData(false);
+        closeModal();
+        renderPackingPage();
+        showToast("已更新物品資訊");
+      });
+    }
+
     /* ==========================================================================
-       十一、互動對話框 (雙幣別新增/編輯行程、交通路段、假設清單)
+       十一、互動對話框 (所有金額與匯率皆使用 step="any" 允許精確整數或小數)
        ========================================================================== */
     function closeModal() {
       document.getElementById("modal-backdrop").classList.add("hidden");
@@ -3405,7 +3525,7 @@
         dayIndex: selectedDayIndex,
         startTime: "15:00",
         durationMin: 60,
-        category: "sightseeing",
+        category: "attraction",
         name: "",
         address: "京都市",
         mapX: 260,
@@ -3423,7 +3543,7 @@
 
       const dialog = document.getElementById("modal-dialog");
       dialog.innerHTML = `
-        <h3 style="font-size:1.12rem;">✏️ ${isEdit ? "編輯行程與雙幣別費用" : "新增京都行程"}</h3>
+        <h3 style="font-size:1.12rem;">✏️ ${isEdit ? "編輯行程與精確費用" : "新增京都行程"}</h3>
         <form id="event-edit-form" class="form-grid">
           <label class="form-field">
             日期
@@ -3434,9 +3554,9 @@
           <label class="form-field">
             類別
             <select name="category" class="form-input">
-              <option value="sightseeing" ${ev.category === "sightseeing" ? "selected" : ""}>景點 (山吹黃)</option>
+              <option value="attraction" ${(ev.category === "attraction" || ev.category === "sightseeing") ? "selected" : ""}>景點 (山吹黃)</option>
               <option value="food" ${ev.category === "food" ? "selected" : ""}>餐飲 (珊瑚粉)</option>
-              <option value="hotel" ${ev.category === "hotel" ? "selected" : ""}>住宿 (水色)</option>
+              <option value="stay" ${(ev.category === "stay" || ev.category === "hotel") ? "selected" : ""}>住宿 (水色)</option>
               <option value="transport" ${ev.category === "transport" ? "selected" : ""}>交通/航班 (若竹綠)</option>
             </select>
           </label>
@@ -3446,11 +3566,11 @@
           </label>
           <label class="form-field">
             停留時長（分鐘）
-            <input type="number" name="durationMin" class="form-input" min="10" max="720" step="5" value="${ev.durationMin}" required />
+            <input type="number" name="durationMin" class="form-input" min="1" max="1440" step="1" value="${ev.durationMin}" required />
           </label>
           <label class="form-field form-full">
             行程名稱
-            <input type="text" name="name" class="form-input" value="${ev.name}" placeholder="例如：八坂神社參拜" required />
+            <input type="text" name="name" class="form-input" value="${ev.name}" placeholder="例如：RESI STAY MAYU 住宿費" required />
           </label>
           <label class="form-field form-full">
             地址或地點
@@ -3464,11 +3584,11 @@
             </select>
           </label>
           <label class="form-field">
-            費用金額
-            <input type="number" name="costAmount" class="form-input" min="0" step="10" value="${ev.costAmount}" />
+            精確費用金額（可輸入任意數字如 19371）
+            <input type="number" name="costAmount" class="form-input" min="0" step="any" inputmode="decimal" value="${ev.costAmount}" />
           </label>
           <label class="form-field form-full">
-            計費基準
+            計價基準
             <select name="costScope" class="form-input">
               <option value="per_person" ${ev.costScope === "per_person" ? "selected" : ""}>每人金額 (自動 × 2人)</option>
               <option value="group" ${ev.costScope === "group" ? "selected" : ""}>全團總金額</option>
@@ -3518,6 +3638,9 @@
         const fd = new FormData(e.target);
         saveTripData(true);
 
+        const parsedAmount = parseFloat(fd.get("costAmount"));
+        const exactAmount = Number.isFinite(parsedAmount) && parsedAmount >= 0 ? parsedAmount : 0;
+
         const updated = {
           ...ev,
           dayIndex: Number(fd.get("dayIndex")),
@@ -3527,7 +3650,7 @@
           name: fd.get("name").trim(),
           address: fd.get("address").trim(),
           currency: fd.get("currency"),
-          costAmount: Number(fd.get("costAmount")) || 0,
+          costAmount: exactAmount,
           costScope: fd.get("costScope"),
           isPaid: fd.get("isPaid") === "on",
           isEstimated: fd.get("isEstimated") === "on",
@@ -3546,28 +3669,28 @@
         saveTripData(false);
         closeModal();
         renderAll();
-        showToast(isEdit ? "已更新行程、地圖與雙幣別預算" : "已新增行程並更新預算");
+        showToast(isEdit ? `已儲存精確金額 (${updated.currency} ${formatExactNumber(updated.costAmount)})` : "已新增行程並更新預算");
       });
     }
 
     function openSegmentModal(seg) {
       const dialog = document.getElementById("modal-dialog");
       dialog.innerHTML = `
-        <h3 style="font-size:1.12rem;">🚃 編輯交通路段與雙幣別車資</h3>
+        <h3 style="font-size:1.12rem;">🚃 編輯交通路段與精確車資</h3>
         <form id="segment-edit-form" class="form-grid">
           <label class="form-field">
             交通方式
             <select name="mode" class="form-input">
               <option value="train" ${seg.mode === "train" ? "selected" : ""}>JR / 近鐵 / 京阪</option>
-              <option value="subway" ${seg.mode === "subway" ? "selected" : ""}>地鐵 / 嵐電</option>
-              <option value="bus" ${seg.mode === "bus" ? "selected" : ""}>市營公車</option>
+              <option value="subway" ${seg.mode === "subway" ? "selected" : ""}>地鐵</option>
+              <option value="bus" ${seg.mode === "bus" ? "selected" : ""}>公車</option>
               <option value="walk" ${seg.mode === "walk" ? "selected" : ""}>純步行</option>
               <option value="taxi" ${seg.mode === "taxi" ? "selected" : ""}>計程車</option>
             </select>
           </label>
           <label class="form-field">
             預估車程（分鐘）
-            <input type="number" name="durationMin" class="form-input" min="1" max="300" value="${seg.durationMin}" required />
+            <input type="number" name="durationMin" class="form-input" min="1" max="600" step="1" value="${seg.durationMin}" required />
           </label>
           <label class="form-field form-full">
             路線名稱
@@ -3581,8 +3704,8 @@
             </select>
           </label>
           <label class="form-field">
-            車資金額
-            <input type="number" name="costAmount" class="form-input" min="0" step="10" value="${seg.costAmount}" />
+            精確車資金額（支援任意整數/小數）
+            <input type="number" name="costAmount" class="form-input" min="0" step="any" inputmode="decimal" value="${seg.costAmount}" />
           </label>
           <label class="form-field form-full">
             計費方式
@@ -3616,11 +3739,12 @@
         const fd = new FormData(e.target);
         saveTripData(true);
 
+        const parsedAmount = parseFloat(fd.get("costAmount"));
         seg.mode = fd.get("mode");
         seg.durationMin = Number(fd.get("durationMin")) || 15;
         seg.modeLabel = fd.get("modeLabel").trim();
         seg.currency = fd.get("currency");
-        seg.costAmount = Number(fd.get("costAmount")) || 0;
+        seg.costAmount = Number.isFinite(parsedAmount) && parsedAmount >= 0 ? parsedAmount : 0;
         seg.costScope = fd.get("costScope");
         seg.isPaid = fd.get("isPaid") === "on";
         seg.isEstimated = fd.get("isEstimated") === "on";
@@ -3629,7 +3753,43 @@
         saveTripData(false);
         closeModal();
         renderAll();
-        showToast("已更新路段交通時間、路線色與費用");
+        showToast("已更新路段交通時間、路線色與精確車資");
+      });
+    }
+
+    function openBudgetRateModal() {
+      const dialog = document.getElementById("modal-dialog");
+      dialog.innerHTML = `
+        <h3 style="font-size:1.12rem;">💱 匯率與預算上限設定</h3>
+        <form id="budget-rate-form" class="form-grid">
+          <label class="form-field">
+            日圓兌台幣匯率 (1 JPY = ? TWD)
+            <input type="number" name="exchangeRate" class="form-input" step="any" min="0.0001" value="${tripData.meta.exchangeRate}" required />
+          </label>
+          <label class="form-field">
+            旅程總預算目標 (TWD)
+            <input type="number" name="budgetTargetTwd" class="form-input" step="any" min="0" value="${tripData.meta.budgetTargetTwd || 75000}" required />
+          </label>
+          <div class="modal-footer form-full" style="justify-content:flex-end;">
+            <button type="button" id="btn-cancel-br" class="tool-btn">取消</button>
+            <button type="submit" class="btn-primary">套用設定</button>
+          </div>
+        </form>
+      `;
+      document.getElementById("modal-backdrop").classList.remove("hidden");
+      document.getElementById("btn-cancel-br").addEventListener("click", closeModal);
+      document.getElementById("budget-rate-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const r = parseFloat(fd.get("exchangeRate"));
+        const b = parseFloat(fd.get("budgetTargetTwd"));
+        if (r > 0) tripData.meta.exchangeRate = r;
+        if (b >= 0) tripData.meta.budgetTargetTwd = b;
+        document.getElementById("jpy-rate-input").value = tripData.meta.exchangeRate;
+        saveTripData(true);
+        closeModal();
+        renderAll();
+        showToast("已更新匯率與預算上限");
       });
     }
 
@@ -3784,6 +3944,15 @@
         }
       });
 
+      document.getElementById("budget-target-input").addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        if (Number.isFinite(val) && val >= 0) {
+          tripData.meta.budgetTargetTwd = val;
+          saveTripData(false);
+          renderExpensesPage();
+        }
+      });
+
       document.getElementById("packing-search").addEventListener("input", renderPackingPage);
       document.getElementById("packing-only-unchecked").addEventListener("change", renderPackingPage);
 
@@ -3801,6 +3970,7 @@
       });
 
       document.getElementById("tool-add-event").addEventListener("click", () => { closeDock(); openEventModal(null); });
+      document.getElementById("tool-budget-rate").addEventListener("click", () => { closeDock(); openBudgetRateModal(); });
       document.getElementById("tool-export-json").addEventListener("click", () => { closeDock(); exportTripJson(); });
       document.getElementById("tool-import-json").addEventListener("click", () => { closeDock(); document.getElementById("json-file-input").click(); });
       document.getElementById("tool-export-ics").addEventListener("click", () => { closeDock(); exportTripIcs(); });
@@ -3813,7 +3983,7 @@
         saveTripData(false);
         selectedDayIndex = 0;
         renderAll();
-        showToast("已重置為預設京都六天五夜行程");
+        showToast("已重設為預設京都六天五夜行程");
       });
 
       document.getElementById("json-file-input").addEventListener("change", (e) => {
