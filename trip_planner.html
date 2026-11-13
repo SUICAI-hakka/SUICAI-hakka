@@ -1565,12 +1565,55 @@
     <div class="expenses-layout">
       <!-- 左欄：雙幣別精確合計與即時匯率換算 -->
       <div class="expense-box">
-        <h2 style="font-size:1.12rem;">💰 雙幣別精確預算與總花費統計（2 位成人）</h2>
+        <h2 style="font-size:1.12rem;">💰 雙幣別預算與總花費統計</h2>
         <div class="expense-kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-label">現地日圓精確合計 (JPY)</div>
+            <div class="kpi-label">現地日圓合計 (JPY)</div>
             <div id="exp-total-jpy" class="kpi-value">¥0</div>
           </div>
+          <div class="kpi-card" style="background:#EDF7FC;">
+            <div class="kpi-label">已付台幣合計 (TWD)</div>
+            <div id="exp-direct-twd" class="kpi-value">NT$0</div>
+          </div>
+          <div class="kpi-card" style="background:#F4FAF0;">
+            <div class="kpi-label">折合台幣總花費 (TWD)</div>
+            <div id="exp-grand-twd" class="kpi-value">NT$0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">總預算上限 (TWD)</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:3px;">
+              <span>NT$</span>
+              <input type="number" id="budget-target-input" class="rate-input" style="width:110px; font-size:1rem;" step="any" min="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rate-control-bar">
+          <span>💱 匯率 (1 JPY → TWD)：</span>
+          <div>
+            <input type="number" id="jpy-rate-input" class="rate-input" step="any" min="0.0001" value="0.215" />
+          </div>
+          <span id="exp-est-badge" class="estimate-badge">0 項待確認/估算</span>
+          <span id="exp-budget-diff" style="font-size:0.82rem; font-weight:800;"></span>
+        </div>
+      </div>
+
+      <!-- 右欄：類別支出 SVG 圓餅圖與圖例 -->
+      <div class="expense-box">
+        <h2 style="font-size:1.12rem;">📊 各類別支出佔比</h2>
+        <div class="pie-wrapper">
+          <svg id="expense-pie-svg" width="185" height="185" viewBox="0 0 200 200" aria-label="支出圓餅圖"></svg>
+          <div id="expense-pie-legend" class="pie-legend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 完整雙幣別明細表 -->
+    <div class="expense-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <h2 style="font-size:1.1rem;">🧾 行程與交通費用明細表</h2>
+        <span style="font-size:0.8rem; color:var(--ink-soft);">點擊任一列可編輯金額</span>
+      </div>
           <div class="kpi-card" style="background:#EDF7FC;">
             <div class="kpi-label">已付／預付台幣精確合計 (TWD)</div>
             <div id="exp-direct-twd" class="kpi-value">NT$0</div>
@@ -2416,7 +2459,7 @@
     /* ==========================================================================
        二、狀態管理與本機儲存 (LocalStorage + Undo Stack)
        ========================================================================== */
-    const STORAGE_KEY = "kyoto_ehon_trip_2027_v3";
+    const STORAGE_KEY = "kyoto_ehon_trip_2027_v4";
     let tripData = loadTripData();
     let undoStack = [];
     let selectedDayIndex = 0;
@@ -3543,7 +3586,7 @@
 
       const dialog = document.getElementById("modal-dialog");
       dialog.innerHTML = `
-        <h3 style="font-size:1.12rem;">✏️ ${isEdit ? "編輯行程與精確費用" : "新增京都行程"}</h3>
+        <h3 style="font-size:1.12rem;">✏️ ${isEdit ? "編輯行程" : "新增行程"}</h3>
         <form id="event-edit-form" class="form-grid">
           <label class="form-field">
             日期
@@ -3554,10 +3597,10 @@
           <label class="form-field">
             類別
             <select name="category" class="form-input">
-              <option value="attraction" ${(ev.category === "attraction" || ev.category === "sightseeing") ? "selected" : ""}>景點 (山吹黃)</option>
-              <option value="food" ${ev.category === "food" ? "selected" : ""}>餐飲 (珊瑚粉)</option>
-              <option value="stay" ${(ev.category === "stay" || ev.category === "hotel") ? "selected" : ""}>住宿 (水色)</option>
-              <option value="transport" ${ev.category === "transport" ? "selected" : ""}>交通/航班 (若竹綠)</option>
+              <option value="attraction" ${(ev.category === "attraction" || ev.category === "sightseeing") ? "selected" : ""}>景點</option>
+              <option value="food" ${ev.category === "food" ? "selected" : ""}>餐飲</option>
+              <option value="stay" ${(ev.category === "stay" || ev.category === "hotel") ? "selected" : ""}>住宿</option>
+              <option value="transport" ${ev.category === "transport" ? "selected" : ""}>交通/航班</option>
             </select>
           </label>
           <label class="form-field">
@@ -3570,7 +3613,7 @@
           </label>
           <label class="form-field form-full">
             行程名稱
-            <input type="text" name="name" class="form-input" value="${ev.name}" placeholder="例如：RESI STAY MAYU 住宿費" required />
+            <input type="text" name="name" class="form-input" value="${ev.name}" required />
           </label>
           <label class="form-field form-full">
             地址或地點
@@ -3584,24 +3627,24 @@
             </select>
           </label>
           <label class="form-field">
-            精確費用金額
+            費用金額
             <input type="number" name="costAmount" class="form-input" min="0" step="any" inputmode="decimal" value="${ev.costAmount}" />
           </label>
           <label class="form-field form-full">
             計價基準
             <select name="costScope" class="form-input">
-              <option value="per_person" ${ev.costScope === "per_person" ? "selected" : ""}>每人金額 (自動 × 2人)</option>
+              <option value="per_person" ${ev.costScope === "per_person" ? "selected" : ""}>每人金額</option>
               <option value="group" ${ev.costScope === "group" ? "selected" : ""}>全團總金額</option>
             </select>
           </label>
           <label class="form-field" style="flex-direction:row; align-items:center; gap:6px;">
-            <input type="checkbox" name="isPaid" ${ev.isPaid ? "checked" : ""} /> 已預先付款（標記「已付」）
+            <input type="checkbox" name="isPaid" ${ev.isPaid ? "checked" : ""} /> 已預先付款
           </label>
           <label class="form-field" style="flex-direction:row; align-items:center; gap:6px;">
-            <input type="checkbox" name="isEstimated" ${ev.isEstimated ? "checked" : ""} /> 標記為「估算/待確認」
+            <input type="checkbox" name="isEstimated" ${ev.isEstimated ? "checked" : ""} /> 估算 / 待確認
           </label>
           <label class="form-field form-full" style="flex-direction:row; align-items:center; gap:6px;">
-            <input type="checkbox" name="locked" ${ev.locked ? "checked" : ""} /> 🔒 鎖定此時段（不可隨意移動）
+            <input type="checkbox" name="locked" ${ev.locked ? "checked" : ""} /> 🔒 鎖定此時段
           </label>
           <label class="form-field form-full">
             備註說明
@@ -3669,14 +3712,14 @@
         saveTripData(false);
         closeModal();
         renderAll();
-        showToast(isEdit ? `已儲存精確金額 (${updated.currency} ${formatExactNumber(updated.costAmount)})` : "已新增行程並更新預算");
+        showToast(isEdit ? "已儲存行程變更" : "已新增行程");
       });
     }
 
     function openSegmentModal(seg) {
       const dialog = document.getElementById("modal-dialog");
       dialog.innerHTML = `
-        <h3 style="font-size:1.12rem;">🚃 編輯交通路段與精確車資</h3>
+        <h3 style="font-size:1.12rem;">🚃 編輯交通路段</h3>
         <form id="segment-edit-form" class="form-grid">
           <label class="form-field">
             交通方式
@@ -3704,21 +3747,21 @@
             </select>
           </label>
           <label class="form-field">
-            精確車資金額（支援任意整數/小數）
+            交通費用
             <input type="number" name="costAmount" class="form-input" min="0" step="any" inputmode="decimal" value="${seg.costAmount}" />
           </label>
           <label class="form-field form-full">
             計費方式
             <select name="costScope" class="form-input">
-              <option value="per_person" ${seg.costScope === "per_person" ? "selected" : ""}>每人票價 (× 2人)</option>
-              <option value="group" ${seg.costScope === "group" ? "selected" : ""}>每車/全團金額</option>
+              <option value="per_person" ${seg.costScope === "per_person" ? "selected" : ""}>每人票價</option>
+              <option value="group" ${seg.costScope === "group" ? "selected" : ""}>全團金額</option>
             </select>
           </label>
           <label class="form-field" style="flex-direction:row; align-items:center; gap:6px;">
-            <input type="checkbox" name="isPaid" ${seg.isPaid ? "checked" : ""} /> 已先購票付款
+            <input type="checkbox" name="isPaid" ${seg.isPaid ? "checked" : ""} /> 已預先付款
           </label>
           <label class="form-field" style="flex-direction:row; align-items:center; gap:6px;">
-            <input type="checkbox" name="isEstimated" ${seg.isEstimated ? "checked" : ""} /> 標記為「估算」
+            <input type="checkbox" name="isEstimated" ${seg.isEstimated ? "checked" : ""} /> 估算 / 待確認
           </label>
           <label class="form-field form-full">
             搭乘備註
@@ -3753,21 +3796,21 @@
         saveTripData(false);
         closeModal();
         renderAll();
-        showToast("已更新路段交通時間、路線色與精確車資");
+        showToast("已更新交通路段");
       });
     }
 
     function openBudgetRateModal() {
       const dialog = document.getElementById("modal-dialog");
       dialog.innerHTML = `
-        <h3 style="font-size:1.12rem;">💱 匯率與預算上限設定</h3>
+        <h3 style="font-size:1.12rem;">💱 匯率與預算設定</h3>
         <form id="budget-rate-form" class="form-grid">
           <label class="form-field">
-            日圓兌台幣匯率 (1 JPY = ? TWD)
+            匯率 (1 JPY → TWD)
             <input type="number" name="exchangeRate" class="form-input" step="any" min="0.0001" value="${tripData.meta.exchangeRate}" required />
           </label>
           <label class="form-field">
-            旅程總預算目標 (TWD)
+            總預算上限 (TWD)
             <input type="number" name="budgetTargetTwd" class="form-input" step="any" min="0" value="${tripData.meta.budgetTargetTwd || 75000}" required />
           </label>
           <div class="modal-footer form-full" style="justify-content:flex-end;">
