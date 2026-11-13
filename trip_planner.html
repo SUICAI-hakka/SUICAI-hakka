@@ -10,6 +10,15 @@
       href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin=""
+    ></script>
     <style>
       /* ==========================================================================
          日系繪本風設計系統與原始 CSS 契約
@@ -316,14 +325,117 @@
       .map-canvas-wrap {
         position: relative;
         width: 100%;
-        height: 350px;
-        background: #eef1f3;
+        height: 360px;
+        background: #efeae1;
+        overflow: hidden;
       }
 
-      #kyoto-svg-map {
+      #kyoto-leaflet-map {
         width: 100%;
         height: 100%;
-        display: block;
+        z-index: 1;
+        background: #efeae1;
+      }
+
+      .ehon-map-tiles {
+        filter: contrast(1.02) brightness(1.01) saturate(0.92);
+      }
+
+      .ehon-map-tiles-osm {
+        filter: grayscale(100%) contrast(1.04) brightness(1.03) sepia(0.08);
+      }
+
+      .leaflet-control-attribution {
+        font-size: 9px !important;
+        background: rgba(255, 252, 246, 0.85) !important;
+        color: #6e6865 !important;
+      }
+
+      .leaflet-control-zoom {
+        border: var(--border-thin) !important;
+        border-radius: 10px !important;
+        overflow: hidden;
+        box-shadow: 0 2px 0 var(--ink) !important;
+      }
+
+      .leaflet-control-zoom a {
+        color: var(--ink) !important;
+        font-weight: 800 !important;
+        background: #ffffff !important;
+      }
+
+      .leaflet-control-zoom a:hover {
+        background: var(--yamabuki) !important;
+      }
+
+      .ehon-pin-wrap {
+        background: transparent;
+        border: none;
+      }
+
+      .ehon-pin-badge {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2.5px solid #3e3a39;
+        color: #3e3a39;
+        font-size: 11px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 0 #3e3a39;
+        transition: transform 120ms ease, background-color 120ms ease;
+      }
+
+      .ehon-pin-badge:hover {
+        background: var(--yamabuki);
+        transform: scale(1.12);
+      }
+
+      .ehon-pin-tooltip {
+        background: rgba(255, 252, 246, 0.96) !important;
+        border: 1.5px solid #3e3a39 !important;
+        border-radius: 8px !important;
+        color: #3e3a39 !important;
+        font-family: "Huninn", "Noto Sans TC", sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        padding: 2px 6px !important;
+        box-shadow: 0 1px 0 #3e3a39 !important;
+        white-space: nowrap;
+      }
+
+      .ehon-pin-tooltip::before {
+        display: none !important;
+      }
+
+      .map-legend-overlay {
+        position: absolute;
+        left: 10px;
+        bottom: 24px;
+        z-index: 500;
+        background: rgba(255, 252, 246, 0.94);
+        border: var(--border-thin);
+        border-radius: 10px;
+        padding: 4px 8px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        pointer-events: none;
+      }
+
+      .legend-line-dot {
+        display: inline-block;
+        width: 10px;
+        height: 4px;
+        border-radius: 2px;
+        margin-right: 3px;
+        vertical-align: middle;
       }
 
       .map-external-bar {
@@ -338,25 +450,9 @@
         flex-wrap: wrap;
       }
 
-      .map-legend-dots {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .legend-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
+      .map-route-hint {
+        color: var(--ink-soft);
         font-weight: 700;
-      }
-
-      .legend-line {
-        width: 14px;
-        height: 4px;
-        border-radius: 3px;
-        display: inline-block;
       }
 
       .ext-map-link {
@@ -1485,24 +1581,25 @@
         <div class="left-column">
           <section class="mappanel" aria-label="京都互動路線地圖">
             <div class="mapheading">
-              <div class="mapheading-title">🗺️ 繪本路線圖</div>
+              <div class="mapheading-title">🗺️ 繪本路線地圖</div>
               <div class="map-btn-group">
                 <button type="button" id="btn-preview-route" class="previewroute active-map-btn">路徑預覽</button>
                 <button type="button" id="btn-fit-all" class="fit">整天概覽</button>
               </div>
             </div>
 
-            <div class="map-canvas-wrap">
-              <svg id="kyoto-svg-map" viewBox="0 0 430 460" preserveAspectRatio="xMidYMid meet"></svg>
+            <div id="map-canvas-wrap" class="map-canvas-wrap">
+              <div id="kyoto-leaflet-map" role="img" aria-label="京都與關西地區真實比例尺繪本風路線圖"></div>
+              <div class="map-legend-overlay">
+                <span><i class="legend-line-dot" style="background:#4678C5;"></i>鐵道</span>
+                <span><i class="legend-line-dot" style="background:#9266C2;"></i>地鐵</span>
+                <span><i class="legend-line-dot" style="background:#3A9B80;"></i>公車</span>
+                <span><i class="legend-line-dot" style="background:#84909E;"></i>步行</span>
+              </div>
             </div>
 
             <div class="map-external-bar">
-              <div class="map-legend-dots">
-                <span class="legend-chip"><span class="legend-line" style="background:#4678C5;"></span>火車</span>
-                <span class="legend-chip"><span class="legend-line" style="background:#9266C2;"></span>地鐵</span>
-                <span class="legend-chip"><span class="legend-line" style="background:#3A9B80;"></span>公車</span>
-                <span class="legend-chip"><span class="legend-line" style="background:#84909E;"></span>步行</span>
-              </div>
+              <span id="map-route-status" class="map-route-hint">可滾輪縮放或拖曳平移檢視</span>
               <a
                 id="external-gmaps-link"
                 class="ext-map-link"
@@ -1685,6 +1782,7 @@
     <div class="floating-dock">
       <div id="dock-menu" class="dock-menu hidden" role="menu">
         <button type="button" id="tool-add-event" class="dock-menu-btn">➕ 新增行程項目</button>
+        <button type="button" id="tool-map-api" class="dock-menu-btn">🗺️ 地圖圖磚 API 設定</button>
         <button type="button" id="tool-cloud-sync" class="dock-menu-btn">☁️ 雲端同步設定</button>
         <button type="button" id="tool-budget-rate" class="dock-menu-btn">💱 匯率與預算上限設定</button>
         <button type="button" id="tool-export-json" class="dock-menu-btn">📤 匯出 JSON 旅程備份</button>
@@ -2444,6 +2542,19 @@
          ========================================================================== */
       const STORAGE_KEY = "kyoto_ehon_trip_2027_v4";
       const DB_URL_STORAGE_KEY = "kyoto_ehon_firebase_url_v1";
+      const GEOAPIFY_KEY_STORAGE_KEY = "kyoto_ehon_geoapify_key_v1";
+      const DEFAULT_GEOAPIFY_KEY = "9a1beba7265c43de985799456729b0dd";
+
+      function resolveGeoapifyKey() {
+        try {
+          const saved = localStorage.getItem(GEOAPIFY_KEY_STORAGE_KEY);
+          if (saved !== null) return saved.trim();
+        } catch (e) {}
+        return DEFAULT_GEOAPIFY_KEY;
+      }
+
+      let geoapifyApiKey = resolveGeoapifyKey();
+      let baseTileLayer = null;
 
       function resolveFirebaseUrl() {
         try {
@@ -2474,6 +2585,8 @@
       let currentCalendarView = "day";
       let showBudget = false;
       let mapShowAllDays = false;
+      let leafletMap = null;
+      let leafletLayerGroup = null;
 
       function loadTripData() {
         try {
@@ -3121,9 +3234,14 @@
         });
 
         html += '<div class="week-time-axis">';
-        for (let h = startHour; h <= endHour; h++) {
-          const top = (h - startHour) * 60 * pxPerMin;
-          html += '<div class="week-hour-mark" style="top:' + top + 'px;">' + String(h).padStart(2, "0") + ":00</div>";
+        for (let h = startHour; h < endHour; h++) {
+          const topPx = (h - startHour) * 60 * pxPerMin;
+          html +=
+            '<div class="week-hour-mark" style="top:' +
+            topPx +
+            'px;">' +
+            String(h).padStart(2, "0") +
+            ":00</div>";
         }
         html += "</div>";
 
@@ -3132,19 +3250,16 @@
           html += '<div class="week-day-lane" data-lane-day="' + dayIdx + '">';
 
           dayEvents.forEach((ev, idx) => {
-            const startMin = timeToMinutes(ev.startTime);
-            const durMin = Math.max(25, Number(ev.durationMin || 60));
-            const topPx = Math.max(0, (startMin - startHour * 60) * pxPerMin);
-            const heightPx = Math.max(24, durMin * pxPerMin);
+            const sMin = Math.max(startHour * 60, timeToMinutes(ev.startTime));
+            const topPx = (sMin - startHour * 60) * pxPerMin;
+            const heightPx = Math.max(22, Number(ev.durationMin || 45) * pxPerMin);
 
-            let overlapCount = 0;
-            for (let j = 0; j < idx; j++) {
-              const prev = dayEvents[j];
-              const pEnd = timeToMinutes(prev.startTime) + Number(prev.durationMin || 60);
-              if (pEnd > startMin) overlapCount += 1;
+            let overlapOffset = 0;
+            if (idx > 0) {
+              const prev = dayEvents[idx - 1];
+              const prevEnd = timeToMinutes(prev.startTime) + Number(prev.durationMin || 45);
+              if (prevEnd > sMin) overlapOffset = 8;
             }
-            const leftPct = Math.min(35, overlapCount * 14);
-            const widthPct = 96 - leftPct;
 
             html +=
               '<div class="week-event-block cat-' +
@@ -3156,10 +3271,8 @@
               "px; height:" +
               heightPx +
               "px; left:" +
-              leftPct +
-              "%; width:" +
-              widthPct +
-              "%; z-index:" +
+              (3 + overlapOffset) +
+              "px; right:3px; z-index:" +
               (idx + 2) +
               ';">' +
               "<div>" +
@@ -3167,9 +3280,7 @@
               " " +
               ev.name +
               "</div>" +
-              '<div class="week-resize-handle" data-resize-ev="' +
-              ev.id +
-              '"></div>' +
+              (!ev.locked ? '<div class="week-resize-handle" data-resize-ev="' + ev.id + '"></div>' : "") +
               "</div>";
           });
 
@@ -3180,179 +3291,265 @@
 
         grid.querySelectorAll(".week-event-block").forEach((block) => {
           const evId = block.dataset.weekEv;
-          let holdTimer = null;
-          let isDragging = false;
-          let startY = 0;
-          let origStartMin = 0;
+          const evObj = tripData.events.find((x) => x.id === evId);
+          if (!evObj) return;
 
           block.addEventListener("dblclick", (e) => {
             e.stopPropagation();
             openEventModal(evId);
           });
 
-          block.addEventListener("mousedown", (e) => {
-            if (e.target.dataset.resizeEv) return;
-            const ev = tripData.events.find((x) => x.id === evId);
-            if (!ev || ev.locked) return;
+          block.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectedDayIndex = evObj.dayIndex;
+            renderDateStationBar(true);
+            renderMapAndSegments();
+          });
 
-            startY = e.clientY;
-            origStartMin = timeToMinutes(ev.startTime);
+          if (!evObj.locked) {
+            let holdTimer = null;
+            let dragActive = false;
+            let startY = 0;
+            let origStartMin = timeToMinutes(evObj.startTime);
 
-            holdTimer = setTimeout(() => {
-              isDragging = true;
-              block.classList.add("holding-ready");
-              showToast("已解鎖拖移：上下移動調整時間");
-            }, 3000);
+            block.addEventListener("mousedown", (e) => {
+              if (e.target.classList.contains("week-resize-handle")) return;
+              startY = e.clientY;
+              origStartMin = timeToMinutes(evObj.startTime);
+              holdTimer = setTimeout(() => {
+                dragActive = true;
+                block.classList.add("holding-ready");
+                showToast("已解鎖拖移：上下移動調整開始時間");
+              }, 3000);
+            });
 
-            const onMove = (me) => {
-              if (!isDragging) {
-                if (Math.abs(me.clientY - startY) > 10) {
-                  clearTimeout(holdTimer);
-                }
-                return;
+            window.addEventListener("mousemove", (e) => {
+              if (holdTimer && !dragActive && Math.abs(e.clientY - startY) > 6) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
               }
-              const deltaMin = Math.round((me.clientY - startY) / pxPerMin / 5) * 5;
-              ev.startTime = minutesToTime(Math.max(startHour * 60, Math.min(22 * 60, origStartMin + deltaMin)));
-              block.style.top = (timeToMinutes(ev.startTime) - startHour * 60) * pxPerMin + "px";
-            };
+              if (dragActive) {
+                const deltaMin = Math.round((e.clientY - startY) / pxPerMin / 5) * 5;
+                const newStart = Math.max(startHour * 60, Math.min(22 * 60, origStartMin + deltaMin));
+                block.style.top = (newStart - startHour * 60) * pxPerMin + "px";
+                evObj.startTime = minutesToTime(newStart);
+              }
+            });
 
-            const onUp = () => {
-              clearTimeout(holdTimer);
-              document.removeEventListener("mousemove", onMove);
-              document.removeEventListener("mouseup", onUp);
-              if (isDragging) {
-                isDragging = false;
+            window.addEventListener("mouseup", () => {
+              if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+              }
+              if (dragActive) {
+                dragActive = false;
                 block.classList.remove("holding-ready");
                 saveTripData(true);
                 renderAll();
-                showToast("已更新行程時間");
+                showToast("已更新行程時段為 " + evObj.startTime);
               }
-            };
-
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
-          });
+            });
+          }
         });
 
         grid.querySelectorAll(".week-resize-handle").forEach((handle) => {
           handle.addEventListener("mousedown", (e) => {
             e.stopPropagation();
             const evId = handle.dataset.resizeEv;
-            const ev = tripData.events.find((x) => x.id === evId);
-            if (!ev || ev.locked) return;
+            const evObj = tripData.events.find((x) => x.id === evId);
+            if (!evObj) return;
 
             const startY = e.clientY;
-            const origDur = Number(ev.durationMin || 60);
+            const origDur = Number(evObj.durationMin || 60);
 
-            const onMove = (me) => {
-              const deltaMin = Math.round((me.clientY - startY) / pxPerMin / 5) * 5;
-              ev.durationMin = Math.max(15, origDur + deltaMin);
-              handle.parentElement.style.height = Math.max(24, ev.durationMin * pxPerMin) + "px";
+            const onMove = (mv) => {
+              const deltaMin = Math.round((mv.clientY - startY) / pxPerMin / 5) * 5;
+              evObj.durationMin = Math.max(15, origDur + deltaMin);
+              handle.parentElement.style.height = Math.max(22, evObj.durationMin * pxPerMin) + "px";
             };
 
             const onUp = () => {
-              document.removeEventListener("mousemove", onMove);
-              document.removeEventListener("mouseup", onUp);
+              window.removeEventListener("mousemove", onMove);
+              window.removeEventListener("mouseup", onUp);
               saveTripData(true);
               renderAll();
-              showToast("已調整時長為 " + formatDuration(ev.durationMin));
+              showToast("已調整時長為 " + formatDuration(evObj.durationMin));
             };
 
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onUp);
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onUp);
           });
         });
       }
 
-      /* 繪本互動地圖與交通明細 */
+      /* Leaflet 真實比例尺繪本風路線地圖 與 交通明細 */
+      function applyBaseTileLayer() {
+        if (!leafletMap || typeof L === "undefined") return;
+        if (baseTileLayer) {
+          leafletMap.removeLayer(baseTileLayer);
+          baseTileLayer = null;
+        }
+        if (geoapifyApiKey) {
+          baseTileLayer = L.tileLayer(
+            "https://maps.geoapify.com/v1/tile/positron/{z}/{x}/{y}.png?apiKey=" + encodeURIComponent(geoapifyApiKey),
+            {
+              attribution: 'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | &copy; OpenStreetMap',
+              maxZoom: 20,
+              className: "ehon-map-tiles"
+            }
+          ).addTo(leafletMap);
+        } else {
+          baseTileLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap contributors",
+            maxZoom: 19,
+            className: "ehon-map-tiles-osm"
+          }).addTo(leafletMap);
+        }
+      }
+
+      function initLeafletMap() {
+        const container = document.getElementById("kyoto-leaflet-map");
+        if (!container || typeof L === "undefined" || leafletMap) return;
+
+        leafletMap = L.map("kyoto-leaflet-map", {
+          center: [35.001, 135.768],
+          zoom: 13,
+          zoomControl: true
+        });
+
+        applyBaseTileLayer();
+
+        leafletLayerGroup = L.layerGroup().addTo(leafletMap);
+      }
+
+      function getEventLatLng(ev) {
+        if (typeof ev.lat === "number" && typeof ev.lng === "number" && !Number.isNaN(ev.lat) && !Number.isNaN(ev.lng)) {
+          return [ev.lat, ev.lng];
+        }
+        const text = (ev.name || "") + " " + (ev.address || "");
+        if (text.includes("嵐山") || text.includes("天龍寺") || text.includes("渡月橋")) return [35.0157, 135.6755];
+        if (text.includes("金閣寺")) return [35.0394, 135.7292];
+        if (text.includes("清水寺") || text.includes("二年坂") || text.includes("三年坂")) return [34.9965, 135.783];
+        if (text.includes("祇園") || text.includes("花見小路")) return [35.0022, 135.7751];
+        if (text.includes("伏見稻荷")) return [34.9671, 135.7727];
+        if (text.includes("宇治") || text.includes("平等院")) return [34.8902, 135.8077];
+        if (text.includes("奈良") || text.includes("東大寺") || text.includes("春日大社")) return [34.6851, 135.843];
+        if (text.includes("關西") || text.includes("KIX")) return [34.4347, 135.2229];
+        if (text.includes("京都站") || text.includes("京都駅")) return [34.9858, 135.7588];
+        return [35.0038, 135.7689];
+      }
+
+      function buildEventMapQuery(ev) {
+        if (ev.address && ev.address.trim()) return ev.address.trim();
+        if (ev.lat && ev.lng) return ev.lat + "," + ev.lng;
+        return (ev.name || "Kyoto").trim();
+      }
+
       function renderMapAndSegments() {
-        const svg = document.getElementById("kyoto-svg-map");
+        const statusEl = document.getElementById("map-route-status");
+        const extLink = document.getElementById("external-gmaps-link");
+
+        if (!leafletMap) initLeafletMap();
+
         const dayEvents = getSortedDayEvents(selectedDayIndex);
         const daySegments = getDaySegments(selectedDayIndex);
-        const displayEvents = mapShowAllDays ? tripData.events : dayEvents;
+        const activeEvents = mapShowAllDays
+          ? tripData.days.flatMap((_, idx) => getSortedDayEvents(idx))
+          : dayEvents;
 
-        let svgHtml =
-          '<rect x="0" y="0" width="430" height="460" fill="#ECEFEE" />' +
-          '<path d="M0 290 Q95 315 135 460 L0 460 Z" fill="#A8D3E6" />' +
-          '<path d="M292 0 L296 185 L278 270 L250 345" fill="none" stroke="#A8D3E6" stroke-width="7" stroke-linecap="round" />' +
-          '<path d="M380 310 Q340 340 278 345" fill="none" stroke="#A8D3E6" stroke-width="6" stroke-linecap="round" />' +
-          '<text x="38" y="425" font-size="11" font-weight="800" fill="#4A7A92">大阪灣・關西機場 KIX</text>' +
-          '<text x="95" y="102" font-size="11" font-weight="800" fill="#6E6865">嵐山</text>' +
-          '<text x="190" y="60" font-size="11" font-weight="800" fill="#6E6865">金閣寺</text>' +
-          '<text x="330" y="182" font-size="11" font-weight="800" fill="#6E6865">東山・清水寺</text>' +
-          '<text x="305" y="294" font-size="11" font-weight="800" fill="#6E6865">伏見稻荷</text>' +
-          '<text x="342" y="366" font-size="11" font-weight="800" fill="#6E6865">宇治</text>' +
-          '<text x="358" y="445" font-size="11" font-weight="800" fill="#6E6865">奈良公園</text>';
+        if (leafletMap && leafletLayerGroup) {
+          leafletLayerGroup.clearLayers();
+          const boundsCoords = [];
 
-        if (!mapShowAllDays) {
-          daySegments.forEach((seg) => {
-            const fromEv = seg.fromEventId
-              ? dayEvents.find((e) => e.id === seg.fromEventId)
-              : { mapX: 255, mapY: 205 };
-            const toEv = dayEvents.find((e) => e.id === seg.toEventId);
-            if (fromEv && toEv) {
-              const color = getModeColor(seg.mode);
-              const dash = seg.mode === "walk" ? 'stroke-dasharray="5,5"' : "";
-              svgHtml +=
-                '<line x1="' +
-                fromEv.mapX +
-                '" y1="' +
-                fromEv.mapY +
-                '" x2="' +
-                toEv.mapX +
-                '" y2="' +
-                toEv.mapY +
-                '" stroke="' +
-                color +
-                '" stroke-width="4.5" stroke-linecap="round" ' +
-                dash +
-                " />";
+          // 繪製按交通方式著色的真實比例尺路線折線
+          const daysToDraw = mapShowAllDays ? tripData.days.map((_, i) => i) : [selectedDayIndex];
+          daysToDraw.forEach((dIdx) => {
+            const evs = getSortedDayEvents(dIdx);
+            const segs = getDaySegments(dIdx);
+            for (let i = 0; i < evs.length - 1; i++) {
+              const a = evs[i];
+              const b = evs[i + 1];
+              const latlngs = [getEventLatLng(a), getEventLatLng(b)];
+              const seg = segs.find((s) => s.fromEventId === a.id && s.toEventId === b.id);
+              const color = seg ? getModeColor(seg.mode) : "#4678C5";
+              const isWalk = seg && seg.mode === "walk";
+
+              L.polyline(latlngs, {
+                color: "#FFFFFF",
+                weight: mapShowAllDays ? 4.5 : 6,
+                opacity: 0.9,
+                lineCap: "round"
+              }).addTo(leafletLayerGroup);
+
+              L.polyline(latlngs, {
+                color: color,
+                weight: mapShowAllDays ? 2.8 : 3.8,
+                opacity: mapShowAllDays ? 0.8 : 0.95,
+                dashArray: isWalk ? "6, 6" : null,
+                lineCap: "round"
+              }).addTo(leafletLayerGroup);
             }
           });
+
+          // 繪製固定像素尺寸的白底墨灰外框編號圓點（不隨縮放變形）
+          activeEvents.forEach((ev, idx) => {
+            const ll = getEventLatLng(ev);
+            boundsCoords.push(ll);
+            const shortName = ev.name.length > 8 ? ev.name.slice(0, 8) + "…" : ev.name;
+
+            const icon = L.divIcon({
+              className: "ehon-pin-wrap",
+              html: '<div class="ehon-pin-badge">' + (idx + 1) + "</div>",
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            });
+
+            const marker = L.marker(ll, { icon: icon }).addTo(leafletLayerGroup);
+            marker.bindTooltip(shortName, {
+              permanent: !mapShowAllDays,
+              direction: idx % 2 === 0 ? "top" : "bottom",
+              offset: idx % 2 === 0 ? [0, -12] : [0, 12],
+              className: "ehon-pin-tooltip"
+            });
+            marker.on("click", () => openEventModal(ev.id));
+          });
+
+          if (boundsCoords.length > 0) {
+            const bounds = L.latLngBounds(boundsCoords);
+            leafletMap.fitBounds(bounds, {
+              padding: [36, 36],
+              maxZoom: mapShowAllDays ? 13 : 15
+            });
+          }
+          setTimeout(() => {
+            if (leafletMap) leafletMap.invalidateSize();
+          }, 60);
         }
 
-        displayEvents.forEach((ev, idx) => {
-          const x = ev.mapX || 260;
-          const y = ev.mapY || 200;
-          const labelNum = mapShowAllDays ? "D" + (ev.dayIndex + 1) : String(idx + 1);
-          svgHtml +=
-            '<g style="cursor:pointer;" data-map-ev="' +
-            ev.id +
-            '">' +
-            '<circle cx="' +
-            x +
-            '" cy="' +
-            y +
-            '" r="11" fill="#FFFFFF" stroke="#555555" stroke-width="2.5" />' +
-            '<text x="' +
-            x +
-            '" y="' +
-            (y + 3.5) +
-            '" text-anchor="middle" font-size="9.5" font-weight="800" fill="#3E3A39">' +
-            labelNum +
-            "</text>" +
-            "</g>";
+        // 同步更新外部 Google 地圖真實路線連結
+        const stops = [];
+        activeEvents.forEach((ev) => {
+          const q = buildEventMapQuery(ev);
+          if (q && (stops.length === 0 || stops[stops.length - 1] !== q)) stops.push(q);
         });
-
-        svg.innerHTML = svgHtml;
-        svg.querySelectorAll("[data-map-ev]").forEach((node) => {
-          node.addEventListener("click", () => openEventModal(node.dataset.mapEv));
-        });
-
-        const coords = dayEvents
-          .filter((e) => e.lat && e.lng)
-          .map((e) => e.lat + "," + e.lng);
-        const extLink = document.getElementById("external-gmaps-link");
-        if (coords.length >= 2) {
-          extLink.href =
-            "https://www.google.com/maps/dir/?api=1&origin=" +
-            coords[0] +
-            "&destination=" +
-            coords[coords.length - 1] +
-            "&waypoints=" +
-            coords.slice(1, -1).join("|");
-        } else if (coords.length === 1) {
-          extLink.href = "https://www.google.com/maps/search/?api=1&query=" + coords[0];
+        if (extLink) {
+          if (stops.length >= 2) {
+            const mid = stops.slice(1, -1);
+            extLink.href =
+              "https://www.google.com/maps/dir/?api=1&origin=" +
+              encodeURIComponent(stops[0]) +
+              "&destination=" +
+              encodeURIComponent(stops[stops.length - 1]) +
+              (mid.length > 0 ? "&waypoints=" + mid.map((s) => encodeURIComponent(s)).join("|") : "") +
+              "&travelmode=transit";
+          } else if (stops.length === 1) {
+            extLink.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(stops[0]);
+          }
+        }
+        if (statusEl) {
+          statusEl.textContent = mapShowAllDays
+            ? "全旅程共 " + activeEvents.length + " 個地標（真實比例尺縮放）"
+            : "當日共 " + activeEvents.length + " 個地標（放大可看街道與河川）";
         }
 
         const listEl = document.getElementById("route-summary-list");
@@ -4029,6 +4226,37 @@
         document.getElementById("btn-close-assump").addEventListener("click", closeModal);
       }
 
+      function openMapApiModal() {
+        const dialog = document.getElementById("modal-dialog");
+        dialog.innerHTML =
+          '<h3 style="font-size:1.12rem;">🗺️ Geoapify 地圖圖磚 API 設定</h3>' +
+          '<form id="map-api-form" class="form-grid">' +
+          '<label class="form-field form-full">Geoapify API Key' +
+          '<input type="text" name="geoapifyKey" class="form-input" value="' +
+          (geoapifyApiKey || "").replace(/"/g, "&quot;") +
+          '" />' +
+          "</label>" +
+          '<div class="modal-footer form-full" style="justify-content:flex-end;">' +
+          '<button type="button" id="btn-cancel-mapapi" class="tool-btn">取消</button>' +
+          '<button type="submit" class="btn-primary">儲存並套用底圖</button>' +
+          "</div>" +
+          "</form>";
+
+        document.getElementById("modal-backdrop").classList.remove("hidden");
+        document.getElementById("btn-cancel-mapapi").addEventListener("click", closeModal);
+        document.getElementById("map-api-form").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          geoapifyApiKey = (fd.get("geoapifyKey") || "").trim();
+          try {
+            localStorage.setItem(GEOAPIFY_KEY_STORAGE_KEY, geoapifyApiKey);
+          } catch (err) {}
+          applyBaseTileLayer();
+          closeModal();
+          showToast(geoapifyApiKey ? "已套用 Geoapify 繪本風底圖" : "已切換為標準備援底圖");
+        });
+      }
+
       function openCloudSyncModal() {
         const statusMap = {
           connecting: "⏳ 連線檢查中...",
@@ -4258,6 +4486,10 @@
           closeDock();
           openEventModal(null);
         });
+        document.getElementById("tool-map-api").addEventListener("click", () => {
+          closeDock();
+          openMapApiModal();
+        });
         document.getElementById("tool-cloud-sync").addEventListener("click", () => {
           closeDock();
           openCloudSyncModal();
@@ -4322,6 +4554,7 @@
           if (e.target.id === "modal-backdrop") closeModal();
         });
 
+        initLeafletMap();
         setupTimelineScrollListeners();
         renderAll();
         updateKyotoNowLine();
