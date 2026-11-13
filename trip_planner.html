@@ -1704,9 +1704,9 @@
           date: "2027-01-28",
           shortDate: "1/28",
           weekday: "四",
-          theme: "抵達與錦市場",
+          theme: "抵達與河原町",
           mascotType: "plane",
-          summary: "樂桃 MM024 抵達關西機場 → HARUKA 特急進京都 → RESI STAY MAYU → 錦市場＆河原町晚餐"
+          summary: "樂桃 MM024 13:10 抵達關西機場 → HARUKA 特急進京都 → RESI STAY MAYU 入住 → 河原町＆先斗町晚餐"
         },
         {
           dayIndex: 1,
@@ -1751,34 +1751,34 @@
           weekday: "二",
           theme: "東本願寺賦歸",
           mascotType: "train",
-          summary: "飯店退房寄放行李 → 京都塔／東本願寺晨間散步 → HARUKA 前往關西機場 → 樂桃 MM027 返台"
+          summary: "飯店退房 → 東本願寺散步與早午餐 → 11:30 搭 HARUKA 前往關西機場 → 樂桃 MM027 15:25 返台"
         }
       ],
       events: [
-        // Day 1: 2027-01-28
+        // Day 1: 2027-01-28 (已確認 MM024 13:10 抵達 KIX)
         {
           id: "evt-d1-1",
           dayIndex: 0,
-          startTime: "08:55",
-          durationMin: 65,
+          startTime: "13:10",
+          durationMin: 70,
           category: "transport",
-          name: "樂桃航空 MM024 抵達關西機場 T2",
+          name: "樂桃航空 MM024 抵達關西機場 T2（已確認）",
           address: "関西国際空港 第2ターミナル",
           lat: 34.4347,
           lng: 135.2229,
           costJpy: 0,
           costScope: "group",
-          isEstimated: true,
+          isEstimated: false,
           locked: true,
-          notes: "機票已另計；預留入境審查、領取行李及領取 ICOCA/HARUKA 車票時間（班表時間待 2026 冬季公告確認）。"
+          notes: "13:10 準時抵達 KIX 第2航廈；預留入境審查、領取行李及搭接駁巴士前往第1航廈 JR 綠色窗口換票時間。"
         },
         {
           id: "evt-d1-2",
           dayIndex: 0,
-          startTime: "11:45",
-          durationMin: 45,
+          startTime: "15:55",
+          durationMin: 40,
           category: "hotel",
-          name: "RESI STAY MAYU 辦理寄放行李",
+          name: "RESI STAY MAYU 辦理入住手續",
           address: "京都市下京區五條烏丸一帶 (RESI STAY MAYU)",
           lat: 34.9965,
           lng: 135.7628,
@@ -1786,31 +1786,15 @@
           costScope: "group",
           isEstimated: true,
           locked: true,
-          notes: "連住 5 晚總房費估算（每晚約 ¥13,600／雙人房，含京都住宿稅估算）。15:00 後可正式進房。"
+          notes: "已過 15:00 入住時間，可直接進房放行李稍作休息。連住 5 晚總房費估算（每晚約 ¥13,600／雙人房含稅）。"
         },
         {
           id: "evt-d1-3",
           dayIndex: 0,
-          startTime: "13:00",
-          durationMin: 150,
+          startTime: "17:00",
+          durationMin: 95,
           category: "sightseeing",
-          name: "錦市場商店街 ＆ 錦天滿宮散策",
-          address: "京都市中京區西大文字町609 (錦市場)",
-          lat: 35.0050,
-          lng: 135.7649,
-          costJpy: 2000,
-          costScope: "per_person",
-          isEstimated: true,
-          locked: false,
-          notes: "沿途品嚐豆乳甜甜圈、玉子燒與現烤海鮮串，注意邊走邊吃禮儀。"
-        },
-        {
-          id: "evt-d1-4",
-          dayIndex: 0,
-          startTime: "16:00",
-          durationMin: 120,
-          category: "sightseeing",
-          name: "四條河原町 ＆ 新京極商店街逛街",
+          name: "四條河原町 ＆ 錦天滿宮・新京極散策",
           address: "京都市中京區河原町通四條上ル",
           lat: 35.0038,
           lng: 135.7689,
@@ -1818,12 +1802,12 @@
           costScope: "per_person",
           isEstimated: true,
           locked: false,
-          notes: "採買冬季保暖小物、藥妝或日常用品。"
+          notes: "錦市場多數店鋪 17:00–18:00 打烊，傍晚改逛新京極、寺町京極商店街與錦天滿宮點燈，採買保暖小物與藥妝。"
         },
         {
-          id: "evt-d1-5",
+          id: "evt-d1-4",
           dayIndex: 0,
-          startTime: "18:30",
+          startTime: "18:45",
           durationMin: 90,
           category: "food",
           name: "先斗町／河原町 京都家常料理晚餐",
@@ -1835,6 +1819,22 @@
           isEstimated: true,
           locked: false,
           notes: "建議點京野菜天婦羅與暖呼呼的湯豆腐鍋。"
+        },
+        {
+          id: "evt-d1-5",
+          dayIndex: 0,
+          startTime: "20:25",
+          durationMin: 55,
+          category: "sightseeing",
+          name: "鴨川四條河畔夜色散步 ＆ 超市採買",
+          address: "京都市中京區四條大橋西詰",
+          lat: 35.0038,
+          lng: 135.7706,
+          costJpy: 1200,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "餐後沿鴨川散步消化，回五條飯店前順道去超市買日本草莓、鮮奶與隔日早餐。"
         },
 
         // Day 2: 2027-01-29 (嵐山路線)
@@ -2149,14 +2149,14 @@
           notes: "採買宇治抹茶點心、小倉山莊仙貝、北山茶之菓等伴手禮。"
         },
 
-        // Day 6: 2027-02-02 (賦歸日)
+        // Day 6: 2027-02-02 (賦歸日 - 已確認 MM027 15:25 離開 KIX)
         {
           id: "evt-d6-1",
           dayIndex: 5,
-          startTime: "09:15",
-          durationMin: 95,
+          startTime: "08:45",
+          durationMin: 75,
           category: "sightseeing",
-          name: "飯店退房寄放行李 → 東本願寺晨間散步",
+          name: "飯店退房拉行李 → 東本願寺晨間散步",
           address: "京都市下京區烏丸通七條上ル",
           lat: 34.9914,
           lng: 135.7586,
@@ -2164,15 +2164,15 @@
           costScope: "group",
           isEstimated: false,
           locked: false,
-          notes: "從飯店步行前往世界最大木造建築之一東本願寺，欣賞早晨陽光與銀杏大樹。"
+          notes: "退房後沿烏丸通步行前往東本願寺（6:20 起免費開放），欣賞晨光中的御影堂與木造山門。"
         },
         {
           id: "evt-d6-2",
           dayIndex: 5,
-          startTime: "11:00",
-          durationMin: 75,
+          startTime: "10:10",
+          durationMin: 70,
           category: "food",
-          name: "京都站前早午餐 ＆ 京都塔展望紀念",
+          name: "京都站前喫茶店早午餐 ＆ 伴手禮補貨",
           address: "京都市下京區烏丸通七條下ル東塩小路町721-1",
           lat: 34.9875,
           lng: 135.7593,
@@ -2180,32 +2180,32 @@
           costScope: "per_person",
           isEstimated: true,
           locked: false,
-          notes: "享用京都老牌喫茶店小川珈琲吐司早餐，取回行李準備前往機場。"
+          notes: "享用小川珈琲或進進堂吐司早午餐，11:20 前至 JR 京都站 30 號月台準備搭乘 HARUKA 特急。"
         },
         {
           id: "evt-d6-3",
           dayIndex: 5,
-          startTime: "16:00",
-          durationMin: 180,
+          startTime: "13:05",
+          durationMin: 140,
           category: "transport",
-          name: "樂桃航空 MM027 關西 KIX → 桃園 TPE",
+          name: "關西機場報到免稅採買 → 樂桃 MM027 15:25 起飛",
           address: "関西国際空港 第2ターミナル",
           lat: 34.4347,
           lng: 135.2229,
           costJpy: 0,
           costScope: "group",
-          isEstimated: true,
+          isEstimated: false,
           locked: true,
-          notes: "建議 13:30 前抵達關西機場完成報到與免稅店採買（回程時間待樂桃冬季時刻表最終確認）。"
+          notes: "已確認航班：15:25 KIX 起飛返回桃園 TPE。抓提前 2 小時 20 分抵達機場，預留 T1→T2 接駁巴士、託運與免稅店時間。"
         }
       ],
       /* 交通路段清單：自動依相鄰事件對應，可手動修改交通方式、分鐘數與費用 */
       segments: [
         // Day 1
-        { id: "seg-d1-1", dayIndex: 0, fromEventId: "evt-d1-1", toEventId: "evt-d1-2", mode: "train", modeLabel: "JR HARUKA 特急 + 地鐵烏丸線", durationMin: 95, costJpy: 2400, costScope: "per_person", isEstimated: true, note: "KIX 搭 HARUKA 至京都站(80分)，轉地鐵烏丸線至五條站(2分)步行3分" },
-        { id: "seg-d1-2", dayIndex: 0, fromEventId: "evt-d1-2", toEventId: "evt-d1-3", mode: "subway", modeLabel: "地鐵烏丸線（五條→四條）+ 步行", durationMin: 18, costJpy: 220, costScope: "per_person", isEstimated: false, note: "搭乘 1 站至四條站，步行約 7 分鐘抵錦市場" },
-        { id: "seg-d1-3", dayIndex: 0, fromEventId: "evt-d1-3", toEventId: "evt-d1-4", mode: "walk", modeLabel: "純步行逛街", durationMin: 8, costJpy: 0, costScope: "group", isEstimated: false, note: "錦市場東端出口即接新京極與河原町" },
-        { id: "seg-d1-4", dayIndex: 0, fromEventId: "evt-d1-4", toEventId: "evt-d1-5", mode: "walk", modeLabel: "純步行", durationMin: 6, costJpy: 0, costScope: "group", isEstimated: false, note: "沿四條通向東步行至先斗町巷口" },
+        { id: "seg-d1-1", dayIndex: 0, fromEventId: "evt-d1-1", toEventId: "evt-d1-2", mode: "train", modeLabel: "JR HARUKA 特急（約14:14/14:44班次）+ 地鐵烏丸線", durationMin: 95, costJpy: 2400, costScope: "per_person", isEstimated: true, note: "KIX 搭 HARUKA 至京都站(80分)，轉地鐵烏丸線至五條站(2分)步行3分" },
+        { id: "seg-d1-2", dayIndex: 0, fromEventId: "evt-d1-2", toEventId: "evt-d1-3", mode: "subway", modeLabel: "地鐵烏丸線（五條→四條）+ 步行", durationMin: 15, costJpy: 220, costScope: "per_person", isEstimated: false, note: "搭乘 1 站至四條站，步行約 5 分鐘抵河原町／新京極" },
+        { id: "seg-d1-3", dayIndex: 0, fromEventId: "evt-d1-3", toEventId: "evt-d1-4", mode: "walk", modeLabel: "純步行", durationMin: 6, costJpy: 0, costScope: "group", isEstimated: false, note: "沿四條通向東步行至先斗町巷口" },
+        { id: "seg-d1-4", dayIndex: 0, fromEventId: "evt-d1-4", toEventId: "evt-d1-5", mode: "walk", modeLabel: "純步行", durationMin: 5, costJpy: 0, costScope: "group", isEstimated: false, note: "步出先斗町即達四條大橋與鴨川河畔" },
 
         // Day 2
         { id: "seg-d2-1", dayIndex: 1, fromEventId: null, toEventId: "evt-d2-1", fromName: "RESI STAY MAYU", mode: "subway", modeLabel: "地鐵烏丸線轉東西線 + 嵐電", durationMin: 48, costJpy: 530, costScope: "per_person", isEstimated: true, note: "五條站→烏丸御池轉東西線至太秦天神川→轉乘嵐電嵐山本線至嵐山站" },
@@ -2237,7 +2237,7 @@
         // Day 6
         { id: "seg-d6-1", dayIndex: 5, fromEventId: null, toEventId: "evt-d6-1", fromName: "RESI STAY MAYU", mode: "walk", modeLabel: "純步行", durationMin: 12, costJpy: 0, costScope: "group", isEstimated: false, note: "沿烏丸通向南步行即可抵達東本願寺" },
         { id: "seg-d6-2", dayIndex: 5, fromEventId: "evt-d6-1", toEventId: "evt-d6-2", mode: "walk", modeLabel: "純步行", durationMin: 7, costJpy: 0, costScope: "group", isEstimated: false, note: "步行前往京都站前商圈" },
-        { id: "seg-d6-3", dayIndex: 5, fromEventId: "evt-d6-2", toEventId: "evt-d6-3", mode: "train", modeLabel: "JR HARUKA 特急（京都站→關西機場）", durationMin: 95, costJpy: 2200, costScope: "per_person", isEstimated: true, note: "建議搭乘 12:00 左右班次（車程約 80 分），預留航廈接駁與報到時間" }
+        { id: "seg-d6-3", dayIndex: 5, fromEventId: "evt-d6-2", toEventId: "evt-d6-3", mode: "train", modeLabel: "JR HARUKA 特急（約11:30京都發）+ T2接駁車", durationMin: 95, costJpy: 2200, costScope: "per_person", isEstimated: false, note: "搭乘約 11:30 HARUKA（80分抵關西機場站），轉乘免費接駁巴士至第2航廈" }
       ],
       packingCategories: [
         {
@@ -2298,7 +2298,7 @@
         }
       ],
       assumptions: [
-        "【航班時刻假設】樂桃 MM024 假設 08:55 抵達 KIX、回程 MM027 假設 16:00 起飛，實際時刻請於 2026 年下半年冬季班表開賣後核對並微調第一天與第六天起訖時間。",
+        "【航班時刻已確認】去程樂桃 MM024 於 2027/01/28 13:10 抵達關西機場 (KIX)，已安排 14:14/14:44 左右 HARUKA 進京都市區，約 15:55 直接辦理入住；回程 MM027 於 2027/02/02 15:25 離開關西機場，已安排約 11:30 自京都站搭乘 HARUKA，於 13:05 前抵達機場。",
         "【住宿地點假設】RESI STAY MAYU 定位於京都市下京區（五條／河原町五條周邊），5 晚連住總房費以 ¥68,000（2成人雙人房含稅）估算，請依實際訂房訂單金額更新。",
         "【交通票價與轉乘】京都市巴均一區間 ¥230、JR HARUKA 優惠票約 ¥2,200、近鐵急行約 ¥760 均為現行參考票價，2027 年若有調漲請於交通明細卡片雙擊更新。",
         "【景點與餐飲預算】天龍寺、平等院、東大寺等拜觀費與餐飲均標記為「估算」，並已區分每人金額（自動乘以 2 位成人）與全團金額。"
@@ -2308,7 +2308,7 @@
     /* ==========================================================================
        二、狀態管理與本機儲存 (LocalStorage + Undo Stack)
        ========================================================================== */
-    const STORAGE_KEY = "kyoto_ehon_trip_2027_v1";
+    const STORAGE_KEY = "kyoto_ehon_trip_2027_v2";
     let tripData = loadTripData();
     let undoStack = [];
     let selectedDayIndex = 0;
