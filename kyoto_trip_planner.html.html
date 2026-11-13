@@ -1,0 +1,3679 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>京都冬日漫遊｜古都與抹茶小旅行 (2027/1/28 - 2027/2/2)</title>
+
+  <!-- Google Fonts: 粉圓體 Huninn -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome 6 圖示庫 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Leaflet 地圖樣式與腳本 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    /* ==========================================================================
+       1. 日系繪本風設計變數與基礎重置 (Design Tokens)
+       ========================================================================== */
+    :root {
+      --bg-washi: #FFFCF6;
+      --bg-card: #FFFFFF;
+      --ink: #3E3A39;
+      --ink-soft: #6B6462;
+      --yellow-yamabuki: #F6D27A;
+      --gold-deep: #8C5D00;
+      --pink-coral: #F2A497;
+      --blue-mizu: #A8D3E6;
+      --blue-mizu-active: color-mix(in srgb, #A8D3E6 75%, #000000 25%);
+      --green-wakatake: #B9DAA5;
+      --purple-light: #DED2ED;
+      --apricot-light: #F4C7AA;
+      --red-now: #A33C32;
+
+      /* 交通方式專屬色 */
+      --route-train: #4678C5;
+      --route-subway: #9266C2;
+      --route-shinkansen: #D8902C;
+      --route-bus: #3A9B80;
+      --route-walk: #84909E;
+      --route-taxi: #D77968;
+
+      --border-thick: 3px solid var(--ink);
+      --border-thin: 2px solid var(--ink);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-pill: 999px;
+      --shadow-book: 4px 4px 0px var(--ink);
+      --shadow-book-sm: 2px 2px 0px var(--ink);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg-washi);
+      background-image: radial-gradient(#E8E0D2 1px, transparent 1px);
+      background-size: 22px 22px;
+      color: var(--ink);
+      line-height: 1.55;
+      padding-bottom: 96px;
+      overflow-x: hidden;
+    }
+
+    button, input, select, textarea {
+      font-family: inherit;
+      color: var(--ink);
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+      outline: 3px dashed var(--gold-deep);
+      outline-offset: 2px;
+    }
+
+    /* ==========================================================================
+       2. 共用頁首 (Header) 與品牌列車動畫
+       ========================================================================== */
+    .app-header {
+      max-width: 1380px;
+      margin: 16px auto 14px;
+      padding: 0 16px;
+    }
+
+    .header-card {
+      background: var(--bg-card);
+      border: var(--border-thick);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-book);
+      padding: 14px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand-zone {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-svg-box {
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: 14px;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 頁首小火車每 4 秒輕移 3px */
+    @keyframes trainChug {
+      0%, 100% { transform: translateX(0px); }
+      50% { transform: translateX(3px); }
+    }
+
+    .brand-train-group {
+      animation: trainChug 4s ease-in-out infinite;
+    }
+
+    .trip-meta-title h1 {
+      font-size: 1.38rem;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .trip-badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.85rem;
+      padding: 3px 11px;
+      border-radius: var(--radius-pill);
+      border: var(--border-thin);
+      background: var(--bg-washi);
+      font-weight: 600;
+    }
+
+    .budget-eye-btn {
+      background: #FFFFFF;
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      padding: 3px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: var(--shadow-book-sm);
+      transition: transform 0.12s ease;
+    }
+
+    .budget-eye-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: none;
+    }
+
+    /* 主分頁導覽列 */
+    .main-nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      padding: 8px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: var(--shadow-book-sm);
+      transition: all 0.15s ease;
+    }
+
+    .nav-tab.active {
+      background: var(--green-wakatake);
+    }
+
+    /* ==========================================================================
+       3. 行程規劃主工作區 (workspace: 左地圖 / 右行事曆)
+       ========================================================================== */
+    .page-container {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    .hidden-page {
+      display: none !important;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 42% 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 850px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      /* 手機版讓行事曆在上方、地圖與交通明細在下方 */
+      .calendarpanel {
+        order: 1;
+      }
+      .mappanel {
+        order: 2;
+      }
+    }
+
+    /* 共用大面板外框 */
+    .mappanel, .calendarpanel, .routepanel {
+      background: var(--bg-card);
+      border: var(--border-thick);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-book);
+      overflow: hidden;
+    }
+
+    /* ==========================================================================
+       4. 地圖與交通明細面板 (mappanel & routepanel)
+       ========================================================================== */
+    .mappanel-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: sticky;
+      top: 14px;
+    }
+
+    @media (max-width: 850px) {
+      .mappanel-stack {
+        position: static;
+      }
+    }
+
+    .mapheading {
+      background: var(--blue-mizu);
+      border-bottom: var(--border-thick);
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .mapheading h2 {
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .map-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .previewroute, .fit {
+      background: #FFFFFF;
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      padding: 5px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s ease;
+    }
+
+    .previewroute.active, .fit.active {
+      background: var(--blue-mizu-active);
+      color: #FFFFFF;
+    }
+
+    #kyoto-map {
+      width: 100%;
+      height: 360px;
+      background: #E8F1F5;
+      z-index: 1;
+    }
+
+    /* 灰階底圖搭配淡藍水域視覺濾鏡 */
+    #kyoto-map .leaflet-tile-pane {
+      filter: grayscale(85%) contrast(1.04) brightness(1.02);
+    }
+
+    .map-legend {
+      padding: 8px 14px;
+      background: var(--bg-washi);
+      border-top: var(--border-thin);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 0.78rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .legend-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-line {
+      width: 14px;
+      height: 4px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .external-map-link {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--ink);
+      text-decoration: underline;
+    }
+
+    /* 交通明細面板 (routepanel) */
+    .routepanel .summary {
+      background: var(--pink-coral);
+      border-bottom: var(--border-thick);
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .routepanel.collapsed .summary {
+      border-bottom: none;
+    }
+
+    .routepanel.collapsed .route-body {
+      display: none;
+    }
+
+    .route-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .route-segment-item {
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: transform 0.12s ease;
+    }
+
+    .route-segment-item:hover {
+      background: #FFF6E8;
+    }
+
+    /* ==========================================================================
+       5. 行事曆面板 (calendarpanel) 與工具列
+       ========================================================================== */
+    .paneltoolbar {
+      background: var(--yellow-yamabuki);
+      border-bottom: var(--border-thick);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-title-group h2 {
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar-month-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.72);
+      padding: 2px 10px;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid var(--ink);
+    }
+
+    .calendar-viewtoggle {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.65);
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      padding: 2px;
+    }
+
+    .view-btn {
+      border: none;
+      background: transparent;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 0.84rem;
+      font-weight: 700;
+      transition: all 0.15s ease;
+    }
+
+    .view-btn.active {
+      background: var(--gold-deep);
+      color: #FFFFFF;
+    }
+
+    .toolbarbuttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-btn {
+      background: #FFFFFF;
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      padding: 6px 13px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: var(--shadow-book-sm);
+    }
+
+    .tool-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-add-mobile-plus {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .toolbar-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+      .btn-add-desktop-label {
+        display: none;
+      }
+      .btn-add-mobile-plus {
+        display: inline;
+        font-size: 1.05rem;
+      }
+    }
+
+    /* ==========================================================================
+       6. 單日時間軸視圖 (timelinepreview) 與滑動插圖
+       ========================================================================== */
+    .timeline-dates {
+      position: relative;
+      background: var(--bg-washi);
+      border-bottom: var(--border-thin);
+      padding: 42px 10px 12px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    /* 滑動日期小圖容器 */
+    .sliding-day-mascot {
+      position: absolute;
+      top: 6px;
+      left: 0;
+      width: 44px;
+      height: 33px;
+      pointer-events: none;
+      transform: translateX(0px);
+      transition: transform 550ms cubic-bezier(.3, .1, .25, 1);
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes mascotHop {
+      0%, 100% { margin-top: 0px; }
+      45% { margin-top: -4px; }
+    }
+
+    .sliding-day-mascot.hopping {
+      animation: mascotHop 550ms cubic-bezier(.3, .1, .25, 1);
+    }
+
+    .day-station-btn {
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: 14px;
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: background 0.15s ease;
+    }
+
+    .day-station-btn.active {
+      background: var(--green-wakatake);
+      box-shadow: var(--shadow-book-sm);
+    }
+
+    @keyframes datePop {
+      0%, 100% { transform: translateY(0) scale(1); }
+      45% { transform: translateY(-3px) scale(1.12); }
+    }
+
+    .day-station-btn.popping .station-date-num {
+      animation: datePop 320ms ease-out;
+    }
+
+    .station-day-label {
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+      font-weight: 700;
+    }
+
+    .station-date-num {
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .station-theme-tag {
+      font-size: 0.7rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 3px;
+    }
+
+    .timeline-intro {
+      padding: 10px 16px;
+      background: #FFF9EC;
+      border-bottom: 1.5px dashed #D6CBB8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88rem;
+    }
+
+    /* 單日主列表：左側固定時間刻度尺 + 右側卡片捲動區 */
+    .timeline-list {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 10px;
+      padding: 14px 14px 18px 10px;
+      height: 62vh;
+      min-height: 460px;
+      max-height: 680px;
+      position: relative;
+    }
+
+    .day-time-scale {
+      position: relative;
+      height: 100%;
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: 16px;
+      padding: 10px 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .scale-bound-label {
+      font-size: 0.74rem;
+      font-weight: 800;
+      background: #FFFFFF;
+      border: 1.5px solid var(--ink);
+      border-radius: 8px;
+      padding: 1px 5px;
+      z-index: 2;
+    }
+
+    .scale-track {
+      position: relative;
+      width: 4px;
+      flex: 1;
+      margin: 6px 0;
+      background: #DCD3C4;
+      border-radius: 4px;
+    }
+
+    /* 追蹤目前焦點卡片的黑框白底圓形 */
+    .scale-focus-dot {
+      position: absolute;
+      left: 50%;
+      top: 0%;
+      width: 16px;
+      height: 16px;
+      background: #FFFFFF;
+      border: 3px solid var(--ink);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: top 160ms ease-out;
+      z-index: 4;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+    }
+
+    /* 當前時間紅線與標籤 */
+    .scale-now-marker {
+      position: absolute;
+      left: -24px;
+      right: -24px;
+      top: 35%;
+      border-top: 2.5px solid var(--red-now);
+      z-index: 3;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+    }
+
+    .scale-now-badge {
+      background: var(--red-now);
+      color: #FFFFFF;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 0 5px;
+      border-radius: 6px;
+      margin-top: -10px;
+    }
+
+    /* 右側卡片捲動區域 */
+    .timeline-cards {
+      height: 100%;
+      overflow-y: auto;
+      padding: 12px 10px 40px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+    }
+
+    .timeline-time-row {
+      position: relative;
+      transition: transform 160ms ease-out, filter 160ms ease-out, opacity 160ms ease-out;
+      transform-origin: left center;
+      --blur-intensity: 0;
+    }
+
+    /* 焦點卡片放大 5% */
+    .timeline-time-row.timeline-current {
+      transform: scale(1.05);
+      z-index: 5;
+      filter: none !important;
+    }
+
+    @media (max-width: 700px) {
+      .timeline-time-row {
+        transform-origin: center center;
+      }
+      .timeline-time-row.timeline-current {
+        transform: scaleY(1.05);
+      }
+    }
+
+    /* 遠離焦點的漸層遮罩與模糊 */
+    .timeline-time-row:not(.timeline-current) {
+      filter: blur(calc(var(--blur-intensity, 0) * 1.65px));
+    }
+
+    .timeline-time-row:not(.timeline-current)::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 252, 246, calc(var(--blur-intensity, 0) * 0.55)),
+        rgba(255, 252, 246, calc(var(--blur-intensity, 0) * 0.25))
+      );
+      transition: opacity 150ms ease;
+    }
+
+    .timeline-time-row.below-focus:not(.timeline-current)::after {
+      background: linear-gradient(
+        0deg,
+        rgba(255, 252, 246, calc(var(--blur-intensity, 0) * 0.55)),
+        rgba(255, 252, 246, calc(var(--blur-intensity, 0) * 0.25))
+      );
+    }
+
+    /* 滑鼠懸停或鍵盤聚焦時取消模糊與遮罩 */
+    .timeline-time-row:hover,
+    .timeline-time-row:focus-within {
+      filter: none !important;
+      z-index: 6;
+    }
+
+    .timeline-time-row:hover::after,
+    .timeline-time-row:focus-within::after {
+      opacity: 0;
+    }
+
+    /* 行程卡片本體 */
+    .timeline-card {
+      background: #FFFFFF;
+      border: var(--border-thin);
+      border-left-width: 9px;
+      border-radius: 16px;
+      padding: 11px 14px;
+      box-shadow: var(--shadow-book-sm);
+      cursor: pointer;
+    }
+
+    .cat-sightseeing { border-left-color: var(--yellow-yamabuki); }
+    .cat-food { border-left-color: var(--pink-coral); }
+    .cat-hotel { border-left-color: var(--blue-mizu); }
+    .cat-transport { border-left-color: var(--green-wakatake); }
+
+    .card-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+
+    .card-time-chip {
+      font-size: 0.82rem;
+      font-weight: 800;
+      background: var(--bg-washi);
+      border: 1.5px solid var(--ink);
+      border-radius: 8px;
+      padding: 1px 8px;
+    }
+
+    .card-cat-tag {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid var(--ink);
+    }
+
+    .bg-sightseeing { background: var(--yellow-yamabuki); }
+    .bg-food { background: var(--pink-coral); }
+    .bg-hotel { background: var(--blue-mizu); }
+    .bg-transport { background: var(--green-wakatake); }
+
+    .card-title {
+      font-size: 1.02rem;
+      font-weight: 800;
+      margin: 2px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .card-sub-info {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .card-note {
+      font-size: 0.82rem;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #DDD3C3;
+      color: #4E4846;
+    }
+
+    .warning-badge {
+      background: #FFE5E0;
+      color: #9E2A1C;
+      border: 1.5px solid #9E2A1C;
+      border-radius: 8px;
+      padding: 1px 7px;
+      font-size: 0.74rem;
+      font-weight: 800;
+    }
+
+    .estimate-badge {
+      background: #FFF3CD;
+      color: #7A5200;
+      border: 1px solid #B5851A;
+      border-radius: 6px;
+      padding: 0 5px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    /* 卡片間的交通轉乘小卡 */
+    .transit-connector-card {
+      margin-left: 14px;
+      background: #F4FAF0;
+      border: 2px dashed var(--ink);
+      border-left: 6px solid var(--green-wakatake);
+      border-radius: 12px;
+      padding: 7px 12px;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .transit-connector-card.pure-walk {
+      background: #FFFDF5;
+      border-left-color: var(--yellow-yamabuki);
+    }
+
+    /* ==========================================================================
+       7. 週行事曆視圖 (Week Grid View)
+       ========================================================================== */
+    .week-view-wrapper {
+      padding: 12px;
+      overflow-x: auto;
+    }
+
+    .week-grid {
+      min-width: 780px;
+      display: grid;
+      grid-template-columns: 56px repeat(6, 1fr);
+      border: var(--border-thin);
+      border-radius: 14px;
+      background: #FFFFFF;
+      overflow: hidden;
+    }
+
+    .week-col-header {
+      background: var(--bg-washi);
+      border-bottom: var(--border-thin);
+      border-left: 1.5px solid #D5CCB8;
+      padding: 8px 4px;
+      text-align: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .week-time-axis {
+      background: var(--bg-washi);
+    }
+
+    .week-hour-cell {
+      height: 46px;
+      border-bottom: 1px dashed #E0D7C6;
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 2px;
+    }
+
+    .week-day-column {
+      position: relative;
+      border-left: 1.5px solid #D5CCB8;
+      height: 736px; /* 16小時 (07:00 - 23:00) * 46px */
+      background-image: linear-gradient(to bottom, #EFE9DC 1px, transparent 1px);
+      background-size: 100% 46px;
+    }
+
+    .week-event-block {
+      position: absolute;
+      left: 3px;
+      right: 3px;
+      border: 2px solid var(--ink);
+      border-radius: 10px;
+      padding: 3px 6px;
+      font-size: 0.75rem;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 1.5px 1.5px 0 var(--ink);
+      transition: transform 0.1s ease;
+    }
+
+    .week-event-block:hover {
+      z-index: 10;
+      transform: scale(1.02);
+    }
+
+    /* ==========================================================================
+       8. 費用總覽頁 (expensespage)
+       ========================================================================== */
+    .expenses-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 820px) {
+      .expenses-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .expense-box {
+      background: #FFFFFF;
+      border: var(--border-thick);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-book);
+      padding: 18px 20px;
+    }
+
+    .expense-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .kpi-card {
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      font-weight: 700;
+    }
+
+    .kpi-value {
+      font-size: 1.32rem;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .rate-control-bar {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: #F4FAF0;
+      border: var(--border-thin);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .rate-input {
+      width: 92px;
+      padding: 4px 8px;
+      border: var(--border-thin);
+      border-radius: 8px;
+      background: #FFFFFF;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .pie-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    .pie-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-width: 190px;
+    }
+
+    .pie-legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .expense-table-wrap {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    .expense-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      min-width: 680px;
+    }
+
+    .expense-table th, .expense-table td {
+      border-bottom: 1.5px solid #E2D9C8;
+      padding: 9px 10px;
+      text-align: left;
+    }
+
+    .expense-table th {
+      background: var(--bg-washi);
+      font-weight: 800;
+    }
+
+    .row-food-tint {
+      background: rgba(242, 164, 151, 0.14);
+    }
+
+    /* ==========================================================================
+       9. 攜帶用品頁 (packingpage)
+       ========================================================================== */
+    .packing-toolbar {
+      background: #FFFFFF;
+      border: var(--border-thick);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-book);
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .progress-track {
+      width: 220px;
+      height: 16px;
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--green-wakatake);
+      transition: width 0.25s ease;
+    }
+
+    .packing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .pack-cat-card {
+      background: #FFFFFF;
+      border: var(--border-thick);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-book);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pack-cat-header {
+      padding: 10px 16px;
+      border-bottom: var(--border-thick);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pack-header-0 { background: var(--yellow-yamabuki); }
+    .pack-header-1 { background: var(--blue-mizu); }
+    .pack-header-2 { background: var(--pink-coral); }
+    .pack-header-3 { background: var(--green-wakatake); }
+    .pack-header-4 { background: var(--purple-light); }
+    .pack-header-5 { background: var(--apricot-light); }
+
+    .pack-items-list {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .pack-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: var(--bg-washi);
+      border: 1.5px solid #E2D8C7;
+    }
+
+    .pack-item-row.checked {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+
+    /* ==========================================================================
+       10. 底部固定綠色工具按鈕與向上展開選單
+       ========================================================================== */
+    .floating-dock {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .dock-menu {
+      margin-bottom: 10px;
+      background: #FFFFFF;
+      border: var(--border-thick);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-book);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 240px;
+      transform-origin: bottom center;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .dock-menu.hidden {
+      display: none;
+    }
+
+    .dock-menu-btn {
+      background: var(--bg-washi);
+      border: var(--border-thin);
+      border-radius: 12px;
+      padding: 8px 13px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .dock-menu-btn:hover {
+      background: var(--green-wakatake);
+    }
+
+    .dock-fab {
+      background: var(--green-wakatake);
+      border: var(--border-thick);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-book);
+      padding: 10px 22px;
+      font-size: 0.96rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dock-fab-icon {
+      transition: transform 160ms ease;
+      display: inline-block;
+    }
+
+    .dock-fab[aria-expanded="true"] .dock-fab-icon {
+      transform: rotate(180deg);
+    }
+
+    /* ==========================================================================
+       11. 對話框 (Modal) 與提示訊息 (Toast)
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(62, 58, 57, 0.48);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.hidden {
+      display: none;
+    }
+
+    .modal-dialog {
+      background: #FFFFFF;
+      border: var(--border-thick);
+      border-radius: var(--radius-lg);
+      box-shadow: 6px 6px 0 var(--ink);
+      width: 100%;
+      max-width: 520px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .form-full {
+      grid-column: 1 / -1;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .form-input {
+      border: var(--border-thin);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: var(--bg-washi);
+      font-size: 0.92rem;
+    }
+
+    .modal-footer {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: var(--green-wakatake);
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      padding: 8px 18px;
+      font-weight: 800;
+      box-shadow: var(--shadow-book-sm);
+    }
+
+    .btn-danger {
+      background: #F6B8B0;
+      border: var(--border-thin);
+      border-radius: var(--radius-pill);
+      padding: 8px 14px;
+      font-weight: 800;
+    }
+
+    .toast-banner {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 1200;
+      background: var(--ink);
+      color: #FFFFFF;
+      border: 2px solid #FFFFFF;
+      border-radius: var(--radius-pill);
+      padding: 10px 18px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease;
+    }
+
+    .toast-banner.show {
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       12. 減少動態效果 (prefers-reduced-motion)
+       ========================================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .brand-train-group,
+      .day-station-btn.popping .station-date-num,
+      .sliding-day-mascot.hopping {
+        animation: none !important;
+      }
+      .sliding-day-mascot,
+      .timeline-time-row,
+      .scale-focus-dot,
+      .dock-fab-icon {
+        transition: none !important;
+      }
+      .timeline-cards {
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 提示訊息 Toast -->
+  <div id="toast-banner" class="toast-banner" role="status" aria-live="polite"></div>
+
+  <!-- ==========================================================================
+       共用頁首 (Header)
+       ========================================================================== -->
+  <header class="app-header">
+    <div class="header-card">
+      <div class="brand-zone">
+        <!-- 原創品牌橫幅 SVG (251 x 66 viewBox)：京都五重塔、鳥居、山水與可獨立微動之 HARUKA 列車 -->
+        <div class="brand-svg-box" aria-label="京都冬日漫遊繪本品牌插圖">
+          <svg width="220" height="58" viewBox="0 0 251 66" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 遠山平塗 -->
+            <path d="M8 52 C35 24, 65 24, 92 52 Z" fill="#B9DAA5" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M58 52 C88 20, 122 20, 152 52 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+            <!-- 冬日暖陽 -->
+            <circle cx="34" cy="18" r="7" fill="#F6D27A" stroke="#3E3A39" stroke-width="2.5"/>
+            <!-- 伏見鳥居 -->
+            <path d="M168 52 V24 M192 52 V24" stroke="#F2A497" stroke-width="5" stroke-linecap="round"/>
+            <path d="M168 52 V24 M192 52 V24" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M160 22 Q180 26 200 22" stroke="#F2A497" stroke-width="5" stroke-linecap="round"/>
+            <path d="M160 22 Q180 26 200 22" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M164 31 H196" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- 京都五重塔剪影 -->
+            <rect x="215" y="20" width="16" height="32" fill="#F6D27A" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M209 22 L223 12 L237 22 Z" fill="#F2A497" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M211 32 L223 24 L235 32 Z" fill="#F2A497" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M223 12 V6" stroke="#3E3A39" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- 可獨立微動的列車群組 -->
+            <g class="brand-train-group">
+              <rect x="22" y="42" width="118" height="14" rx="6" fill="#FFFFFF" stroke="#3E3A39" stroke-width="3"/>
+              <path d="M126 42 H136 C142 42 146 47 146 52 V56 H126 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/>
+              <rect x="32" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <rect x="54" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <rect x="76" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <rect x="98" y="46" width="14" height="5" rx="2" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.8"/>
+              <circle cx="38" cy="57" r="3" fill="#3E3A39"/>
+              <circle cx="62" cy="57" r="3" fill="#3E3A39"/>
+              <circle cx="104" cy="57" r="3" fill="#3E3A39"/>
+              <circle cx="130" cy="57" r="3" fill="#3E3A39"/>
+            </g>
+            <!-- 鐵軌底線 -->
+            <line x1="6" y1="60" x2="245" y2="60" stroke="#3E3A39" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="trip-meta-title">
+          <h1 id="header-trip-title">京都冬日漫遊｜古都與抹茶小旅行</h1>
+          <div class="trip-badges">
+            <span class="meta-pill"><i class="fa-solid fa-location-dot"></i> <span id="header-dest">日本・京都</span></span>
+            <span class="meta-pill"><i class="fa-regular fa-calendar"></i> <span id="header-days">6天5夜 (1/28–2/2)</span></span>
+            <span class="meta-pill"><i class="fa-solid fa-map-pin"></i> <span id="header-spots-count">0 個行程</span></span>
+            <span class="meta-pill"><i class="fa-solid fa-user-group"></i> <span id="header-travelers">2 位成人</span></span>
+            <button type="button" id="toggle-budget-eye" class="budget-eye-btn" aria-label="切換總花費顯示">
+              <i id="budget-eye-icon" class="fa-regular fa-eye-slash"></i>
+              <span id="header-budget-text">總花費已隱藏</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 三頁導覽切換 -->
+      <nav class="main-nav" aria-label="主要功能分頁">
+        <button type="button" class="nav-tab active" data-page="workspace-page">
+          <i class="fa-solid fa-map-location-dot"></i> 行程規劃
+        </button>
+        <button type="button" class="nav-tab" data-page="expensespage">
+          <i class="fa-solid fa-coins"></i> 費用總覽
+        </button>
+        <button type="button" class="nav-tab" data-page="packingpage">
+          <i class="fa-solid fa-suitcase-rolling"></i> 攜帶用品
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       第一頁：行程規劃主工作區 (workspace)
+       ========================================================================== -->
+  <main id="workspace-page" class="page-container">
+    <div class="workspace">
+
+      <!-- 左欄：地圖與當日交通明細 -->
+      <div class="mappanel-stack">
+        <section class="mappanel" aria-label="京都互動路線地圖">
+          <div class="mapheading">
+            <h2><i class="fa-solid fa-compass"></i> <span id="map-day-heading">Day 1 路線地圖</span></h2>
+            <div class="map-actions">
+              <button type="button" id="btn-preview-route" class="previewroute active">
+                <i class="fa-solid fa-route"></i> 路徑預覽
+              </button>
+              <button type="button" id="btn-fit-map" class="fit">
+                <i class="fa-solid fa-expand"></i> 整天概覽
+              </button>
+            </div>
+          </div>
+
+          <div id="kyoto-map"></div>
+
+          <div class="map-legend">
+            <div class="legend-items">
+              <span class="legend-dot"><span class="legend-line" style="background: var(--route-train);"></span>JR/近鐵</span>
+              <span class="legend-dot"><span class="legend-line" style="background: var(--route-subway);"></span>地鐵/嵐電</span>
+              <span class="legend-dot"><span class="legend-line" style="background: var(--route-bus);"></span>公車</span>
+              <span class="legend-dot"><span class="legend-line" style="background: var(--route-walk);"></span>步行</span>
+            </div>
+            <a id="gmaps-day-link" class="external-map-link" href="https://www.google.com/maps" target="_blank" rel="noopener">
+              開啟 Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          </div>
+        </section>
+
+        <!-- 可收合的當日交通明細 (routepanel) -->
+        <section id="routepanel" class="routepanel" aria-label="當日交通明細">
+          <div id="route-panel-toggle" class="summary" role="button" tabindex="0" aria-expanded="true">
+            <strong><i class="fa-solid fa-train-subway"></i> 當日交通明細（點擊編輯分段）</strong>
+            <span id="route-summary-badge" style="font-size:0.84rem; font-weight:800;">展開中 <i class="fa-solid fa-chevron-up"></i></span>
+          </div>
+          <div id="route-segments-list" class="route-body"></div>
+        </section>
+      </div>
+
+      <!-- 右欄：行事曆面板 (calendarpanel) -->
+      <section class="calendarpanel" aria-label="京都行程行事曆">
+        <div class="paneltoolbar">
+          <div class="toolbar-left">
+            <div class="toolbar-title-group">
+              <h2><i class="fa-regular fa-calendar-check"></i> 行事曆</h2>
+              <span class="toolbar-month-label">2027年 1月 – 2月</span>
+            </div>
+
+            <div class="calendar-viewtoggle" role="group" aria-label="行事曆檢視切換">
+              <button type="button" id="btn-view-day" class="view-btn active">單日時間軸</button>
+              <button type="button" id="btn-view-week" class="view-btn">週行事曆</button>
+            </div>
+          </div>
+
+          <div class="toolbarbuttons">
+            <button type="button" id="btn-undo" class="tool-btn" disabled title="復原上一步變更">
+              <i class="fa-solid fa-rotate-left"></i> 復原
+            </button>
+            <button type="button" id="btn-add-event" class="tool-btn">
+              <span class="btn-add-desktop-label"><i class="fa-solid fa-plus"></i> 新增行程</span>
+              <span class="btn-add-mobile-plus">＋</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 日站點導覽列與滑動插圖 (單日與週檢視共用) -->
+        <div id="timeline-dates" class="timeline-dates">
+          <div id="sliding-day-mascot" class="sliding-day-mascot" aria-hidden="true"></div>
+          <!-- 由 JS 動態產生 6 日站點按鈕 -->
+        </div>
+
+        <!-- 單日時間軸模式 (timelinepreview) -->
+        <div id="day-timeline-view" class="timelinepreview">
+          <div class="timeline-intro">
+            <span id="day-intro-title" style="font-weight:800;">Day 1 · 2027/01/28 (四) 抵達京都</span>
+            <span id="day-intro-stats" style="font-size:0.82rem; color:var(--ink-soft);">捲動右側卡片可自動追蹤時間刻度</span>
+          </div>
+
+          <div class="timeline-list">
+            <!-- 左側固定比例時間刻度尺 -->
+            <div class="day-time-scale" aria-label="當日時間比例尺">
+              <span id="scale-start-label" class="scale-bound-label">08:55</span>
+              <div class="scale-track">
+                <div id="scale-now-marker" class="scale-now-marker" title="京都當地目前時間">
+                  <span id="scale-now-badge" class="scale-now-badge">10:30</span>
+                </div>
+                <div id="scale-focus-dot" class="scale-focus-dot" title="目前焦點行程位置"></div>
+              </div>
+              <span id="scale-end-label" class="scale-bound-label">21:30</span>
+            </div>
+
+            <!-- 右側單欄行程卡片捲動區 -->
+            <div id="timeline-cards" class="timeline-cards"></div>
+          </div>
+        </div>
+
+        <!-- 週行事曆模式 -->
+        <div id="week-calendar-view" class="week-view-wrapper hidden-page">
+          <div style="font-size:0.8rem; color:var(--ink-soft); margin-bottom:8px;">
+            <i class="fa-solid fa-circle-info"></i> 提示：點擊行程可切換該日地圖，雙擊可編輯行程；已鎖定時段附有鎖頭標記。
+          </div>
+          <div id="week-grid" class="week-grid"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==========================================================================
+       第二頁：費用總覽 (expensespage)
+       ========================================================================== -->
+  <section id="expensespage" class="page-container hidden-page" aria-label="旅程費用總覽">
+    <div class="expenses-layout">
+      <!-- 左欄：幣別合計與即時匯率換算 -->
+      <div class="expense-box">
+        <h2 style="font-size:1.15rem;"><i class="fa-solid fa-wallet"></i> 預算與總花費統計（2 位成人）</h2>
+        <div class="expense-kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">日圓總花費 (JPY)</div>
+            <div id="exp-total-jpy" class="kpi-value">¥0</div>
+          </div>
+          <div class="kpi-card" style="background:#F4FAF0;">
+            <div class="kpi-label">台幣換算總額 (TWD)</div>
+            <div id="exp-total-twd" class="kpi-value">NT$0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">每人平均分攤 (TWD)</div>
+            <div id="exp-per-person-twd" class="kpi-value">NT$0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">待確認／估算項目佔比</div>
+            <div id="exp-est-ratio" class="kpi-value">0 項估算</div>
+          </div>
+        </div>
+
+        <div class="rate-control-bar">
+          <span><i class="fa-solid fa-arrow-right-arrow-left"></i> 即時匯率：1 JPY =</span>
+          <div>
+            <input type="number" id="jpy-rate-input" class="rate-input" step="0.001" min="0.05" max="1" value="0.215" />
+            <span>TWD</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右欄：類別支出 SVG 圓餅圖與圖例 -->
+      <div class="expense-box">
+        <h2 style="font-size:1.15rem;"><i class="fa-solid fa-chart-pie"></i> 各類別支出組成（沿用行事曆配色）</h2>
+        <div class="pie-wrapper">
+          <svg id="expense-pie-svg" width="190" height="190" viewBox="0 0 200 200" aria-label="支出圓餅圖"></svg>
+          <div id="expense-pie-legend" class="pie-legend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 完整費用明細表 -->
+    <div class="expense-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <h2 style="font-size:1.12rem;"><i class="fa-solid fa-receipt"></i> 行程與交通費用明細表</h2>
+        <span style="font-size:0.82rem; color:var(--ink-soft);">※ 餐飲列以珊瑚粉淡底標示；金額已依單人/全團規則計算</span>
+      </div>
+      <div class="expense-table-wrap">
+        <table class="expense-table">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>類別</th>
+              <th>項目名稱</th>
+              <th>計費方式</th>
+              <th>日圓小計 (JPY)</th>
+              <th>台幣換算 (TWD)</th>
+              <th>狀態</th>
+            </tr>
+          </thead>
+          <tbody id="expense-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       第三頁：攜帶用品 (packingpage)
+       ========================================================================== -->
+  <section id="packingpage" class="page-container hidden-page" aria-label="京都冬日攜帶用品清單">
+    <div class="packing-toolbar">
+      <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <h2 style="font-size:1.12rem;"><i class="fa-solid fa-clipboard-check"></i> 冬日京都打包進度</h2>
+        <div class="progress-track">
+          <div id="packing-progress-fill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+        <span id="packing-progress-text" style="font-weight:800; font-size:0.9rem;">0 / 0 完成</span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <input type="search" id="packing-search" class="form-input" placeholder="搜尋物品名稱..." style="width:175px;" />
+        <label style="font-size:0.86rem; font-weight:700; display:inline-flex; align-items:center; gap:5px; cursor:pointer;">
+          <input type="checkbox" id="packing-only-unchecked" /> 只顯示未完成
+        </label>
+      </div>
+    </div>
+
+    <div id="packing-grid" class="packing-grid"></div>
+  </section>
+
+  <!-- ==========================================================================
+       底部固定綠色工具按鈕與向上展開選單
+       ========================================================================== -->
+  <div class="floating-dock">
+    <div id="dock-menu" class="dock-menu hidden" role="menu">
+      <button type="button" id="tool-export-json" class="dock-menu-btn">
+        <i class="fa-solid fa-file-export"></i> 匯出 JSON 旅程備份
+      </button>
+      <button type="button" id="tool-import-json" class="dock-menu-btn">
+        <i class="fa-solid fa-file-import"></i> 匯入 JSON 旅程資料
+      </button>
+      <button type="button" id="tool-export-ics" class="dock-menu-btn">
+        <i class="fa-regular fa-calendar-plus"></i> 匯出 ICS 行事曆 (Asia/Tokyo)
+      </button>
+      <button type="button" id="tool-assumptions" class="dock-menu-btn">
+        <i class="fa-solid fa-list-check"></i> 檢視假設與待查清單
+      </button>
+      <button type="button" id="tool-reset-default" class="dock-menu-btn" style="color:#9E2A1C;">
+        <i class="fa-solid fa-arrow-rotate-left"></i> 重置為預設京都行程
+      </button>
+    </div>
+
+    <button type="button" id="dock-fab" class="dock-fab" aria-expanded="false" aria-controls="dock-menu">
+      <span class="dock-fab-icon"><i class="fa-solid fa-bars"></i></span>
+      <span>旅程工具箱</span>
+    </button>
+    <input type="file" id="json-file-input" accept=".json" style="display:none;" />
+  </div>
+
+  <!-- ==========================================================================
+       通用對話框 (新增/編輯行程、編輯交通、檢視假設清單)
+       ========================================================================== -->
+  <div id="modal-backdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div id="modal-dialog" class="modal-dialog"></div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       一、核心旅程資料層 (TRIP_DATA) - 與 UI 元件完全分離，方便隨時修改連動
+       ========================================================================== */
+    const DEFAULT_TRIP_DATA = {
+      meta: {
+        title: "京都冬日漫遊｜古都與抹茶小旅行",
+        destination: "日本・京都",
+        timezone: "Asia/Tokyo",
+        startDate: "2027-01-28",
+        endDate: "2027-02-02",
+        nights: 5,
+        travelers: { adults: 2, children: 0, label: "2 位成人" },
+        localCurrency: "JPY",
+        settleCurrency: "TWD",
+        exchangeRate: 0.215
+      },
+      days: [
+        {
+          dayIndex: 0,
+          date: "2027-01-28",
+          shortDate: "1/28",
+          weekday: "四",
+          theme: "抵達與錦市場",
+          mascotType: "plane",
+          summary: "樂桃 MM024 抵達關西機場 → HARUKA 特急進京都 → RESI STAY MAYU → 錦市場＆河原町晚餐"
+        },
+        {
+          dayIndex: 1,
+          date: "2027-01-29",
+          shortDate: "1/29",
+          weekday: "五",
+          theme: "嵐山竹林漫步",
+          mascotType: "arashiyama",
+          summary: "渡月橋與竹林小徑 → 嵐山豆腐料理 → 天龍寺庭園 → 嵐山抹茶甜點與足湯"
+        },
+        {
+          dayIndex: 2,
+          date: "2027-01-30",
+          shortDate: "1/30",
+          weekday: "六",
+          theme: "伏見稻荷夜色",
+          mascotType: "torii",
+          summary: "清水寺＆二三年坂 → 花見小路午餐 → 鴨川散步 → 傍晚伏見稻荷千本鳥居夜景 → 拉麵小路"
+        },
+        {
+          dayIndex: 3,
+          date: "2027-01-31",
+          shortDate: "1/31",
+          weekday: "日",
+          theme: "宇治抹茶巡禮",
+          mascotType: "uji",
+          summary: "平等院鳳凰堂 → 宇治川畔與宇治上神社 → 抹茶蕎麥麵與中村藤吉本店甜點"
+        },
+        {
+          dayIndex: 4,
+          date: "2027-02-01",
+          shortDate: "2/01",
+          weekday: "一",
+          theme: "奈良小鹿之旅",
+          mascotType: "nara",
+          summary: "近鐵往奈良 → 奈良公園餵鹿與東大寺大佛殿 → 春日大社參道 → 奈良町老街午餐"
+        },
+        {
+          dayIndex: 5,
+          date: "2027-02-02",
+          shortDate: "2/02",
+          weekday: "二",
+          theme: "東本願寺賦歸",
+          mascotType: "train",
+          summary: "飯店退房寄放行李 → 京都塔／東本願寺晨間散步 → HARUKA 前往關西機場 → 樂桃 MM027 返台"
+        }
+      ],
+      events: [
+        // Day 1: 2027-01-28
+        {
+          id: "evt-d1-1",
+          dayIndex: 0,
+          startTime: "08:55",
+          durationMin: 65,
+          category: "transport",
+          name: "樂桃航空 MM024 抵達關西機場 T2",
+          address: "関西国際空港 第2ターミナル",
+          lat: 34.4347,
+          lng: 135.2229,
+          costJpy: 0,
+          costScope: "group",
+          isEstimated: true,
+          locked: true,
+          notes: "機票已另計；預留入境審查、領取行李及領取 ICOCA/HARUKA 車票時間（班表時間待 2026 冬季公告確認）。"
+        },
+        {
+          id: "evt-d1-2",
+          dayIndex: 0,
+          startTime: "11:45",
+          durationMin: 45,
+          category: "hotel",
+          name: "RESI STAY MAYU 辦理寄放行李",
+          address: "京都市下京區五條烏丸一帶 (RESI STAY MAYU)",
+          lat: 34.9965,
+          lng: 135.7628,
+          costJpy: 68000,
+          costScope: "group",
+          isEstimated: true,
+          locked: true,
+          notes: "連住 5 晚總房費估算（每晚約 ¥13,600／雙人房，含京都住宿稅估算）。15:00 後可正式進房。"
+        },
+        {
+          id: "evt-d1-3",
+          dayIndex: 0,
+          startTime: "13:00",
+          durationMin: 150,
+          category: "sightseeing",
+          name: "錦市場商店街 ＆ 錦天滿宮散策",
+          address: "京都市中京區西大文字町609 (錦市場)",
+          lat: 35.0050,
+          lng: 135.7649,
+          costJpy: 2000,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "沿途品嚐豆乳甜甜圈、玉子燒與現烤海鮮串，注意邊走邊吃禮儀。"
+        },
+        {
+          id: "evt-d1-4",
+          dayIndex: 0,
+          startTime: "16:00",
+          durationMin: 120,
+          category: "sightseeing",
+          name: "四條河原町 ＆ 新京極商店街逛街",
+          address: "京都市中京區河原町通四條上ル",
+          lat: 35.0038,
+          lng: 135.7689,
+          costJpy: 3000,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "採買冬季保暖小物、藥妝或日常用品。"
+        },
+        {
+          id: "evt-d1-5",
+          dayIndex: 0,
+          startTime: "18:30",
+          durationMin: 90,
+          category: "food",
+          name: "先斗町／河原町 京都家常料理晚餐",
+          address: "京都市中京區先斗町通",
+          lat: 35.0062,
+          lng: 135.7711,
+          costJpy: 3800,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "建議點京野菜天婦羅與暖呼呼的湯豆腐鍋。"
+        },
+
+        // Day 2: 2027-01-29 (嵐山路線)
+        {
+          id: "evt-d2-1",
+          dayIndex: 1,
+          startTime: "09:15",
+          durationMin: 95,
+          category: "sightseeing",
+          name: "嵐山渡月橋 ＆ 嵯峨野竹林小徑",
+          address: "京都市右京區嵯峨天龍寺芒ノ馬場町",
+          lat: 35.0129,
+          lng: 135.6777,
+          costJpy: 0,
+          costScope: "group",
+          isEstimated: false,
+          locked: false,
+          notes: "早晨人潮較少，冬季陽光穿透竹林光影極美，河畔風大建議戴毛帽。"
+        },
+        {
+          id: "evt-d2-2",
+          dayIndex: 1,
+          startTime: "11:15",
+          durationMin: 75,
+          category: "food",
+          name: "嵐山湯豆腐料理午餐（嵯峨野／稻）",
+          address: "京都市右京區嵯峨天龍寺造路町19",
+          lat: 35.0156,
+          lng: 135.6768,
+          costJpy: 3500,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "冬日必吃熱騰騰手工湯豆腐與胡麻豆腐套餐。"
+        },
+        {
+          id: "evt-d2-3",
+          dayIndex: 1,
+          startTime: "12:45",
+          durationMin: 90,
+          category: "sightseeing",
+          name: "世界遺產 天龍寺 曹源池庭園",
+          address: "京都市右京區嵯峨天龍寺芒ノ馬場町68",
+          lat: 35.0157,
+          lng: 135.6745,
+          costJpy: 800,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "庭園參拜 ¥500 + 諸堂參拜 ¥300（待確認 2027 最新票價）。"
+        },
+        {
+          id: "evt-d2-4",
+          dayIndex: 1,
+          startTime: "14:30",
+          durationMin: 105,
+          category: "food",
+          name: "嵐山大街抹茶甜點 ＆ 嵐電車站足湯",
+          address: "京都市右京區嵯峨天龍寺造路町20-2",
+          lat: 35.0152,
+          lng: 135.6775,
+          costJpy: 1800,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "% Arabica 咖啡或 eX cafe 烤糰子，再去嵐電嵐山站泡暖腳足湯（含小毛巾約 ¥250）。"
+        },
+        {
+          id: "evt-d2-5",
+          dayIndex: 1,
+          startTime: "18:00",
+          durationMin: 90,
+          category: "food",
+          name: "四條烏丸 京風居酒屋／壽喜燒晚餐",
+          address: "京都市下京區四條通烏丸東入",
+          lat: 35.0036,
+          lng: 135.7598,
+          costJpy: 4500,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "回到住宿附近用餐，飯後可順道逛超市買草莓與牛奶。"
+        },
+
+        // Day 3: 2027-01-30 (伏見稻荷與東山夜色)
+        {
+          id: "evt-d3-1",
+          dayIndex: 2,
+          startTime: "09:15",
+          durationMin: 135,
+          category: "sightseeing",
+          name: "清水寺 ＆ 二年坂、三年坂古街漫步",
+          address: "京都市東山區清水1丁目294",
+          lat: 34.9949,
+          lng: 135.7850,
+          costJpy: 500,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "清晨登上清水舞台遠眺京都市景，下山沿三年坂、二年坂逛清水燒與八橋老店。"
+        },
+        {
+          id: "evt-d3-2",
+          dayIndex: 2,
+          startTime: "12:00",
+          durationMin: 75,
+          category: "food",
+          name: "祇園花見小路 親子丼／京烏龍麵午餐",
+          address: "京都市東山區祇園町南側",
+          lat: 35.0022,
+          lng: 135.7751,
+          costJpy: 2200,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "推薦祇園下河原ひさご親子丼或おかる狐狸烏龍麵。"
+        },
+        {
+          id: "evt-d3-3",
+          dayIndex: 2,
+          startTime: "13:45",
+          durationMin: 115,
+          category: "sightseeing",
+          name: "鴨川四條大橋散步 ＆ 町家咖啡時光",
+          address: "京都市東山區四條大橋東詰",
+          lat: 35.0038,
+          lng: 135.7720,
+          costJpy: 1400,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "沿鴨川河畔欣賞冬日水鳥，找間町家老屋咖啡館歇腳暖身。"
+        },
+        {
+          id: "evt-d3-4",
+          dayIndex: 2,
+          startTime: "16:30",
+          durationMin: 110,
+          category: "sightseeing",
+          name: "伏見稻荷大社（千本鳥居黃昏與夜色）",
+          address: "京都市伏見區深草藪之内町68",
+          lat: 34.9671,
+          lng: 135.7727,
+          costJpy: 0,
+          costScope: "group",
+          isEstimated: false,
+          locked: false,
+          notes: "24小時開放免費參拜！傍晚點燈後的朱紅千本鳥居極具神祕氛圍，建議走至四辻觀景台欣賞京都夜景。"
+        },
+        {
+          id: "evt-d3-5",
+          dayIndex: 2,
+          startTime: "19:00",
+          durationMin: 75,
+          category: "food",
+          name: "京都站 拉麵小路晚餐",
+          address: "京都市下京區烏丸通塩小路下ル (京都駅ビル10F)",
+          lat: 34.9858,
+          lng: 135.7588,
+          costJpy: 1300,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "集結日本各地名店拉麵，冬天來一碗濃厚豚骨或醬油拉麵最療癒。"
+        },
+
+        // Day 4: 2027-01-31 (宇治茶香一日)
+        {
+          id: "evt-d4-1",
+          dayIndex: 3,
+          startTime: "09:45",
+          durationMin: 95,
+          category: "sightseeing",
+          name: "世界遺產 平等院鳳凰堂",
+          address: "京都府宇治市宇治蓮華116",
+          lat: 34.8893,
+          lng: 135.8077,
+          costJpy: 1000,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "庭園+鳳翔館 ¥700，鳳凰堂內部拜觀另加 ¥300（現場排隊預約場次）。"
+        },
+        {
+          id: "evt-d4-2",
+          dayIndex: 3,
+          startTime: "11:45",
+          durationMin: 75,
+          category: "food",
+          name: "宇治表參道 抹茶蕎麥麵午餐",
+          address: "京都府宇治市宇治蓮華",
+          lat: 34.8904,
+          lng: 135.8065,
+          costJpy: 1800,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "品嚐現磨宇治抹茶製成的翠綠蕎麥麵與炸蝦天婦羅。"
+        },
+        {
+          id: "evt-d4-3",
+          dayIndex: 3,
+          startTime: "13:15",
+          durationMin: 85,
+          category: "sightseeing",
+          name: "宇治川橘島 ＆ 宇治上神社散策",
+          address: "京都府宇治市宇治山田59",
+          lat: 34.8921,
+          lng: 135.8114,
+          costJpy: 500,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "走過朝霧橋參拜日本現存最古神社建築，可求可愛兔子御神籤。"
+        },
+        {
+          id: "evt-d4-4",
+          dayIndex: 3,
+          startTime: "15:00",
+          durationMin: 90,
+          category: "food",
+          name: "中村藤吉本店 宇治抹茶聖代下午茶",
+          address: "京都府宇治市宇治壱番10",
+          lat: 34.8902,
+          lng: 135.8012,
+          costJpy: 2000,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "必點生茶凍與濃郁抹茶冰淇淋，現場抽號碼牌候位。"
+        },
+        {
+          id: "evt-d4-5",
+          dayIndex: 3,
+          startTime: "18:00",
+          durationMin: 95,
+          category: "food",
+          name: "京都站地下街 Porta 晚餐與選物",
+          address: "京都市下京區烏丸通塩小路下ル東塩小路町902",
+          lat: 34.9866,
+          lng: 135.7592,
+          costJpy: 2600,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "返回京都站暖和室內用餐，順便挑選京都工藝小物。"
+        },
+
+        // Day 5: 2027-02-01 (奈良小鹿之旅)
+        {
+          id: "evt-d5-1",
+          dayIndex: 4,
+          startTime: "09:45",
+          durationMin: 115,
+          category: "sightseeing",
+          name: "奈良公園餵小鹿 ＆ 東大寺大佛殿",
+          address: "奈良市雑司町406-1",
+          lat: 34.6890,
+          lng: 135.8398,
+          costJpy: 1000,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "鹿仙貝 ¥200/份 + 東大寺大佛殿門票 ¥800（待確認）。冬季小鹿毛色蓬鬆可愛。"
+        },
+        {
+          id: "evt-d5-2",
+          dayIndex: 4,
+          startTime: "12:00",
+          durationMin: 80,
+          category: "food",
+          name: "奈良町老街 釜飯／柿葉壽司午餐",
+          address: "奈良市下御門町・ならまち",
+          lat: 34.6788,
+          lng: 135.8306,
+          costJpy: 2400,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "推薦志津香釜飯或平宗柿葉壽司，感受江戶町家風情。"
+        },
+        {
+          id: "evt-d5-3",
+          dayIndex: 4,
+          startTime: "13:45",
+          durationMin: 105,
+          category: "sightseeing",
+          name: "春日大社 表參道石燈籠散步",
+          address: "奈良市春日野町160",
+          lat: 34.6814,
+          lng: 135.8484,
+          costJpy: 700,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "沿途數千座石燈籠與苔蘚森林非常寧靜，特別參拜 ¥700。"
+        },
+        {
+          id: "evt-d5-4",
+          dayIndex: 4,
+          startTime: "17:15",
+          durationMin: 120,
+          category: "sightseeing",
+          name: "四條烏丸大丸百貨 ＆ 伴手禮最後採買",
+          address: "京都市下京區四條通高倉西入立売西町79",
+          lat: 35.0036,
+          lng: 135.7615,
+          costJpy: 6000,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "採買宇治抹茶點心、小倉山莊仙貝、北山茶之菓等伴手禮。"
+        },
+
+        // Day 6: 2027-02-02 (賦歸日)
+        {
+          id: "evt-d6-1",
+          dayIndex: 5,
+          startTime: "09:15",
+          durationMin: 95,
+          category: "sightseeing",
+          name: "飯店退房寄放行李 → 東本願寺晨間散步",
+          address: "京都市下京區烏丸通七條上ル",
+          lat: 34.9914,
+          lng: 135.7586,
+          costJpy: 0,
+          costScope: "group",
+          isEstimated: false,
+          locked: false,
+          notes: "從飯店步行前往世界最大木造建築之一東本願寺，欣賞早晨陽光與銀杏大樹。"
+        },
+        {
+          id: "evt-d6-2",
+          dayIndex: 5,
+          startTime: "11:00",
+          durationMin: 75,
+          category: "food",
+          name: "京都站前早午餐 ＆ 京都塔展望紀念",
+          address: "京都市下京區烏丸通七條下ル東塩小路町721-1",
+          lat: 34.9875,
+          lng: 135.7593,
+          costJpy: 2000,
+          costScope: "per_person",
+          isEstimated: true,
+          locked: false,
+          notes: "享用京都老牌喫茶店小川珈琲吐司早餐，取回行李準備前往機場。"
+        },
+        {
+          id: "evt-d6-3",
+          dayIndex: 5,
+          startTime: "16:00",
+          durationMin: 180,
+          category: "transport",
+          name: "樂桃航空 MM027 關西 KIX → 桃園 TPE",
+          address: "関西国際空港 第2ターミナル",
+          lat: 34.4347,
+          lng: 135.2229,
+          costJpy: 0,
+          costScope: "group",
+          isEstimated: true,
+          locked: true,
+          notes: "建議 13:30 前抵達關西機場完成報到與免稅店採買（回程時間待樂桃冬季時刻表最終確認）。"
+        }
+      ],
+      /* 交通路段清單：自動依相鄰事件對應，可手動修改交通方式、分鐘數與費用 */
+      segments: [
+        // Day 1
+        { id: "seg-d1-1", dayIndex: 0, fromEventId: "evt-d1-1", toEventId: "evt-d1-2", mode: "train", modeLabel: "JR HARUKA 特急 + 地鐵烏丸線", durationMin: 95, costJpy: 2400, costScope: "per_person", isEstimated: true, note: "KIX 搭 HARUKA 至京都站(80分)，轉地鐵烏丸線至五條站(2分)步行3分" },
+        { id: "seg-d1-2", dayIndex: 0, fromEventId: "evt-d1-2", toEventId: "evt-d1-3", mode: "subway", modeLabel: "地鐵烏丸線（五條→四條）+ 步行", durationMin: 18, costJpy: 220, costScope: "per_person", isEstimated: false, note: "搭乘 1 站至四條站，步行約 7 分鐘抵錦市場" },
+        { id: "seg-d1-3", dayIndex: 0, fromEventId: "evt-d1-3", toEventId: "evt-d1-4", mode: "walk", modeLabel: "純步行逛街", durationMin: 8, costJpy: 0, costScope: "group", isEstimated: false, note: "錦市場東端出口即接新京極與河原町" },
+        { id: "seg-d1-4", dayIndex: 0, fromEventId: "evt-d1-4", toEventId: "evt-d1-5", mode: "walk", modeLabel: "純步行", durationMin: 6, costJpy: 0, costScope: "group", isEstimated: false, note: "沿四條通向東步行至先斗町巷口" },
+
+        // Day 2
+        { id: "seg-d2-1", dayIndex: 1, fromEventId: null, toEventId: "evt-d2-1", fromName: "RESI STAY MAYU", mode: "subway", modeLabel: "地鐵烏丸線轉東西線 + 嵐電", durationMin: 48, costJpy: 530, costScope: "per_person", isEstimated: true, note: "五條站→烏丸御池轉東西線至太秦天神川→轉乘嵐電嵐山本線至嵐山站" },
+        { id: "seg-d2-2", dayIndex: 1, fromEventId: "evt-d2-1", toEventId: "evt-d2-2", mode: "walk", modeLabel: "純步行", durationMin: 10, costJpy: 0, costScope: "group", isEstimated: false, note: "沿嵐山大街步行前往餐廳" },
+        { id: "seg-d2-3", dayIndex: 1, fromEventId: "evt-d2-2", toEventId: "evt-d2-3", mode: "walk", modeLabel: "純步行", durationMin: 5, costJpy: 0, costScope: "group", isEstimated: false, note: "過馬路即達天龍寺入口" },
+        { id: "seg-d2-4", dayIndex: 1, fromEventId: "evt-d2-3", toEventId: "evt-d2-4", mode: "walk", modeLabel: "純步行", durationMin: 6, costJpy: 0, costScope: "group", isEstimated: false, note: "前往嵐電嵐山站周邊商店街" },
+        { id: "seg-d2-5", dayIndex: 1, fromEventId: "evt-d2-4", toEventId: "evt-d2-5", mode: "subway", modeLabel: "嵐電 + 地鐵東西線/烏丸線", durationMin: 45, costJpy: 530, costScope: "per_person", isEstimated: true, note: "原路返回四條烏丸站" },
+
+        // Day 3
+        { id: "seg-d3-1", dayIndex: 2, fromEventId: null, toEventId: "evt-d3-1", fromName: "RESI STAY MAYU", mode: "bus", modeLabel: "京都市營巴士 80 / 207 號", durationMin: 28, costJpy: 230, costScope: "per_person", isEstimated: false, note: "河原町五條搭市巴至五條坂下車，步行上坡約 10 分鐘" },
+        { id: "seg-d3-2", dayIndex: 2, fromEventId: "evt-d3-1", toEventId: "evt-d3-2", mode: "walk", modeLabel: "純步行（沿二年坂散步下山）", durationMin: 18, costJpy: 0, costScope: "group", isEstimated: false, note: "經寧寧之道、八坂神社南樓門至花見小路" },
+        { id: "seg-d3-3", dayIndex: 2, fromEventId: "evt-d3-2", toEventId: "evt-d3-3", mode: "walk", modeLabel: "純步行", durationMin: 8, costJpy: 0, costScope: "group", isEstimated: false, note: "沿四條通西行至鴨川河畔" },
+        { id: "seg-d3-4", dayIndex: 2, fromEventId: "evt-d3-3", toEventId: "evt-d3-4", mode: "train", modeLabel: "京阪電鐵本線（祇園四條→伏見稻荷）", durationMin: 18, costJpy: 220, costScope: "per_person", isEstimated: false, note: "搭京阪準急/普通列車約 9 分鐘抵達伏見稻荷站，步行 5 分" },
+        { id: "seg-d3-5", dayIndex: 2, fromEventId: "evt-d3-4", toEventId: "evt-d3-5", mode: "train", modeLabel: "JR 奈良線（稻荷→京都站）", durationMin: 14, costJpy: 150, costScope: "per_person", isEstimated: false, note: "JR 稻荷站就在鳥居正對面，搭 2 站 5 分鐘直達京都站" },
+
+        // Day 4
+        { id: "seg-d4-1", dayIndex: 3, fromEventId: null, toEventId: "evt-d4-1", fromName: "RESI STAY MAYU", mode: "train", modeLabel: "地鐵烏丸線 + JR 奈良線（京都→宇治）", durationMin: 42, costJpy: 460, costScope: "per_person", isEstimated: false, note: "五條搭地鐵至京都站(2分)，轉 JR 奈良線快速列車至宇治站(17分)" },
+        { id: "seg-d4-2", dayIndex: 3, fromEventId: "evt-d4-1", toEventId: "evt-d4-2", mode: "walk", modeLabel: "純步行", durationMin: 5, costJpy: 0, costScope: "group", isEstimated: false, note: "平等院表參道沿街餐廳" },
+        { id: "seg-d4-3", dayIndex: 3, fromEventId: "evt-d4-2", toEventId: "evt-d4-3", mode: "walk", modeLabel: "純步行（過橘橋與朝霧橋）", durationMin: 12, costJpy: 0, costScope: "group", isEstimated: false, note: "橫跨宇治川中央小島前往宇治上神社" },
+        { id: "seg-d4-4", dayIndex: 3, fromEventId: "evt-d4-3", toEventId: "evt-d4-4", mode: "walk", modeLabel: "純步行", durationMin: 14, costJpy: 0, costScope: "group", isEstimated: false, note: "過宇治橋前往 JR 宇治站前中村藤吉本店" },
+        { id: "seg-d4-5", dayIndex: 3, fromEventId: "evt-d4-4", toEventId: "evt-d4-5", mode: "train", modeLabel: "JR 奈良線（宇治→京都站）", durationMin: 22, costJpy: 240, costScope: "per_person", isEstimated: false, note: "JR 宇治站就在店門斜對面，搭快速列車返回京都站" },
+
+        // Day 5
+        { id: "seg-d5-1", dayIndex: 4, fromEventId: null, toEventId: "evt-d5-1", fromName: "RESI STAY MAYU", mode: "train", modeLabel: "地鐵烏丸線直通近鐵京都線（五條→近鐵奈良）", durationMin: 58, costJpy: 760, costScope: "per_person", isEstimated: true, note: "五條站搭烏丸線直通運轉近鐵急行至近鐵奈良站，出站步行 12 分" },
+        { id: "seg-d5-2", dayIndex: 4, fromEventId: "evt-d5-1", toEventId: "evt-d5-2", mode: "walk", modeLabel: "純步行", durationMin: 16, costJpy: 0, costScope: "group", isEstimated: false, note: "經興福寺五重塔旁散步至奈良町老街" },
+        { id: "seg-d5-3", dayIndex: 4, fromEventId: "evt-d5-2", toEventId: "evt-d5-3", mode: "walk", modeLabel: "純步行", durationMin: 20, costJpy: 0, costScope: "group", isEstimated: false, note: "穿越奈良公園南部綠地前往春日大社參道" },
+        { id: "seg-d5-4", dayIndex: 4, fromEventId: "evt-d5-3", toEventId: "evt-d5-4", mode: "train", modeLabel: "奈良交通巴士 + 近鐵直通地鐵（→四條站）", durationMin: 65, costJpy: 990, costScope: "per_person", isEstimated: true, note: "春日大社表參道搭巴士至近鐵奈良站(¥230)，轉乘近鐵直通地鐵至四條站" },
+
+        // Day 6
+        { id: "seg-d6-1", dayIndex: 5, fromEventId: null, toEventId: "evt-d6-1", fromName: "RESI STAY MAYU", mode: "walk", modeLabel: "純步行", durationMin: 12, costJpy: 0, costScope: "group", isEstimated: false, note: "沿烏丸通向南步行即可抵達東本願寺" },
+        { id: "seg-d6-2", dayIndex: 5, fromEventId: "evt-d6-1", toEventId: "evt-d6-2", mode: "walk", modeLabel: "純步行", durationMin: 7, costJpy: 0, costScope: "group", isEstimated: false, note: "步行前往京都站前商圈" },
+        { id: "seg-d6-3", dayIndex: 5, fromEventId: "evt-d6-2", toEventId: "evt-d6-3", mode: "train", modeLabel: "JR HARUKA 特急（京都站→關西機場）", durationMin: 95, costJpy: 2200, costScope: "per_person", isEstimated: true, note: "建議搭乘 12:00 左右班次（車程約 80 分），預留航廈接駁與報到時間" }
+      ],
+      packingCategories: [
+        {
+          id: "pack-cat-1",
+          title: "證件與票券",
+          items: [
+            { id: "pk-1", name: "護照（效期 6 個月以上）", qty: "2本", note: "務必檢查未過期", checked: true },
+            { id: "pk-2", name: "Visit Japan Web 入境 QR Code 截圖", qty: "2份", note: "離線存於手機相簿", checked: true },
+            { id: "pk-3", name: "樂桃航空 MM024/MM027 電子機票", qty: "1份", note: "確認手提與託運行李額度", checked: true },
+            { id: "pk-4", name: "RESI STAY MAYU 住宿憑證與大門密碼信", qty: "1份", note: "無人自助入住需事先確認密碼", checked: false },
+            { id: "pk-5", name: "交通 IC 卡 (ICOCA / Suica) ＆ 日幣現鈔", qty: "2張", note: "寺院門票與老店多收現金", checked: false }
+          ]
+        },
+        {
+          id: "pack-cat-2",
+          title: "冬季保暖衣物（1月底京都約 1°C–9°C）",
+          items: [
+            { id: "pk-6", name: "防風羽絨外套或羊毛大衣", qty: "2件", note: "嵐山與鴨川河畔體感較冷", checked: true },
+            { id: "pk-7", name: "發熱衣褲（洋蔥式穿法）", qty: "各4件", note: "室內暖氣強，內搭宜透氣好穿脫", checked: false },
+            { id: "pk-8", name: "毛帽、圍巾、可觸控保暖手套", qty: "2組", note: "伏見稻荷傍晚與奈良早晨必備", checked: false },
+            { id: "pk-9", name: "好走防滑的厚底健走鞋 ＆ 厚羊毛襪", qty: "2雙", note: "神社多碎石路與階梯", checked: false }
+          ]
+        },
+        {
+          id: "pack-cat-3",
+          title: "電子與充電設備",
+          items: [
+            { id: "pk-10", name: "日本上網 eSIM / 漫遊開通", qty: "2門", note: "抵達關西機場即可啟用", checked: true },
+            { id: "pk-11", name: "行動電源（10000mAh 以下）", qty: "2顆", note: "須隨身登機，不可託運", checked: false },
+            { id: "pk-12", name: "多孔 USB 充電器 ＆ 充電線", qty: "1組", note: "日本為雙平腳 100V 插座", checked: false }
+          ]
+        },
+        {
+          id: "pack-cat-4",
+          title: "常備藥品與冬日保養",
+          items: [
+            { id: "pk-13", name: "高保濕護唇膏、護手霜與乳液", qty: "1組", note: "日本冬季極度乾燥", checked: false },
+            { id: "pk-14", name: "暖暖包（手握式＋貼式）", qty: "12片", note: "可到當地藥妝店再補充", checked: false },
+            { id: "pk-15", name: "腸胃藥、感冒藥、止痛藥與 OK 繃", qty: "1袋", note: "以備不時之需", checked: false }
+          ]
+        },
+        {
+          id: "pack-cat-5",
+          title: "京都散策隨身包",
+          items: [
+            { id: "pk-16", name: "輕便摺疊晴雨傘", qty: "2支", note: "京都冬季偶有陣雨或小雪", checked: false },
+            { id: "pk-17", name: "零錢包（分類 100/500 日圓硬幣）", qty: "2個", note: "投販賣機、神社參拜超方便", checked: false },
+            { id: "pk-18", name: "保溫瓶", qty: "1支", note: "隨時喝熱水暖胃", checked: false }
+          ]
+        },
+        {
+          id: "pack-cat-6",
+          title: "伴手禮收納擴充",
+          items: [
+            { id: "pk-19", name: "可折疊大型旅行提袋（可掛行李箱拉桿）", qty: "1個", note: "裝宇治茶葉、仙貝與零食", checked: false },
+            { id: "pk-20", name: "壓縮袋 ＆ 氣泡紙防撞袋", qty: "3個", note: "保護清水燒或玻璃瓶伴手禮", checked: false }
+          ]
+        }
+      ],
+      assumptions: [
+        "【航班時刻假設】樂桃 MM024 假設 08:55 抵達 KIX、回程 MM027 假設 16:00 起飛，實際時刻請於 2026 年下半年冬季班表開賣後核對並微調第一天與第六天起訖時間。",
+        "【住宿地點假設】RESI STAY MAYU 定位於京都市下京區（五條／河原町五條周邊），5 晚連住總房費以 ¥68,000（2成人雙人房含稅）估算，請依實際訂房訂單金額更新。",
+        "【交通票價與轉乘】京都市巴均一區間 ¥230、JR HARUKA 優惠票約 ¥2,200、近鐵急行約 ¥760 均為現行參考票價，2027 年若有調漲請於交通明細卡片雙擊更新。",
+        "【景點與餐飲預算】天龍寺、平等院、東大寺等拜觀費與餐飲均標記為「估算」，並已區分每人金額（自動乘以 2 位成人）與全團金額。"
+      ]
+    };
+
+    /* ==========================================================================
+       二、狀態管理與本機儲存 (LocalStorage + Undo Stack)
+       ========================================================================== */
+    const STORAGE_KEY = "kyoto_ehon_trip_2027_v1";
+    let tripData = loadTripData();
+    let undoStack = [];
+    let selectedDayIndex = 0;
+    let prevDayIndex = 0;
+    let currentCalendarView = "day"; // "day" | "week"
+    let showBudget = false;
+    let mapShowAllDays = false;
+    let leafletMap = null;
+    let mapLayerGroup = null;
+
+    function loadTripData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.meta && Array.isArray(parsed.days) && Array.isArray(parsed.events)) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn("讀取本機草稿失敗，使用預設京都行程", e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_TRIP_DATA));
+    }
+
+    function saveTripData(pushUndo = true) {
+      if (pushUndo) {
+        undoStack.push(JSON.stringify(tripData));
+        if (undoStack.length > 20) undoStack.shift();
+      }
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData));
+      } catch (e) {
+        console.warn("無法寫入 localStorage", e);
+      }
+      updateUndoButton();
+    }
+
+    function performUndo() {
+      if (undoStack.length === 0) return;
+      const previous = undoStack.pop();
+      tripData = JSON.parse(previous);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData));
+      updateUndoButton();
+      renderAll();
+      showToast("已復原上一步操作");
+    }
+
+    function updateUndoButton() {
+      const btn = document.getElementById("btn-undo");
+      if (btn) btn.disabled = undoStack.length === 0;
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast-banner");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        el.classList.remove("show");
+      }, 3800);
+    }
+
+    /* ==========================================================================
+       三、原創 40x30 SVG 日期專屬繪本插圖庫
+       ========================================================================== */
+    function getMascotSvg(type) {
+      const commonStart = `<svg width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${type}">`;
+      const commonEnd = `</svg>`;
+
+      const illustrations = {
+        // Day 1: 飛機
+        plane: `
+          <path d="M5 17 L16 14 L23 6 L26 7 L22 14 L32 12 L35 9 L37 10 L35 15 L37 18 L34 19 L31 16 L21 18 L24 24 L21 25 L16 19 L7 20 Z" fill="#FFFFFF" stroke="#3E3A39" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M11 16.5 L29 14.5" stroke="#F2A497" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="3" y1="11" x2="10" y2="11" stroke="#A8D3E6" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="2" y1="24" x2="11" y2="24" stroke="#A8D3E6" stroke-width="1.7" stroke-linecap="round"/>
+        `,
+        // Day 2: 嵐山渡月橋與竹林
+        arashiyama: `
+          <rect x="7" y="4" width="3.5" height="19" rx="1.5" fill="#B9DAA5" stroke="#3E3A39" stroke-width="1.7"/>
+          <rect x="13" y="6" width="3.5" height="17" rx="1.5" fill="#B9DAA5" stroke="#3E3A39" stroke-width="1.7"/>
+          <line x1="7" y1="11" x2="10.5" y2="11" stroke="#3E3A39" stroke-width="1.5"/>
+          <line x1="13" y1="14" x2="16.5" y2="14" stroke="#3E3A39" stroke-width="1.5"/>
+          <path d="M16 22 Q26 14 36 22" stroke="#F6D27A" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M16 22 Q26 14 36 22" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M4 25 Q20 22 36 25" stroke="#A8D3E6" stroke-width="2.2" stroke-linecap="round"/>
+        `,
+        // Day 3: 伏見稻荷千本鳥居
+        torii: `
+          <path d="M11 26 V9 M29 26 V9" stroke="#F2A497" stroke-width="3.6" stroke-linecap="round"/>
+          <path d="M11 26 V9 M29 26 V9" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M6 8 Q20 11 34 8" stroke="#F2A497" stroke-width="3.8" stroke-linecap="round"/>
+          <path d="M6 8 Q20 11 34 8" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="8" y1="14" x2="32" y2="14" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="20" y1="9" x2="20" y2="14" stroke="#3E3A39" stroke-width="1.7"/>
+        `,
+        // Day 4: 宇治抹茶碗與茶筅
+        uji: `
+          <path d="M8 13 H32 C32 21 27 25 20 25 C13 25 8 21 8 13 Z" fill="#FFFFFF" stroke="#3E3A39" stroke-width="1.7" stroke-linejoin="round"/>
+          <ellipse cx="20" cy="13" rx="11.5" ry="2.6" fill="#B9DAA5" stroke="#3E3A39" stroke-width="1.6"/>
+          <rect x="15" y="25" width="10" height="2.5" rx="1" fill="#F6D27A" stroke="#3E3A39" stroke-width="1.5"/>
+          <path d="M27 5 L24 12" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+        `,
+        // Day 5: 奈良小鹿
+        nara: `
+          <path d="M15 9 L12 4 M14 6 L16 4 M25 9 L28 4 M26 6 L24 4" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+          <ellipse cx="20" cy="17" rx="8.5" ry="9" fill="#F6D27A" stroke="#3E3A39" stroke-width="1.7"/>
+          <ellipse cx="10" cy="12" rx="3" ry="1.8" transform="rotate(-25 10 12)" fill="#F2A497" stroke="#3E3A39" stroke-width="1.5"/>
+          <ellipse cx="30" cy="12" rx="3" ry="1.8" transform="rotate(25 30 12)" fill="#F2A497" stroke="#3E3A39" stroke-width="1.5"/>
+          <circle cx="17" cy="16" r="1.2" fill="#3E3A39"/>
+          <circle cx="23" cy="16" r="1.2" fill="#3E3A39"/>
+          <ellipse cx="20" cy="20.5" rx="2.5" ry="1.8" fill="#3E3A39"/>
+        `,
+        // Day 6: HARUKA 特急列車
+        train: `
+          <rect x="4" y="9" width="32" height="14" rx="5" fill="#FFFFFF" stroke="#3E3A39" stroke-width="1.7"/>
+          <path d="M27 9 H31 C34 9 36 12 36 15 V23 H27 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.7"/>
+          <rect x="8" y="13" width="6" height="4" rx="1" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.4"/>
+          <rect x="17" y="13" width="6" height="4" rx="1" fill="#A8D3E6" stroke="#3E3A39" stroke-width="1.4"/>
+          <circle cx="11" cy="24" r="2.2" fill="#3E3A39"/>
+          <circle cx="28" cy="24" r="2.2" fill="#3E3A39"/>
+          <line x1="2" y1="26.5" x2="38" y2="26.5" stroke="#3E3A39" stroke-width="1.7" stroke-linecap="round"/>
+        `
+      };
+
+      return commonStart + (illustrations[type] || illustrations.torii) + commonEnd;
+    }
+
+    /* ==========================================================================
+       四、時間、金額與衝突計算工具函式
+       ========================================================================== */
+    function timeToMinutes(hhmm) {
+      const [h, m] = (hhmm || "09:00").split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToTime(totalMin) {
+      const clamped = Math.max(0, Math.min(23 * 60 + 59, Math.round(totalMin)));
+      const h = String(Math.floor(clamped / 60)).padStart(2, "0");
+      const m = String(clamped % 60).padStart(2, "0");
+      return `${h}:${m}`;
+    }
+
+    function formatDuration(min) {
+      if (min < 60) return `${min} 分鐘`;
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return m === 0 ? `${h} 小時` : `${h} 小時 ${m} 分`;
+    }
+
+    function getCategoryMeta(cat) {
+      const map = {
+        sightseeing: { label: "景點", cls: "cat-sightseeing", bg: "bg-sightseeing", color: "#F6D27A", icon: "fa-torii-gate" },
+        food: { label: "餐飲", cls: "cat-food", bg: "bg-food", color: "#F2A497", icon: "fa-utensils" },
+        hotel: { label: "住宿", cls: "cat-hotel", bg: "bg-hotel", color: "#A8D3E6", icon: "fa-bed" },
+        transport: { label: "交通/航班", cls: "cat-transport", bg: "bg-transport", color: "#B9DAA5", icon: "fa-train" }
+      };
+      return map[cat] || map.sightseeing;
+    }
+
+    function getModeMeta(mode) {
+      const map = {
+        train: { label: "JR / 近鐵 / 京阪", color: "#4678C5", icon: "fa-train" },
+        subway: { label: "地鐵 / 嵐電", color: "#9266C2", icon: "fa-train-subway" },
+        bus: { label: "市營公車", color: "#3A9B80", icon: "fa-bus" },
+        walk: { label: "步行", color: "#84909E", icon: "fa-person-walking" },
+        taxi: { label: "計程車", color: "#D77968", icon: "fa-taxi" }
+      };
+      return map[mode] || map.train;
+    }
+
+    function getDayEventsSorted(dayIndex) {
+      return tripData.events
+        .filter(e => e.dayIndex === dayIndex)
+        .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+    }
+
+    function getDaySegments(dayIndex) {
+      return tripData.segments.filter(s => s.dayIndex === dayIndex);
+    }
+
+    function calcItemTotalJpy(item) {
+      const base = Number(item.costJpy) || 0;
+      const people = (tripData.meta.travelers.adults || 2) + (tripData.meta.travelers.children || 0);
+      return item.costScope === "per_person" ? base * people : base;
+    }
+
+    function calculateAllFinancials() {
+      const byCat = { sightseeing: 0, food: 0, hotel: 0, transport: 0 };
+      let estimatedCount = 0;
+
+      tripData.events.forEach(ev => {
+        const amt = calcItemTotalJpy(ev);
+        byCat[ev.category] = (byCat[ev.category] || 0) + amt;
+        if (ev.isEstimated && amt > 0) estimatedCount++;
+      });
+
+      tripData.segments.forEach(seg => {
+        const amt = calcItemTotalJpy(seg);
+        byCat.transport += amt;
+        if (seg.isEstimated && amt > 0) estimatedCount++;
+      });
+
+      const totalJpy = Object.values(byCat).reduce((a, b) => a + b, 0);
+      const rate = Number(tripData.meta.exchangeRate) || 0.215;
+      const totalTwd = Math.round(totalJpy * rate);
+      const people = Math.max(1, (tripData.meta.travelers.adults || 2) + (tripData.meta.travelers.children || 0));
+      const perPersonTwd = Math.round(totalTwd / people);
+
+      return { byCat, totalJpy, totalTwd, perPersonTwd, estimatedCount };
+    }
+
+    /* ==========================================================================
+       五、渲染共用頁首與日期站點列
+       ========================================================================== */
+    function renderHeader() {
+      document.getElementById("header-trip-title").textContent = tripData.meta.title;
+      document.getElementById("header-dest").textContent = tripData.meta.destination;
+      document.getElementById("header-days").textContent = `${tripData.days.length}天${tripData.meta.nights}夜 (1/28–2/2)`;
+      document.getElementById("header-spots-count").textContent = `${tripData.events.length} 個行程`;
+      document.getElementById("header-travelers").textContent = tripData.meta.travelers.label;
+
+      const fin = calculateAllFinancials();
+      const eyeIcon = document.getElementById("budget-eye-icon");
+      const budgetText = document.getElementById("header-budget-text");
+
+      if (showBudget) {
+        eyeIcon.className = "fa-regular fa-eye";
+        budgetText.textContent = `總花費 ¥${fin.totalJpy.toLocaleString()} (約 NT$${fin.totalTwd.toLocaleString()})`;
+      } else {
+        eyeIcon.className = "fa-regular fa-eye-slash";
+        budgetText.textContent = "總花費已隱藏";
+      }
+    }
+
+    function renderDayStations(animateSwitch = false) {
+      const container = document.getElementById("timeline-dates");
+      const mascot = document.getElementById("sliding-day-mascot");
+
+      // 移除舊按鈕保留 mascot
+      container.querySelectorAll(".day-station-btn").forEach(el => el.remove());
+
+      tripData.days.forEach((d, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "day-station-btn" + (idx === selectedDayIndex ? " active" : "");
+        if (animateSwitch && idx === selectedDayIndex) {
+          btn.classList.add("popping");
+        }
+        btn.innerHTML = `
+          <span class="station-day-label">Day ${idx + 1} (${d.weekday})</span>
+          <span class="station-date-num">${d.shortDate}</span>
+          <span class="station-theme-tag">${d.theme}</span>
+        `;
+        btn.addEventListener("click", () => {
+          if (selectedDayIndex === idx) return;
+          prevDayIndex = selectedDayIndex;
+          selectedDayIndex = idx;
+          renderDayStations(true);
+          renderDayTimeline();
+          renderWeekGrid();
+          renderRoutePanel();
+          updateKyotoMap();
+        });
+        container.appendChild(btn);
+      });
+
+      // 更新插圖內容並計算站點中心位置滑動
+      const activeDay = tripData.days[selectedDayIndex];
+      mascot.innerHTML = getMascotSvg(activeDay.mascotType);
+
+      requestAnimationFrame(() => {
+        const stations = container.querySelectorAll(".day-station-btn");
+        const target = stations[selectedDayIndex];
+        if (target) {
+          const targetCenter = target.offsetLeft + target.offsetWidth / 2 - mascot.offsetWidth / 2;
+          mascot.style.transform = `translateX(${targetCenter}px)`;
+          if (animateSwitch) {
+            mascot.classList.remove("hopping");
+            void mascot.offsetWidth;
+            mascot.classList.add("hopping");
+          }
+        }
+      });
+    }
+
+    /* ==========================================================================
+       六、渲染單日時間軸與動態焦點模糊 / 刻度尺追蹤
+       ========================================================================== */
+    function renderDayTimeline() {
+      const day = tripData.days[selectedDayIndex];
+      const events = getDayEventsSorted(selectedDayIndex);
+      const segments = getDaySegments(selectedDayIndex);
+
+      document.getElementById("day-intro-title").textContent =
+        `Day ${selectedDayIndex + 1} · ${day.date} (${day.weekday}) ${day.theme}`;
+
+      const cardsContainer = document.getElementById("timeline-cards");
+      cardsContainer.innerHTML = "";
+
+      if (events.length === 0) {
+        cardsContainer.innerHTML = `<div class="timeline-card" style="text-align:center; padding:24px;">本日尚無行程，請點擊右上角「＋新增行程」。</div>`;
+        return;
+      }
+
+      // 計算當日時間刻度範圍
+      const firstStart = timeToMinutes(events[0].startTime);
+      const lastEv = events[events.length - 1];
+      const lastEnd = timeToMinutes(lastEv.startTime) + lastEv.durationMin;
+      document.getElementById("scale-start-label").textContent = minutesToTime(firstStart);
+      document.getElementById("scale-end-label").textContent = minutesToTime(lastEnd);
+
+      // 若有出發前第一段交通（從飯店出發）
+      const initialSeg = segments.find(s => !s.fromEventId && s.toEventId === events[0].id);
+      if (initialSeg) {
+        cardsContainer.appendChild(createTransitConnectorEl(initialSeg));
+      }
+
+      events.forEach((ev, idx) => {
+        const catMeta = getCategoryMeta(ev.category);
+        const endTimeStr = minutesToTime(timeToMinutes(ev.startTime) + ev.durationMin);
+        const totalJpy = calcItemTotalJpy(ev);
+
+        // 檢查是否與前一事件時間重疊或趕路可能遲到
+        let conflictWarning = "";
+        if (idx > 0) {
+          const prev = events[idx - 1];
+          const prevEnd = timeToMinutes(prev.startTime) + prev.durationMin;
+          const segBetween = segments.find(s => s.fromEventId === prev.id && s.toEventId === ev.id);
+          const transitMin = segBetween ? segBetween.durationMin : 0;
+          const curStart = timeToMinutes(ev.startTime);
+
+          if (curStart < prevEnd) {
+            conflictWarning = `<span class="warning-badge"><i class="fa-solid fa-triangle-exclamation"></i> 時段重疊</span>`;
+          } else if (curStart < prevEnd + transitMin) {
+            conflictWarning = `<span class="warning-badge"><i class="fa-solid fa-clock"></i> 轉乘緊湊 (差 ${prevEnd + transitMin - curStart} 分)</span>`;
+          }
+        }
+
+        const row = document.createElement("div");
+        row.className = "timeline-time-row" + (idx === 0 ? " timeline-current" : "");
+        row.dataset.eventId = ev.id;
+        row.dataset.startMin = timeToMinutes(ev.startTime);
+        row.tabIndex = 0;
+
+        row.innerHTML = `
+          <article class="timeline-card ${catMeta.cls}">
+            <div class="card-top-row">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span class="card-time-chip">${ev.startTime} – ${endTimeStr} (${formatDuration(ev.durationMin)})</span>
+                <span class="card-cat-tag ${catMeta.bg}"><i class="fa-solid ${catMeta.icon}"></i> ${catMeta.label}</span>
+                ${ev.locked ? `<span title="已確認鎖定時段" style="font-size:0.82rem;"><i class="fa-solid fa-lock"></i></span>` : ""}
+                ${conflictWarning}
+              </div>
+              <div style="font-size:0.84rem; font-weight:800;">
+                ${totalJpy > 0 ? `¥${totalJpy.toLocaleString()}` : "免費 / 已含"}
+                ${ev.isEstimated && totalJpy > 0 ? `<span class="estimate-badge">估算</span>` : ""}
+              </div>
+            </div>
+            <div class="card-title">${ev.name}</div>
+            <div class="card-sub-info">
+              <span><i class="fa-solid fa-location-dot"></i> ${ev.address}</span>
+              ${ev.costJpy > 0 ? `<span><i class="fa-solid fa-tag"></i> ${ev.costScope === "per_person" ? `¥${ev.costJpy.toLocaleString()}/人` : `¥${ev.costJpy.toLocaleString()}/全團`}</span>` : ""}
+            </div>
+            ${ev.notes ? `<div class="card-note">${ev.notes}</div>` : ""}
+          </article>
+        `;
+
+        row.addEventListener("click", () => openEventModal(ev));
+        row.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openEventModal(ev);
+          }
+        });
+
+        cardsContainer.appendChild(row);
+
+        // 插入前往下一站的交通連接卡
+        if (idx < events.length - 1) {
+          const nextEv = events[idx + 1];
+          const seg = segments.find(s => s.fromEventId === ev.id && s.toEventId === nextEv.id);
+          if (seg) {
+            cardsContainer.appendChild(createTransitConnectorEl(seg));
+          }
+        }
+      });
+
+      cardsContainer.scrollTop = 0;
+      updateTimelineFocusEffects();
+    }
+
+    function createTransitConnectorEl(seg) {
+      const mMeta = getModeMeta(seg.mode);
+      const isWalk = seg.mode === "walk";
+      const totalSegJpy = calcItemTotalJpy(seg);
+      const div = document.createElement("div");
+      div.className = "transit-connector-card" + (isWalk ? " pure-walk" : "");
+      div.title = "點擊編輯此段交通方式、時間與車資";
+      div.innerHTML = `
+        <div style="display:flex; align-items:center; gap:7px;">
+          <i class="fa-solid ${mMeta.icon}" style="color:${mMeta.color};"></i>
+          <strong>${seg.modeLabel}</strong>
+          <span>· 約 ${formatDuration(seg.durationMin)}</span>
+        </div>
+        <div style="font-weight:700;">
+          ${totalSegJpy > 0 ? `¥${totalSegJpy.toLocaleString()} (${seg.costScope === "per_person" ? "2人" : "全團"})` : "免費步行"}
+          ${seg.isEstimated && totalSegJpy > 0 ? `<span class="estimate-badge">估算</span>` : ""}
+          <i class="fa-solid fa-pen-to-square" style="margin-left:4px; opacity:0.65;"></i>
+        </div>
+      `;
+      div.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openSegmentModal(seg);
+      });
+      return div;
+    }
+
+    /* 單日時間軸捲動焦點、5% 放大與漸進模糊計算 */
+    function updateTimelineFocusEffects() {
+      const container = document.getElementById("timeline-cards");
+      const rows = Array.from(container.querySelectorAll(".timeline-time-row"));
+      const dot = document.getElementById("scale-focus-dot");
+      if (rows.length === 0) return;
+
+      const cRect = container.getBoundingClientRect();
+      const viewportCenter = cRect.top + cRect.height * 0.45;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+
+      let focusIndex = 0;
+      if (container.scrollTop <= 6) {
+        focusIndex = 0;
+      } else if (maxScroll > 0 && container.scrollTop >= maxScroll - 6) {
+        focusIndex = rows.length - 1;
+      } else {
+        let minDist = Infinity;
+        rows.forEach((row, i) => {
+          const r = row.getBoundingClientRect();
+          const rowCenter = r.top + r.height / 2;
+          const dist = Math.abs(rowCenter - viewportCenter);
+          if (dist < minDist) {
+            minDist = dist;
+            focusIndex = i;
+          }
+        });
+      }
+
+      const focusRect = rows[focusIndex].getBoundingClientRect();
+      const focusCenter = focusRect.top + focusRect.height / 2;
+      const normDenom = Math.max(180, cRect.height * 0.55);
+
+      rows.forEach((row, i) => {
+        row.classList.toggle("timeline-current", i === focusIndex);
+        row.classList.toggle("below-focus", i > focusIndex);
+
+        if (i === focusIndex) {
+          row.style.setProperty("--blur-intensity", "0");
+        } else {
+          const r = row.getBoundingClientRect();
+          const rc = r.top + r.height / 2;
+          const intensity = Math.min(1, Math.abs(rc - focusCenter) / normDenom);
+          row.style.setProperty("--blur-intensity", intensity.toFixed(2));
+        }
+      });
+
+      // 更新左側刻度尺圓點位置
+      if (dot) {
+        const pct = rows.length === 1 ? 0 : (focusIndex / (rows.length - 1)) * 100;
+        dot.style.top = `${pct}%`;
+      }
+    }
+
+    /* 單次滾輪縱向移動上限 32px 控制與捲動監聽 */
+    function setupTimelineScrollListeners() {
+      const container = document.getElementById("timeline-cards");
+      container.addEventListener("wheel", (e) => {
+        if (Math.abs(e.deltaY) > 32) {
+          e.preventDefault();
+          const clamped = Math.sign(e.deltaY) * 32;
+          container.scrollTop += clamped;
+          updateTimelineFocusEffects();
+        }
+      }, { passive: false });
+
+      container.addEventListener("scroll", () => {
+        updateTimelineFocusEffects();
+      }, { passive: true });
+    }
+
+    /* 每 15 秒更新京都當地時間 (Asia/Tokyo) 紅線 */
+    function updateKyotoNowLine() {
+      try {
+        const nowStr = new Date().toLocaleTimeString("en-GB", {
+          timeZone: tripData.meta.timezone || "Asia/Tokyo",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false
+        });
+        const badge = document.getElementById("scale-now-badge");
+        const marker = document.getElementById("scale-now-marker");
+        if (badge) badge.textContent = nowStr;
+
+        const events = getDayEventsSorted(selectedDayIndex);
+        if (events.length > 0 && marker) {
+          const startMin = timeToMinutes(events[0].startTime);
+          const lastEv = events[events.length - 1];
+          const endMin = Math.max(startMin + 60, timeToMinutes(lastEv.startTime) + lastEv.durationMin);
+          const nowMin = timeToMinutes(nowStr);
+          const ratio = Math.max(0, Math.min(1, (nowMin - startMin) / (endMin - startMin)));
+          marker.style.top = `${ratio * 100}%`;
+        }
+      } catch (e) {
+        console.warn("時區時間更新異常", e);
+      }
+    }
+
+    /* ==========================================================================
+       七、渲染週行事曆視圖 (Week Grid)
+       ========================================================================== */
+    function renderWeekGrid() {
+      const grid = document.getElementById("week-grid");
+      grid.innerHTML = "";
+
+      // 左上空白角
+      const corner = document.createElement("div");
+      corner.className = "week-col-header";
+      corner.textContent = "時間";
+      grid.appendChild(corner);
+
+      // 6 天標題欄
+      tripData.days.forEach((d, idx) => {
+        const hd = document.createElement("div");
+        hd.className = "week-col-header";
+        if (idx === selectedDayIndex) hd.style.background = "var(--green-wakatake)";
+        hd.textContent = `D${idx + 1} ${d.shortDate}(${d.weekday})`;
+        grid.appendChild(hd);
+      });
+
+      // 時間軸 (07:00 ~ 23:00)
+      const axis = document.createElement("div");
+      axis.className = "week-time-axis";
+      for (let h = 7; h < 23; h++) {
+        const cell = document.createElement("div");
+        cell.className = "week-hour-cell";
+        cell.textContent = `${String(h).padStart(2, "0")}:00`;
+        axis.appendChild(cell);
+      }
+      grid.appendChild(axis);
+
+      // 每日行程方塊欄
+      tripData.days.forEach((d, dayIdx) => {
+        const col = document.createElement("div");
+        col.className = "week-day-column";
+        const events = getDayEventsSorted(dayIdx);
+
+        events.forEach(ev => {
+          const startMin = timeToMinutes(ev.startTime);
+          const topPx = Math.max(0, ((startMin - 7 * 60) / 60) * 46);
+          const heightPx = Math.max(24, (ev.durationMin / 60) * 46);
+          const catMeta = getCategoryMeta(ev.category);
+
+          const block = document.createElement("div");
+          block.className = `week-event-block ${catMeta.bg}`;
+          block.style.top = `${topPx}px`;
+          block.style.height = `${heightPx}px`;
+          block.title = `${ev.startTime} ${ev.name}（雙擊編輯）`;
+          block.innerHTML = `
+            <div style="font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${ev.locked ? "🔒" : ""}${ev.startTime} ${ev.name}
+            </div>
+          `;
+
+          block.addEventListener("click", () => {
+            selectedDayIndex = dayIdx;
+            renderDayStations(false);
+            renderRoutePanel();
+            updateKyotoMap();
+            renderWeekGrid();
+          });
+
+          block.addEventListener("dblclick", () => {
+            openEventModal(ev);
+          });
+
+          col.appendChild(block);
+        });
+
+        grid.appendChild(col);
+      });
+    }
+
+    /* ==========================================================================
+       八、渲染左側互動地圖 (Leaflet) 與交通明細面板 (routepanel)
+       ========================================================================== */
+    function initKyotoMap() {
+      if (typeof L === "undefined") {
+        document.getElementById("kyoto-map").innerHTML =
+          `<div style="padding:24px; text-align:center;">地圖元件載入中或離線狀態，請使用下方 Google Maps 連結開啟路線。</div>`;
+        return;
+      }
+      leafletMap = L.map("kyoto-map").setView([35.0036, 135.7681], 12);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: "abcd",
+        maxZoom: 18
+      }).addTo(leafletMap);
+
+      mapLayerGroup = L.layerGroup().addTo(leafletMap);
+      updateKyotoMap();
+    }
+
+    function updateKyotoMap() {
+      const heading = document.getElementById("map-day-heading");
+      heading.textContent = mapShowAllDays ? "京都 6 日全覽地圖" : `Day ${selectedDayIndex + 1} 路線地圖`;
+
+      const targetEvents = mapShowAllDays ? tripData.events : getDayEventsSorted(selectedDayIndex);
+      const validPoints = targetEvents.filter(e => typeof e.lat === "number" && typeof e.lng === "number");
+
+      // 更新外部 Google Maps 路線連結
+      if (validPoints.length > 0) {
+        const coords = validPoints.slice(0, 8).map(p => `${p.lat},${p.lng}`).join("/");
+        document.getElementById("gmaps-day-link").href = `https://www.google.com/maps/dir/${coords}`;
+      }
+
+      if (!leafletMap || !mapLayerGroup) return;
+      mapLayerGroup.clearLayers();
+
+      const bounds = [];
+      const daySegments = getDaySegments(selectedDayIndex);
+
+      validPoints.forEach((ev, idx) => {
+        const catMeta = getCategoryMeta(ev.category);
+        const iconHtml = `
+          <div style="background:#FFFFFF; border:2.5px solid #555555; border-radius:999px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:#3E3A39; box-shadow:2px 2px 0 #3E3A39;">
+            ${idx + 1}
+          </div>
+        `;
+        const marker = L.marker([ev.lat, ev.lng], {
+          icon: L.divIcon({ html: iconHtml, className: "", iconSize: [28, 28], iconAnchor: [14, 14] })
+        });
+        marker.bindPopup(`
+          <div style="font-family:Huninn,sans-serif; min-width:170px;">
+            <span style="background:${catMeta.color}; padding:2px 7px; border-radius:99px; font-size:11px; font-weight:700; border:1px solid #3E3A39;">${catMeta.label}</span>
+            <div style="font-weight:800; margin-top:4px;">${ev.startTime} ${ev.name}</div>
+            <div style="font-size:12px; color:#666; margin-top:2px;">${ev.address}</div>
+          </div>
+        `);
+        marker.addTo(mapLayerGroup);
+        bounds.push([ev.lat, ev.lng]);
+
+        // 繪製路段折線（依交通方式著色）
+        if (!mapShowAllDays && idx < validPoints.length - 1) {
+          const nextEv = validPoints[idx + 1];
+          const seg = daySegments.find(s => s.fromEventId === ev.id && s.toEventId === nextEv.id);
+          const modeMeta = getModeMeta(seg ? seg.mode : "train");
+          L.polyline([[ev.lat, ev.lng], [nextEv.lat, nextEv.lng]], {
+            color: modeMeta.color,
+            weight: 4.5,
+            opacity: 0.9,
+            dashArray: seg && seg.mode === "walk" ? "6, 6" : null
+          }).addTo(mapLayerGroup);
+        }
+      });
+
+      if (bounds.length > 0) {
+        leafletMap.fitBounds(bounds, { padding: [34, 34], maxZoom: 14 });
+      }
+    }
+
+    function renderRoutePanel() {
+      const list = document.getElementById("route-segments-list");
+      const segments = getDaySegments(selectedDayIndex);
+      const events = getDayEventsSorted(selectedDayIndex);
+      list.innerHTML = "";
+
+      if (segments.length === 0) {
+        list.innerHTML = `<div style="font-size:0.84rem; color:var(--ink-soft);">當日尚無獨立交通分段紀錄。</div>`;
+        return;
+      }
+
+      segments.forEach(seg => {
+        const fromEv = events.find(e => e.id === seg.fromEventId);
+        const toEv = events.find(e => e.id === seg.toEventId);
+        const fromTitle = fromEv ? fromEv.name : (seg.fromName || "出發地");
+        const toTitle = toEv ? toEv.name : "下一站";
+        const mMeta = getModeMeta(seg.mode);
+        const totalJpy = calcItemTotalJpy(seg);
+
+        const item = document.createElement("div");
+        item.className = "route-segment-item";
+        item.innerHTML = `
+          <div>
+            <div style="font-size:0.78rem; color:var(--ink-soft);">
+              ${fromTitle} <i class="fa-solid fa-arrow-right"></i> ${toTitle}
+            </div>
+            <div style="font-weight:800; font-size:0.9rem; margin-top:2px;">
+              <i class="fa-solid ${mMeta.icon}" style="color:${mMeta.color};"></i>
+              ${seg.modeLabel} · ${formatDuration(seg.durationMin)}
+            </div>
+            ${seg.note ? `<div style="font-size:0.76rem; color:var(--ink-soft); margin-top:2px;">${seg.note}</div>` : ""}
+          </div>
+          <div style="text-align:right; min-width:82px;">
+            <div style="font-weight:800; font-size:0.88rem;">${totalJpy > 0 ? `¥${totalJpy.toLocaleString()}` : "免費"}</div>
+            <button type="button" class="tool-btn" style="padding:3px 9px; font-size:0.75rem; margin-top:4px;">編輯</button>
+          </div>
+        `;
+        item.querySelector("button").addEventListener("click", () => openSegmentModal(seg));
+        list.appendChild(item);
+      });
+    }
+
+    /* ==========================================================================
+       九、渲染費用總覽頁 (expensespage) 與 SVG 圓餅圖
+       ========================================================================== */
+    function renderExpensesPage() {
+      const fin = calculateAllFinancials();
+      const rate = Number(tripData.meta.exchangeRate) || 0.215;
+
+      document.getElementById("exp-total-jpy").textContent = `¥${fin.totalJpy.toLocaleString()}`;
+      document.getElementById("exp-total-twd").textContent = `NT$${fin.totalTwd.toLocaleString()}`;
+      document.getElementById("exp-per-person-twd").textContent = `NT$${fin.perPersonTwd.toLocaleString()}`;
+      document.getElementById("exp-est-ratio").textContent = `${fin.estimatedCount} 項待確認/估算`;
+
+      // 繪製 SVG 圓餅圖
+      const pieSvg = document.getElementById("expense-pie-svg");
+      const legendEl = document.getElementById("expense-pie-legend");
+      pieSvg.innerHTML = "";
+      legendEl.innerHTML = "";
+
+      const categories = ["hotel", "food", "transport", "sightseeing"];
+      let currentAngle = -Math.PI / 2;
+
+      categories.forEach(catKey => {
+        const meta = getCategoryMeta(catKey);
+        const val = fin.byCat[catKey] || 0;
+        const pct = fin.totalJpy > 0 ? val / fin.totalJpy : 0;
+        const sliceAngle = pct * Math.PI * 2;
+
+        if (sliceAngle > 0.001) {
+          const x1 = 100 + 82 * Math.cos(currentAngle);
+          const y1 = 100 + 82 * Math.sin(currentAngle);
+          const x2 = 100 + 82 * Math.cos(currentAngle + sliceAngle);
+          const y2 = 100 + 82 * Math.sin(currentAngle + sliceAngle);
+          const largeArc = sliceAngle > Math.PI ? 1 : 0;
+
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path.setAttribute("d", `M 100 100 L ${x1} ${y1} A 82 82 0 ${largeArc} 1 ${x2} ${y2} Z`);
+          path.setAttribute("fill", meta.color);
+          path.setAttribute("stroke", "#3E3A39");
+          path.setAttribute("stroke-width", "2.5");
+          pieSvg.appendChild(path);
+          currentAngle += sliceAngle;
+        }
+
+        const row = document.createElement("div");
+        row.className = "pie-legend-row";
+        row.innerHTML = `
+          <span style="display:inline-flex; align-items:center; gap:7px;">
+            <span style="width:14px; height:14px; border-radius:4px; background:${meta.color}; border:2px solid #3E3A39; display:inline-block;"></span>
+            ${meta.label} (${Math.round(pct * 100)}%)
+          </span>
+          <span>NT$${Math.round(val * rate).toLocaleString()}</span>
+        `;
+        legendEl.appendChild(row);
+      });
+
+      // 渲染明細表格
+      const tbody = document.getElementById("expense-table-body");
+      tbody.innerHTML = "";
+
+      const allRows = [];
+      tripData.events.forEach(ev => {
+        const jpy = calcItemTotalJpy(ev);
+        if (jpy > 0) {
+          allRows.push({
+            day: `Day ${ev.dayIndex + 1} (${tripData.days[ev.dayIndex].shortDate})`,
+            category: ev.category,
+            name: ev.name,
+            scope: ev.costScope === "per_person" ? `¥${ev.costJpy.toLocaleString()} × 2人` : "全團總計",
+            jpy,
+            twd: Math.round(jpy * rate),
+            isEstimated: ev.isEstimated
+          });
+        }
+      });
+
+      tripData.segments.forEach(seg => {
+        const jpy = calcItemTotalJpy(seg);
+        if (jpy > 0) {
+          allRows.push({
+            day: `Day ${seg.dayIndex + 1} (${tripData.days[seg.dayIndex].shortDate})`,
+            category: "transport",
+            name: `交通：${seg.modeLabel}`,
+            scope: seg.costScope === "per_person" ? `¥${seg.costJpy.toLocaleString()} × 2人` : "全團總計",
+            jpy,
+            twd: Math.round(jpy * rate),
+            isEstimated: seg.isEstimated
+          });
+        }
+      });
+
+      allRows.forEach(r => {
+        const meta = getCategoryMeta(r.category);
+        const tr = document.createElement("tr");
+        if (r.category === "food") tr.className = "row-food-tint";
+        tr.innerHTML = `
+          <td><strong>${r.day}</strong></td>
+          <td><span class="card-cat-tag ${meta.bg}">${meta.label}</span></td>
+          <td>${r.name}</td>
+          <td>${r.scope}</td>
+          <td><strong>¥${r.jpy.toLocaleString()}</strong></td>
+          <td>NT$${r.twd.toLocaleString()}</td>
+          <td>${r.isEstimated ? `<span class="estimate-badge">估算/待確認</span>` : `<span style="color:#2B6E2A; font-weight:700;">已確認</span>`}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* ==========================================================================
+       十、渲染攜帶用品頁 (packingpage)
+       ========================================================================== */
+    function renderPackingPage() {
+      const grid = document.getElementById("packing-grid");
+      const searchKw = (document.getElementById("packing-search").value || "").trim().toLowerCase();
+      const onlyUnchecked = document.getElementById("packing-only-unchecked").checked;
+
+      let totalCount = 0;
+      let checkedCount = 0;
+
+      tripData.packingCategories.forEach(cat => {
+        cat.items.forEach(it => {
+          totalCount++;
+          if (it.checked) checkedCount++;
+        });
+      });
+
+      const pct = totalCount === 0 ? 0 : Math.round((checkedCount / totalCount) * 100);
+      document.getElementById("packing-progress-fill").style.width = `${pct}%`;
+      document.getElementById("packing-progress-text").textContent = `${checkedCount} / ${totalCount} 完成 (${pct}%)`;
+
+      grid.innerHTML = "";
+
+      tripData.packingCategories.forEach((cat, idx) => {
+        const filteredItems = cat.items.filter(it => {
+          if (onlyUnchecked && it.checked) return false;
+          if (searchKw && !it.name.toLowerCase().includes(searchKw) && !(it.note || "").toLowerCase().includes(searchKw)) return false;
+          return true;
+        });
+
+        const card = document.createElement("div");
+        card.className = "pack-cat-card";
+        card.innerHTML = `
+          <div class="pack-cat-header pack-header-${idx % 6}">
+            <span>${cat.title}</span>
+            <span style="font-size:0.8rem;">${cat.items.filter(i => i.checked).length}/${cat.items.length}</span>
+          </div>
+          <div class="pack-items-list"></div>
+          <div style="padding:8px 14px 12px; display:flex; gap:6px;">
+            <input type="text" class="form-input new-pack-input" placeholder="新增物品..." style="flex:1; padding:5px 9px; font-size:0.84rem;" />
+            <button type="button" class="tool-btn add-pack-btn" style="padding:5px 11px;">＋</button>
+          </div>
+        `;
+
+        const listEl = card.querySelector(".pack-items-list");
+        filteredItems.forEach(it => {
+          const row = document.createElement("label");
+          row.className = "pack-item-row" + (it.checked ? " checked" : "");
+          row.style.cursor = "pointer";
+          row.innerHTML = `
+            <div style="display:flex; align-items:flex-start; gap:8px;">
+              <input type="checkbox" ${it.checked ? "checked" : ""} style="margin-top:4px; width:16px; height:16px;" />
+              <div>
+                <div style="font-weight:700; font-size:0.9rem;">${it.name} <span style="font-size:0.78rem; color:var(--ink-soft);">(${it.qty})</span></div>
+                ${it.note ? `<div style="font-size:0.76rem; color:var(--ink-soft);">${it.note}</div>` : ""}
+              </div>
+            </div>
+          `;
+          row.querySelector("input").addEventListener("change", (e) => {
+            it.checked = e.target.checked;
+            saveTripData(false);
+            renderPackingPage();
+          });
+          listEl.appendChild(row);
+        });
+
+        const inputEl = card.querySelector(".new-pack-input");
+        const addBtn = card.querySelector(".add-pack-btn");
+        const handleAdd = () => {
+          const val = inputEl.value.trim();
+          if (!val) return;
+          cat.items.push({ id: "pk-" + Date.now(), name: val, qty: "1份", note: "", checked: false });
+          saveTripData(true);
+          renderPackingPage();
+          showToast(`已新增「${val}」至${cat.title}`);
+        };
+        addBtn.addEventListener("click", handleAdd);
+        inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") handleAdd(); });
+
+        grid.appendChild(card);
+      });
+    }
+
+    /* ==========================================================================
+       十一、互動對話框 (新增/編輯行程、編輯交通、假設清單)
+       ========================================================================== */
+    function closeModal() {
+      document.getElementById("modal-backdrop").classList.add("hidden");
+    }
+
+    function openEventModal(existingEvent = null) {
+      const isEdit = Boolean(existingEvent);
+      const ev = existingEvent || {
+        id: "evt-" + Date.now(),
+        dayIndex: selectedDayIndex,
+        startTime: "15:00",
+        durationMin: 60,
+        category: "sightseeing",
+        name: "",
+        address: "京都市",
+        lat: 35.0036,
+        lng: 135.7681,
+        costJpy: 0,
+        costScope: "per_person",
+        isEstimated: true,
+        locked: false,
+        notes: ""
+      };
+
+      const dialog = document.getElementById("modal-dialog");
+      dialog.innerHTML = `
+        <h3 style="font-size:1.15rem;"><i class="fa-solid fa-pen-nib"></i> ${isEdit ? "編輯行程項目" : "新增京都行程"}</h3>
+        <form id="event-edit-form" class="form-grid">
+          <label class="form-field">
+            日期
+            <select name="dayIndex" class="form-input">
+              ${tripData.days.map((d, i) => `<option value="${i}" ${i === ev.dayIndex ? "selected" : ""}>Day ${i + 1} (${d.shortDate} ${d.weekday})</option>`).join("")}
+            </select>
+          </label>
+          <label class="form-field">
+            類別
+            <select name="category" class="form-input">
+              <option value="sightseeing" ${ev.category === "sightseeing" ? "selected" : ""}>景點 (山吹黃)</option>
+              <option value="food" ${ev.category === "food" ? "selected" : ""}>餐飲 (珊瑚粉)</option>
+              <option value="hotel" ${ev.category === "hotel" ? "selected" : ""}>住宿 (水色)</option>
+              <option value="transport" ${ev.category === "transport" ? "selected" : ""}>交通/航班 (若竹綠)</option>
+            </select>
+          </label>
+          <label class="form-field">
+            開始時間
+            <input type="time" name="startTime" class="form-input" value="${ev.startTime}" required />
+          </label>
+          <label class="form-field">
+            停留時長（分鐘）
+            <input type="number" name="durationMin" class="form-input" min="10" max="720" step="5" value="${ev.durationMin}" required />
+          </label>
+          <label class="form-field form-full">
+            行程名稱
+            <input type="text" name="name" class="form-input" value="${ev.name}" placeholder="例如：八坂神社參拜" required />
+          </label>
+          <label class="form-field form-full">
+            地址或地點描述
+            <input type="text" name="address" class="form-input" value="${ev.address}" />
+          </label>
+          <label class="form-field">
+            費用金額 (JPY)
+            <input type="number" name="costJpy" class="form-input" min="0" step="10" value="${ev.costJpy}" />
+          </label>
+          <label class="form-field">
+            計費基準
+            <select name="costScope" class="form-input">
+              <option value="per_person" ${ev.costScope === "per_person" ? "selected" : ""}>每人金額 (自動 × 2人)</option>
+              <option value="group" ${ev.costScope === "group" ? "selected" : ""}>全團總金額</option>
+            </select>
+          </label>
+          <label class="form-field" style="flex-direction:row; align-items:center; gap:6px;">
+            <input type="checkbox" name="isEstimated" ${ev.isEstimated ? "checked" : ""} /> 標記為「估算/待確認」
+          </label>
+          <label class="form-field" style="flex-direction:row; align-items:center; gap:6px;">
+            <input type="checkbox" name="locked" ${ev.locked ? "checked" : ""} /> 鎖定此時段（不可隨意移動）
+          </label>
+          <label class="form-field form-full">
+            備註說明
+            <textarea name="notes" class="form-input" rows="2">${ev.notes || ""}</textarea>
+          </label>
+          <div class="modal-footer form-full">
+            <div>
+              ${isEdit ? `<button type="button" id="btn-delete-event" class="btn-danger"><i class="fa-solid fa-trash"></i> 刪除</button>` : ""}
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="button" id="btn-cancel-modal" class="tool-btn">取消</button>
+              <button type="submit" class="btn-primary">儲存變更</button>
+            </div>
+          </div>
+        </form>
+      `;
+
+      document.getElementById("modal-backdrop").classList.remove("hidden");
+      document.getElementById("btn-cancel-modal").addEventListener("click", closeModal);
+
+      if (isEdit) {
+        document.getElementById("btn-delete-event").addEventListener("click", () => {
+          saveTripData(true);
+          tripData.events = tripData.events.filter(item => item.id !== ev.id);
+          saveTripData(false);
+          closeModal();
+          renderAll();
+          showToast("已刪除該行程並更新總花費");
+        });
+      }
+
+      document.getElementById("event-edit-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        saveTripData(true);
+
+        const updated = {
+          ...ev,
+          dayIndex: Number(fd.get("dayIndex")),
+          category: fd.get("category"),
+          startTime: fd.get("startTime"),
+          durationMin: Number(fd.get("durationMin")) || 60,
+          name: fd.get("name").trim(),
+          address: fd.get("address").trim(),
+          costJpy: Number(fd.get("costJpy")) || 0,
+          costScope: fd.get("costScope"),
+          isEstimated: fd.get("isEstimated") === "on",
+          locked: fd.get("locked") === "on",
+          notes: fd.get("notes").trim()
+        };
+
+        if (isEdit) {
+          const idx = tripData.events.findIndex(item => item.id === ev.id);
+          if (idx >= 0) tripData.events[idx] = updated;
+        } else {
+          tripData.events.push(updated);
+          selectedDayIndex = updated.dayIndex;
+        }
+
+        saveTripData(false);
+        closeModal();
+        renderAll();
+        showToast(isEdit ? "已更新行程、路線與預算" : "已新增行程並連動更新");
+      });
+    }
+
+    function openSegmentModal(seg) {
+      const dialog = document.getElementById("modal-dialog");
+      dialog.innerHTML = `
+        <h3 style="font-size:1.15rem;"><i class="fa-solid fa-route"></i> 編輯交通路段明細</h3>
+        <form id="segment-edit-form" class="form-grid">
+          <label class="form-field">
+            交通方式
+            <select name="mode" class="form-input">
+              <option value="train" ${seg.mode === "train" ? "selected" : ""}>JR / 近鐵 / 京阪</option>
+              <option value="subway" ${seg.mode === "subway" ? "selected" : ""}>地鐵 / 嵐電</option>
+              <option value="bus" ${seg.mode === "bus" ? "selected" : ""}>市營公車</option>
+              <option value="walk" ${seg.mode === "walk" ? "selected" : ""}>純步行</option>
+              <option value="taxi" ${seg.mode === "taxi" ? "selected" : ""}>計程車</option>
+            </select>
+          </label>
+          <label class="form-field">
+            預估車程（分鐘）
+            <input type="number" name="durationMin" class="form-input" min="1" max="300" value="${seg.durationMin}" required />
+          </label>
+          <label class="form-field form-full">
+            路線名稱與轉乘說明
+            <input type="text" name="modeLabel" class="form-input" value="${seg.modeLabel}" required />
+          </label>
+          <label class="form-field">
+            單程車資 (JPY)
+            <input type="number" name="costJpy" class="form-input" min="0" step="10" value="${seg.costJpy}" />
+          </label>
+          <label class="form-field">
+            計費方式
+            <select name="costScope" class="form-input">
+              <option value="per_person" ${seg.costScope === "per_person" ? "selected" : ""}>每人票價 (× 2人)</option>
+              <option value="group" ${seg.costScope === "group" ? "selected" : ""}>每車/全團金額</option>
+            </select>
+          </label>
+          <label class="form-field form-full" style="flex-direction:row; align-items:center; gap:6px;">
+            <input type="checkbox" name="isEstimated" ${seg.isEstimated ? "checked" : ""} /> 標記為「估算車資/車程」
+          </label>
+          <label class="form-field form-full">
+            搭乘備註
+            <textarea name="note" class="form-input" rows="2">${seg.note || ""}</textarea>
+          </label>
+          <div class="modal-footer form-full" style="justify-content:flex-end;">
+            <button type="button" id="btn-cancel-seg" class="tool-btn">取消</button>
+            <button type="submit" class="btn-primary">儲存交通設定</button>
+          </div>
+        </form>
+      `;
+
+      document.getElementById("modal-backdrop").classList.remove("hidden");
+      document.getElementById("btn-cancel-seg").addEventListener("click", closeModal);
+
+      document.getElementById("segment-edit-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        saveTripData(true);
+
+        seg.mode = fd.get("mode");
+        seg.durationMin = Number(fd.get("durationMin")) || 15;
+        seg.modeLabel = fd.get("modeLabel").trim();
+        seg.costJpy = Number(fd.get("costJpy")) || 0;
+        seg.costScope = fd.get("costScope");
+        seg.isEstimated = fd.get("isEstimated") === "on";
+        seg.note = fd.get("note").trim();
+
+        saveTripData(false);
+        closeModal();
+        renderAll();
+        showToast("已更新路段交通時間、地圖顏色與費用");
+      });
+    }
+
+    function openAssumptionsModal() {
+      const dialog = document.getElementById("modal-dialog");
+      dialog.innerHTML = `
+        <h3 style="font-size:1.15rem;"><i class="fa-solid fa-clipboard-question"></i> 合理假設與待查項目清單</h3>
+        <ul style="margin:12px 0 0 18px; display:flex; flex-direction:column; gap:10px; font-size:0.9rem;">
+          ${tripData.assumptions.map(item => `<li>${item}</li>`).join("")}
+        </ul>
+        <div class="modal-footer" style="justify-content:flex-end;">
+          <button type="button" id="btn-close-assump" class="btn-primary">我知道了</button>
+        </div>
+      `;
+      document.getElementById("modal-backdrop").classList.remove("hidden");
+      document.getElementById("btn-close-assump").addEventListener("click", closeModal);
+    }
+
+    /* ==========================================================================
+       十二、JSON 匯入匯出 與 ICS 行事曆 (Asia/Tokyo 時區) 匯出
+       ========================================================================== */
+    function exportTripJson() {
+      const blob = new Blob([JSON.stringify(tripData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "kyoto-winter-trip-2027.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("已下載 JSON 旅程備份檔");
+    }
+
+    function exportTripIcs() {
+      const lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Kyoto Ehon Trip Planner//ZH-TW",
+        "CALSCALE:GREGORIAN",
+        "X-WR-TIMEZONE:Asia/Tokyo"
+      ];
+
+      tripData.events.forEach(ev => {
+        const day = tripData.days[ev.dayIndex];
+        if (!day) return;
+        const dateCompact = day.date.replace(/-/g, "");
+        const startCompact = ev.startTime.replace(":", "") + "00";
+        const endTimeStr = minutesToTime(timeToMinutes(ev.startTime) + ev.durationMin);
+        const endCompact = endTimeStr.replace(":", "") + "00";
+
+        lines.push("BEGIN:VEVENT");
+        lines.push(`UID:${ev.id}@kyoto2027`);
+        lines.push(`DTSTART;TZID=Asia/Tokyo:${dateCompact}T${startCompact}`);
+        lines.push(`DTEND;TZID=Asia/Tokyo:${dateCompact}T${endCompact}`);
+        lines.push(`SUMMARY:${ev.name}`);
+        lines.push(`LOCATION:${ev.address}`);
+        lines.push(`DESCRIPTION:${(ev.notes || "").replace(/\n/g, " ")}`);
+        lines.push("END:VEVENT");
+      });
+
+      lines.push("END:VCALENDAR");
+      const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "kyoto-2027-itinerary.ics";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("已匯出 Asia/Tokyo 時區 ICS 行事曆");
+    }
+
+    /* ==========================================================================
+       十三、總渲染與事件綁定初始化
+       ========================================================================== */
+    function renderAll() {
+      renderHeader();
+      renderDayStations(false);
+      renderDayTimeline();
+      renderWeekGrid();
+      renderRoutePanel();
+      updateKyotoMap();
+      renderExpensesPage();
+      renderPackingPage();
+      updateUndoButton();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      // 1. 頁首總花費眼睛切換
+      document.getElementById("toggle-budget-eye").addEventListener("click", () => {
+        showBudget = !showBudget;
+        renderHeader();
+      });
+
+      // 2. 三大主分頁切換
+      document.querySelectorAll(".nav-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          const targetId = tab.dataset.page;
+
+          ["workspace-page", "expensespage", "packingpage"].forEach(pid => {
+            document.getElementById(pid).classList.toggle("hidden-page", pid !== targetId);
+          });
+
+          if (targetId === "workspace-page" && leafletMap) {
+            setTimeout(() => leafletMap.invalidateSize(), 120);
+          }
+        });
+      });
+
+      // 3. 單日 / 週行事曆檢視切換
+      document.getElementById("btn-view-day").addEventListener("click", () => {
+        currentCalendarView = "day";
+        document.getElementById("btn-view-day").classList.add("active");
+        document.getElementById("btn-view-week").classList.remove("active");
+        document.getElementById("day-timeline-view").classList.remove("hidden-page");
+        document.getElementById("week-calendar-view").classList.add("hidden-page");
+      });
+
+      document.getElementById("btn-view-week").addEventListener("click", () => {
+        currentCalendarView = "week";
+        document.getElementById("btn-view-week").classList.add("active");
+        document.getElementById("btn-view-day").classList.remove("active");
+        document.getElementById("week-calendar-view").classList.remove("hidden-page");
+        document.getElementById("day-timeline-view").classList.add("hidden-page");
+      });
+
+      // 4. 復原與新增行程
+      document.getElementById("btn-undo").addEventListener("click", performUndo);
+      document.getElementById("btn-add-event").addEventListener("click", () => openEventModal(null));
+
+      // 5. 地圖模式與交通面板收合
+      document.getElementById("btn-preview-route").addEventListener("click", () => {
+        mapShowAllDays = false;
+        document.getElementById("btn-preview-route").classList.add("active");
+        document.getElementById("btn-fit-map").classList.remove("active");
+        updateKyotoMap();
+      });
+
+      document.getElementById("btn-fit-map").addEventListener("click", () => {
+        mapShowAllDays = true;
+        document.getElementById("btn-fit-map").classList.add("active");
+        document.getElementById("btn-preview-route").classList.remove("active");
+        updateKyotoMap();
+      });
+
+      const routeToggle = document.getElementById("route-panel-toggle");
+      routeToggle.addEventListener("click", () => {
+        const panel = document.getElementById("routepanel");
+        const collapsed = panel.classList.toggle("collapsed");
+        routeToggle.setAttribute("aria-expanded", String(!collapsed));
+        document.getElementById("route-summary-badge").innerHTML = collapsed
+          ? `已收合 <i class="fa-solid fa-chevron-down"></i>`
+          : `展開中 <i class="fa-solid fa-chevron-up"></i>`;
+      });
+
+      // 6. 匯率即時調整與用品篩選
+      document.getElementById("jpy-rate-input").value = tripData.meta.exchangeRate;
+      document.getElementById("jpy-rate-input").addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        if (val > 0) {
+          tripData.meta.exchangeRate = val;
+          saveTripData(false);
+          renderHeader();
+          renderExpensesPage();
+        }
+      });
+
+      document.getElementById("packing-search").addEventListener("input", renderPackingPage);
+      document.getElementById("packing-only-unchecked").addEventListener("change", renderPackingPage);
+
+      // 7. 底部固定綠色工具按鈕選單
+      const dockFab = document.getElementById("dock-fab");
+      const dockMenu = document.getElementById("dock-menu");
+      dockFab.addEventListener("click", () => {
+        const isOpen = !dockMenu.classList.contains("hidden");
+        dockMenu.classList.toggle("hidden", isOpen);
+        dockFab.setAttribute("aria-expanded", String(!isOpen));
+      });
+
+      document.getElementById("tool-export-json").addEventListener("click", () => {
+        dockMenu.classList.add("hidden");
+        dockFab.setAttribute("aria-expanded", "false");
+        exportTripJson();
+      });
+
+      document.getElementById("tool-import-json").addEventListener("click", () => {
+        dockMenu.classList.add("hidden");
+        dockFab.setAttribute("aria-expanded", "false");
+        document.getElementById("json-file-input").click();
+      });
+
+      document.getElementById("json-file-input").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const imported = JSON.parse(ev.target.result);
+            if (imported && imported.meta && Array.isArray(imported.events)) {
+              saveTripData(true);
+              tripData = imported;
+              saveTripData(false);
+              selectedDayIndex = 0;
+              renderAll();
+              showToast("成功匯入 JSON 旅程資料！");
+            } else {
+              showToast("JSON 格式不符，請確認欄位結構");
+            }
+          } catch (err) {
+            showToast("解析 JSON 檔案失敗");
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = "";
+      });
+
+      document.getElementById("tool-export-ics").addEventListener("click", () => {
+        dockMenu.classList.add("hidden");
+        dockFab.setAttribute("aria-expanded", "false");
+        exportTripIcs();
+      });
+
+      document.getElementById("tool-assumptions").addEventListener("click", () => {
+        dockMenu.classList.add("hidden");
+        dockFab.setAttribute("aria-expanded", "false");
+        openAssumptionsModal();
+      });
+
+      document.getElementById("tool-reset-default").addEventListener("click", () => {
+        dockMenu.classList.add("hidden");
+        dockFab.setAttribute("aria-expanded", "false");
+        saveTripData(true);
+        tripData = JSON.parse(JSON.stringify(DEFAULT_TRIP_DATA));
+        saveTripData(false);
+        selectedDayIndex = 0;
+        renderAll();
+        showToast("已重置為預設京都六天五夜行程（可按復原還原）");
+      });
+
+      // 點擊遮罩關閉對話框
+      document.getElementById("modal-backdrop").addEventListener("click", (e) => {
+        if (e.target.id === "modal-backdrop") closeModal();
+      });
+
+      // 啟動初始化
+      setupTimelineScrollListeners();
+      initKyotoMap();
+      renderAll();
+      updateKyotoNowLine();
+      setInterval(updateKyotoNowLine, 15000);
+    });
+  </script>
+</body>
+</html>
