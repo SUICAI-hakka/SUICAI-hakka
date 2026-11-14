@@ -3097,21 +3097,44 @@
           const reader = new FileReader();
           reader.onload = () => {
             try {
-              const parsed = JSON.parse(reader.result);
-              if (parsed.tripData && Array.isArray(parsed.tripData.days)) {
-                pushUndoSnapshot();
-                tripData = parsed.tripData;
-                if (Array.isArray(parsed.packingData)) packingData = parsed.packingData;
-                ensureAllDaysSegmentsSynced();
-                saveTripData(true);
-                renderAll();
-                showToast("已成功匯入 JSON 行程");
+              const rawText = String(reader.result || "").replace(/^\uFEFF/, "").trim();
+              const parsed = JSON.parse(rawText);
+              const candidateTrip = (parsed && parsed.tripData && typeof parsed.tripData === "object")
+                ? parsed.tripData
+                : (parsed && Array.isArray(parsed.days) ? parsed : null);
+
+              if (!candidateTrip || !Array.isArray(candidateTrip.days) || candidateTrip.days.length === 0) {
+                showToast("⚠️ JSON 缺少有效的 days 行程陣列");
+                return;
               }
+
+              pushUndoSnapshot();
+              tripData = {
+                ...cloneObj(DEFAULT_TRIP_DATA),
+                ...candidateTrip,
+                events: Array.isArray(candidateTrip.events) ? candidateTrip.events : [],
+                segments: Array.isArray(candidateTrip.segments) ? candidateTrip.segments : []
+              };
+
+              if (parsed && Array.isArray(parsed.packingData)) {
+                packingData = parsed.packingData;
+              }
+
+              if (selectedDayIndex >= tripData.days.length) {
+                selectedDayIndex = 0;
+              }
+
+              ensureAllDaysSegmentsSynced();
+              saveTripData(true);
+              renderAll(true);
+              showToast("✅ 已成功匯入 JSON 行程（共 " + tripData.events.length + " 筆）");
             } catch (err) {
-              showToast("⚠️ JSON 格式解析失敗");
+              showToast("⚠️ JSON 格式解析失敗：" + (err?.message || "請確認檔案內容"));
+            } finally {
+              e.target.value = "";
             }
           };
-          reader.readAsText(file);
+          reader.readAsText(file, "UTF-8");
         });
 
         document.getElementById("tool-export-ics").addEventListener("click", () => {
