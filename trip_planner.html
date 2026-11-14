@@ -11,29 +11,65 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
     :root {
-      --bg-washi: #FFFCF6;
-      --card-white: #FFFFFF;
+      --bg-washi: #FCF8F0;
+      --card-white: #FFFCF6;
       --ink: #3E3A39;
       --yamabuki: #F6D27A;
-      --deep-gold: #8C5D00;
-      --coral: #F2A497;
-      --mizu: #A8D3E6;
-      --mizu-active: color-mix(in srgb, #A8D3E6 75%, #000000 25%);
       --wakatake: #B9DAA5;
-      --lavender: #DED2ED;
-      --apricot: #F4C7AA;
-      --alert-red: #A33C32;
-      --route-train: #4678C5;
-      --route-subway: #9266C2;
-      --route-shinkansen: #D8902C;
-      --route-bus: #3A9B80;
-      --route-walk: #84909E;
-      --route-taxi: #D77968;
-      --border-w: 3px;
+      --mizu: #A8D3E6;
+      --mizu-active: #57A5C5;
+      --coral: #F2A497;
+      --deep-gold: #A97D32;
+      --alert-red: #C84B3E;
       --radius-lg: 20px;
-      --radius-md: 14px;
-      --radius-sm: 10px;
+      --radius-md: 16px;
+      --border-w: 3px;
       --shadow-ehon: 0 4px 0 rgba(62, 58, 57, 0.14);
+    }
+
+    /* 單日時間軸：左側時間比例尺與右側卡片共享完全一致的實際分鐘垂直座標 */
+    .calendarpanel.timelinepreview .timeline-list {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      gap: 16px;
+      padding: 22px 24px 28px 14px;
+      align-items: stretch;
+      position: relative;
+    }
+
+    .day-time-scale {
+      position: relative;
+      height: 100%;
+      min-height: 280px;
+      border-right: 3px solid var(--ink);
+      padding-right: 10px;
+      user-select: none;
+      z-index: 6;
+    }
+
+    .scale-bound-label {
+      position: absolute;
+      right: 10px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-align: right;
+      line-height: 1;
+      color: var(--ink);
+      transform: translateY(-50%);
+    }
+
+    .scale-bound-label.start-bound {
+      top: 0%;
+    }
+
+    .scale-bound-label.end-bound {
+      top: 100%;
+    }
+
+    .scale-track {
+      position: relative;
+      width: 100%;
+      height: 100%;
     }
 
     * {
@@ -563,43 +599,6 @@
       background: #FFFDF9;
     }
 
-    /* 單日時間軸：左側比例尺完整延伸包含所有卡片 + 清晰無放大霧化 */
-    .timeline-list {
-      display: grid;
-      grid-template-columns: 76px 1fr;
-      gap: 14px;
-      padding: 18px 22px 24px 14px;
-      align-items: stretch;
-      position: relative;
-    }
-
-    .day-time-scale {
-      position: relative;
-      height: 100%;
-      min-height: 260px;
-      border-right: 3px solid var(--ink);
-      padding-right: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      user-select: none;
-      z-index: 4;
-    }
-
-    .scale-bound-label {
-      font-size: 0.76rem;
-      font-weight: 800;
-      text-align: right;
-      line-height: 1.2;
-      color: var(--ink);
-    }
-
-    .scale-track {
-      position: relative;
-      flex: 1;
-      margin: 10px 0;
-    }
-
     .scale-tick-mark {
       position: absolute;
       right: -10px;
@@ -621,16 +620,17 @@
     /* 黑框白底圓形追蹤目前可視行程 */
     .scale-focus-dot {
       position: absolute;
-      right: -18px;
-      width: 14px;
-      height: 14px;
+      right: -20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: #FFFFFF;
-      border: 3px solid var(--ink);
-      box-shadow: 0 2px 4px rgba(62, 58, 57, 0.25);
+      border: 3.5px solid var(--ink);
+      box-shadow: 0 0 0 3px #FFFFFF, 0 3px 6px rgba(62, 58, 57, 0.32);
       transform: translateY(-50%);
-      transition: top 160ms ease-out;
-      z-index: 5;
+      transition: top 140ms cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 8;
+      pointer-events: none;
     }
 
     .now-time-line {
@@ -639,7 +639,7 @@
       right: -12px;
       height: 2px;
       background: var(--alert-red);
-      z-index: 3;
+      z-index: 5;
       pointer-events: none;
     }
 
@@ -656,34 +656,119 @@
     }
 
     .timeline-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      padding: 4px 8px 12px 4px;
+      position: relative;
+      width: 100%;
       min-width: 0;
     }
 
     .timeline-time-row {
-      position: relative;
+      --dist-ratio: 0;
+      position: absolute;
+      left: 4px;
+      right: 14px;
       min-width: 0;
+      transform-origin: left center;
+      transition: transform 160ms ease, filter 160ms ease;
+    }
+
+    /* 交通卡往右縮排並縮小體積，與主行程卡建立層次 */
+    .timeline-time-row.is-segment-row {
+      left: 32px;
+      right: 18px;
+    }
+
+    .timeline-time-row.timeline-current {
+      --dist-ratio: 0;
+      transform: scale(1.05);
+      z-index: 4;
+    }
+
+    .timeline-time-row:not(.timeline-current) .timeline-card {
+      filter: blur(calc(var(--dist-ratio, 0) * 1.4px));
+      transition: filter 160ms ease;
+    }
+
+    .timeline-time-row:not(.timeline-current)::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-md);
+      background: linear-gradient(
+        180deg,
+        rgba(255, 252, 246, calc(var(--dist-ratio, 0) * 0.56)) 0%,
+        rgba(255, 255, 255, calc(var(--dist-ratio, 0) * 0.42)) 100%
+      );
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      z-index: 2;
+    }
+
+    /* 懸停或聚焦時取消遮罩與模糊 */
+    .timeline-time-row:hover .timeline-card,
+    .timeline-time-row:focus-within .timeline-card {
+      filter: none !important;
+    }
+
+    .timeline-time-row:hover::after,
+    .timeline-time-row:focus-within::after {
+      opacity: 0 !important;
     }
 
     .timeline-card {
+      position: relative;
+      height: auto;
+      box-sizing: border-box;
       background: var(--card-white);
       border: var(--border-w) solid var(--ink);
       border-left-width: 10px;
       border-radius: var(--radius-md);
-      padding: 12px 14px;
+      padding: 10px 14px;
       box-shadow: var(--shadow-ehon);
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .leg-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .leg-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-washi);
+      border: 1.5px solid var(--ink);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .leg-sep-arrow {
+      font-size: 0.74rem;
+      opacity: 0.65;
+      font-weight: 800;
     }
 
     .timeline-card.cat-sight { border-left-color: var(--yamabuki); }
     .timeline-card.cat-food { border-left-color: var(--coral); }
     .timeline-card.cat-hotel { border-left-color: var(--mizu); }
     .timeline-card.cat-flight { border-left-color: var(--wakatake); }
-    .timeline-card.cat-transport { border-left-color: var(--wakatake); }
-    .timeline-card.cat-transport.walk-only { border-left-color: var(--yamabuki); }
+    .timeline-card.cat-transport {
+      border-left-color: var(--mode-color, #4678C5);
+      border-width: 2.5px;
+      border-left-width: 8px;
+      border-radius: 13px;
+      padding: 6px 11px !important;
+      font-size: 0.92em;
+    }
+    .timeline-card.cat-transport.walk-only { border-left-color: var(--mode-color, #84909E); }
 
     .card-top-row {
       display: flex;
@@ -1141,10 +1226,22 @@
     }
 
     @media (max-width: 700px) {
-      .timeline-list {
+      .calendarpanel.timelinepreview .timeline-list {
         grid-template-columns: 58px 1fr;
         gap: 8px;
-        padding: 12px 10px;
+        padding: 16px 10px 20px;
+      }
+      .timeline-time-row {
+        left: 2px;
+        right: 4px;
+        transform-origin: center center;
+      }
+      .timeline-time-row.is-segment-row {
+        left: 16px;
+        right: 6px;
+      }
+      .timeline-time-row.timeline-current {
+        transform: scaleY(1.05);
       }
       .map-canvas-wrap {
         height: 280px;
@@ -1183,8 +1280,20 @@
       }
       .date-mascot-runner,
       .scale-focus-dot,
+      .timeline-time-row,
+      .timeline-time-row .timeline-card,
+      .timeline-time-row::after,
       .fab-hamburger {
         transition: none !important;
+      }
+      .timeline-time-row.timeline-current {
+        transform: none !important;
+      }
+      .timeline-time-row:not(.timeline-current) .timeline-card {
+        filter: none !important;
+      }
+      .timeline-time-row:not(.timeline-current)::after {
+        display: none !important;
       }
     }
   </style>
@@ -1310,33 +1419,35 @@
           <div id="date-stations-grid" class="date-stations-grid"></div>
         </div>
 
-        <!-- 單日視圖容器 -->
-        <div id="day-view-container">
-          <div class="timeline-intro">
-            <div>
-              <strong id="day-theme-title">Day 1</strong>
-              <span id="day-theme-sub" style="font-size:0.84rem; opacity:0.85; margin-left:8px;"></span>
-            </div>
-            <span id="day-tz-clock" style="font-size:0.82rem; font-weight:700;">Asia/Tokyo</span>
-          </div>
-          <div class="timeline-list">
-            <div class="day-time-scale">
-              <div id="scale-start-label" class="scale-bound-label">08:00</div>
-              <div id="scale-track" class="scale-track">
-                <div id="now-time-line" class="now-time-line" style="display:none;">
-                  <span id="now-time-badge" class="now-time-badge">00:00</span>
-                </div>
-                <div id="scale-focus-dot" class="scale-focus-dot" style="top:0%;"></div>
+        <div class="calendar">
+          <!-- 單日視圖容器 -->
+          <div id="day-view-container">
+            <div class="timeline-intro">
+              <div>
+                <strong id="day-theme-title">Day 1</strong>
+                <span id="day-theme-sub" style="font-size:0.84rem; opacity:0.85; margin-left:8px;"></span>
               </div>
-              <div id="scale-end-label" class="scale-bound-label">22:00</div>
+              <span id="day-tz-clock" style="font-size:0.82rem; font-weight:700;">Asia/Tokyo</span>
             </div>
-            <div id="timeline-cards" class="timeline-cards"></div>
+            <div class="timeline-list">
+              <div class="day-time-scale">
+                <div id="scale-track" class="scale-track">
+                  <div id="scale-start-label" class="scale-bound-label start-bound">08:00</div>
+                  <div id="now-time-line" class="now-time-line" style="display:none;">
+                    <span id="now-time-badge" class="now-time-badge">00:00</span>
+                  </div>
+                  <div id="scale-focus-dot" class="scale-focus-dot" style="top:0%;"></div>
+                  <div id="scale-end-label" class="scale-bound-label end-bound">22:00</div>
+                </div>
+              </div>
+              <div id="timeline-cards" class="timeline-cards"></div>
+            </div>
           </div>
-        </div>
 
-        <!-- 週視圖容器 -->
-        <div id="week-view-container" class="week-view-wrap" style="display:none;">
-          <div id="week-grid" class="week-grid"></div>
+          <!-- 週視圖容器 -->
+          <div id="week-view-container" class="week-view-wrap" style="display:none;">
+            <div id="week-grid" class="week-grid"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -1569,6 +1680,11 @@
             <label for="seg-detail">轉乘與路線說明</label>
             <input type="text" id="seg-detail" />
           </div>
+          <div class="form-field full">
+            <label>分段明細（可設定多段轉乘方式與時間）</label>
+            <div id="seg-legs-editor" style="display:flex; flex-direction:column; gap:8px; margin-top:4px;"></div>
+            <button type="button" id="btn-add-seg-leg" class="btn-secondary" style="margin-top:8px; align-self:flex-start; padding:4px 12px; font-size:0.82rem;">＋ 新增轉乘分段</button>
+          </div>
         </div>
         <div class="modal-footer-btns">
           <button type="button" id="btn-close-seg" class="btn-secondary">取消</button>
@@ -1791,6 +1907,7 @@
               rawStatus = seg.isEstimated ? "estimated" : "confirmed";
             }
             const detailParts = [seg.modeLabel, seg.detail, seg.note].filter(Boolean);
+            const rawLegs = Array.isArray(seg.legs) ? seg.legs : null;
             return {
               id: seg.id || ("seg-imp-" + idx + "-" + Date.now()),
               dayIndex: Number(seg.dayIndex) || 0,
@@ -1802,7 +1919,12 @@
               cost: Number(rawCost) || 0,
               costType: rawScope === "per_person" ? "per_person" : "group",
               costStatus: rawStatus,
-              detail: detailParts.join("｜")
+              detail: detailParts.join("｜"),
+              legs: rawLegs ? rawLegs.map(l => ({
+                mode: l.mode || seg.mode || "train",
+                label: l.label || getModeLabel(l.mode || seg.mode || "train"),
+                duration: Number(l.duration) || 10
+              })) : buildDefaultLegsForSegment(seg.mode || "train", Number(seg.duration ?? seg.durationMin ?? 15) || 15, detailParts.join("｜"))
             };
           });
 
@@ -1905,44 +2027,125 @@
         return map[cat] || "行程";
       }
 
+      function buildDefaultLegsForSegment(mode, totalDur, detailText = "") {
+        const dur = Math.max(1, Math.round(Number(totalDur) || 15));
+        const txt = String(detailText || "");
+        if (mode === "walk") {
+          return [{ mode: "walk", label: "步行", duration: dur }];
+        }
+        if ((txt.includes("HARUKA") || txt.includes("地鐵")) && dur >= 40) {
+          const walkPart = 8;
+          const subPart = 12;
+          const mainPart = Math.max(15, dur - walkPart - subPart);
+          return [
+            { mode: "train", label: "JR 特急", duration: mainPart },
+            { mode: "subway", label: "地鐵轉乘", duration: subPart },
+            { mode: "walk", label: "站內步行", duration: walkPart }
+          ];
+        }
+        if (dur >= 20) {
+          const walkPart = Math.min(8, Math.max(4, Math.round(dur * 0.2)));
+          return [
+            { mode: mode, label: getModeLabel(mode).split(" ")[0], duration: dur - walkPart },
+            { mode: "walk", label: "步行", duration: walkPart }
+          ];
+        }
+        return [{ mode: mode, label: getModeLabel(mode).split(" ")[0], duration: dur }];
+      }
+
+      function normalizeSegmentLegs(seg) {
+        if (Array.isArray(seg.legs) && seg.legs.length > 0) {
+          return seg.legs.map(l => ({
+            mode: l.mode || seg.mode || "train",
+            label: l.label || getModeLabel(l.mode || seg.mode || "train").split(" ")[0],
+            duration: Math.max(1, Math.round(Number(l.duration) || 5))
+          }));
+        }
+        return buildDefaultLegsForSegment(seg.mode || "train", seg.duration || 15, seg.detail || "");
+      }
+
       function estimateTransitBetween(evA, evB) {
         const txtA = (evA.title + " " + (evA.address || "")).toLowerCase();
         const txtB = (evB.title + " " + (evB.address || "")).toLowerCase();
         if (txtA.includes("關西機場") || txtB.includes("關西機場")) {
-          return { mode: "train", duration: 90, currency: "JPY", cost: 2200, costType: "per_person", costStatus: "estimated", detail: "JR 特急 HARUKA 往返關西機場＋地鐵／接駁車" };
+          return {
+            mode: "train", duration: 90, currency: "JPY", cost: 2200, costType: "per_person", costStatus: "estimated",
+            detail: "JR 特急 HARUKA 往返關西機場＋地鐵／接駁車",
+            legs: [
+              { mode: "train", label: "JR HARUKA", duration: 75 },
+              { mode: "subway", label: "烏丸線", duration: 7 },
+              { mode: "walk", label: "步行", duration: 8 }
+            ]
+          };
         }
         if (txtA.includes("嵐山") || txtB.includes("嵐山")) {
           const dist = Math.hypot((evA.lat || 35) - (evB.lat || 35), (evA.lng || 135.75) - (evB.lng || 135.75));
           if (dist < 0.012) {
-            return { mode: "walk", duration: 10, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "嵐山區域徒步散步" };
+            return { mode: "walk", duration: 10, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "嵐山區域徒步散步", legs: [{ mode: "walk", label: "步行", duration: 10 }] };
           }
-          return { mode: "train", duration: 42, currency: "JPY", cost: 510, costType: "per_person", costStatus: "estimated", detail: "地鐵烏丸線轉 JR 嵯峨野線／阪急嵐山線" };
+          return {
+            mode: "train", duration: 42, currency: "JPY", cost: 510, costType: "per_person", costStatus: "estimated",
+            detail: "地鐵烏丸線轉 JR 嵯峨野線／阪急嵐山線",
+            legs: [
+              { mode: "subway", label: "地鐵", duration: 10 },
+              { mode: "train", label: "JR 嵯峨野線", duration: 22 },
+              { mode: "walk", label: "步行", duration: 10 }
+            ]
+          };
         }
         if (txtA.includes("宇治") || txtB.includes("宇治")) {
           const dist = Math.hypot((evA.lat || 35) - (evB.lat || 35), (evA.lng || 135.75) - (evB.lng || 135.75));
           if (dist < 0.01) {
-            return { mode: "walk", duration: 12, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "宇治川畔徒步移動" };
+            return { mode: "walk", duration: 12, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "宇治川畔徒步移動", legs: [{ mode: "walk", label: "步行", duration: 12 }] };
           }
-          return { mode: "train", duration: 28, currency: "JPY", cost: 320, costType: "per_person", costStatus: "estimated", detail: "京阪電鐵宇治線／JR 奈良線" };
+          return {
+            mode: "train", duration: 28, currency: "JPY", cost: 320, costType: "per_person", costStatus: "estimated",
+            detail: "京阪電鐵宇治線／JR 奈良線",
+            legs: [
+              { mode: "train", label: "京阪／JR", duration: 20 },
+              { mode: "walk", label: "步行", duration: 8 }
+            ]
+          };
         }
         if (txtA.includes("奈良") || txtB.includes("奈良")) {
           const dist = Math.hypot((evA.lat || 34.68) - (evB.lat || 34.68), (evA.lng || 135.83) - (evB.lng || 135.83));
           if (dist < 0.012) {
-            return { mode: "walk", duration: 14, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "奈良公園林間參道步行" };
+            return { mode: "walk", duration: 14, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "奈良公園林間參道步行", legs: [{ mode: "walk", label: "步行", duration: 14 }] };
           }
-          return { mode: "train", duration: 52, currency: "JPY", cost: 760, costType: "per_person", costStatus: "estimated", detail: "近鐵京都線急行／特急往返近鐵奈良" };
+          return {
+            mode: "train", duration: 52, currency: "JPY", cost: 760, costType: "per_person", costStatus: "estimated",
+            detail: "近鐵京都線急行／特急往返近鐵奈良",
+            legs: [
+              { mode: "train", label: "近鐵急行", duration: 42 },
+              { mode: "walk", label: "步行", duration: 10 }
+            ]
+          };
         }
         if (txtA.includes("清水") || txtB.includes("清水")) {
-          return { mode: "bus", duration: 22, currency: "JPY", cost: 230, costType: "per_person", costStatus: "estimated", detail: "京都市營巴士前往五條坂／清水道" };
+          return {
+            mode: "bus", duration: 22, currency: "JPY", cost: 230, costType: "per_person", costStatus: "estimated",
+            detail: "京都市營巴士前往五條坂／清水道",
+            legs: [
+              { mode: "bus", label: "市營巴士", duration: 14 },
+              { mode: "walk", label: "上坡步行", duration: 8 }
+            ]
+          };
         }
         const latDiff = (evA.lat || 35.0) - (evB.lat || 35.0);
         const lngDiff = (evA.lng || 135.76) - (evB.lng || 135.76);
         const degDist = Math.hypot(latDiff, lngDiff);
         if (degDist < 0.011) {
           const walkMins = Math.max(5, Math.min(20, Math.round(degDist * 1400)));
-          return { mode: "walk", duration: walkMins, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "市區徒步前往" };
+          return { mode: "walk", duration: walkMins, currency: "JPY", cost: 0, costType: "group", costStatus: "confirmed", detail: "市區徒步前往", legs: [{ mode: "walk", label: "步行", duration: walkMins }] };
         }
-        return { mode: "subway", duration: 18, currency: "JPY", cost: 220, costType: "per_person", costStatus: "estimated", detail: "京都市營地鐵／公車轉乘" };
+        return {
+          mode: "subway", duration: 18, currency: "JPY", cost: 220, costType: "per_person", costStatus: "estimated",
+          detail: "京都市營地鐵／公車轉乘",
+          legs: [
+            { mode: "subway", label: "地鐵", duration: 11 },
+            { mode: "walk", label: "步行", duration: 7 }
+          ]
+        };
       }
 
       // 核心：依據排序後的當日行程，自動保留既有相鄰路段並補齊修改時間後的新路段
@@ -1965,6 +2168,9 @@
           const toEv = dayEvents[i + 1];
           const matched = existingDaySegs.find(s => s.fromId === fromEv.id && s.toId === toEv.id);
           if (matched) {
+            if (!Array.isArray(matched.legs) || matched.legs.length === 0) {
+              matched.legs = normalizeSegmentLegs(matched);
+            }
             newDaySegs.push(matched);
           } else {
             const est = estimateTransitBetween(fromEv, toEv);
@@ -1979,7 +2185,8 @@
               cost: est.cost,
               costType: est.costType,
               costStatus: est.costStatus,
-              detail: est.detail
+              detail: est.detail,
+              legs: est.legs
             });
             changed = true;
           }
@@ -2320,6 +2527,7 @@
         const cardsContainer = document.getElementById("timeline-cards");
 
         if (dayEvents.length === 0) {
+          cardsContainer.style.height = "auto";
           cardsContainer.innerHTML = `<div class="ehon-box" style="text-align:center;">這天還沒有安排行程，點擊右上角「＋ 新增行程」開始規劃吧！</div>`;
           return;
         }
@@ -2327,108 +2535,258 @@
         const startMins = timeToMinutes(dayEvents[0].startTime);
         const lastEv = dayEvents[dayEvents.length - 1];
         const endMins = Math.max(startMins + 60, timeToMinutes(lastEv.startTime) + (Number(lastEv.duration) || 60));
-        document.getElementById("scale-start-label").textContent = minutesToTime(startMins);
-        document.getElementById("scale-end-label").textContent = minutesToTime(endMins);
 
-        const scaleTrack = document.getElementById("scale-track");
-        scaleTrack.querySelectorAll(".scale-tick-mark, .scale-tick-text").forEach(el => el.remove());
-        const firstHour = Math.ceil((startMins + 30) / 60);
-        const lastHour = Math.floor((endMins - 30) / 60);
-        const stepHour = (lastHour - firstHour) > 8 ? 3 : 2;
-        for (let h = firstHour; h <= lastHour; h += stepHour) {
-          const tickMins = h * 60;
-          const pct = ((tickMins - startMins) / (endMins - startMins)) * 100;
-          const mark = document.createElement("div");
-          mark.className = "scale-tick-mark";
-          mark.style.top = pct + "%";
-          const lbl = document.createElement("div");
-          lbl.className = "scale-tick-text";
-          lbl.style.top = pct + "%";
-          lbl.textContent = String(h).padStart(2, "0") + ":00";
-          scaleTrack.appendChild(mark);
-          scaleTrack.appendChild(lbl);
+        // 建立實際分鐘數 → 垂直像素座標映射（適度壓縮超過 45 分鐘的空白空檔，避免出現大片空白）
+        const activeIntervals = [];
+        dayEvents.forEach(ev => {
+          const s = timeToMinutes(ev.startTime);
+          const e = s + Math.max(15, Number(ev.duration) || 60);
+          activeIntervals.push([s, e]);
+        });
+        daySegments.forEach(seg => {
+          const f = dayEvents.find(e => e.id === seg.fromId);
+          const t = dayEvents.find(e => e.id === seg.toId);
+          if (f && t) {
+            const s = timeToMinutes(f.startTime) + (Number(f.duration) || 60);
+            const e = Math.max(s + 10, timeToMinutes(t.startTime));
+            activeIntervals.push([s, e]);
+          }
+        });
+        activeIntervals.sort((a, b) => a[0] - b[0]);
+        const mergedActive = [];
+        activeIntervals.forEach(iv => {
+          if (mergedActive.length === 0 || iv[0] > mergedActive[mergedActive.length - 1][1]) {
+            mergedActive.push([iv[0], iv[1]]);
+          } else {
+            mergedActive[mergedActive.length - 1][1] = Math.max(mergedActive[mergedActive.length - 1][1], iv[1]);
+          }
+        });
+
+        const BASE_PX_PER_MIN = 1.55;
+        const IDLE_PX_PER_MIN = 0.45;
+        const FREE_GAP_MINS = 35;
+
+        function mapMinuteToPx(targetMin) {
+          const clamped = Math.max(startMins, Math.min(endMins, targetMin));
+          if (clamped <= startMins) return 0;
+          let px = 0;
+          let cursor = startMins;
+          for (let k = 0; k < mergedActive.length; k++) {
+            const [ivS, ivE] = mergedActive[k];
+            if (ivS > cursor) {
+              const gapEnd = Math.min(clamped, ivS);
+              const gapDur = Math.max(0, gapEnd - cursor);
+              const normalPart = Math.min(gapDur, FREE_GAP_MINS);
+              const compressedPart = Math.max(0, gapDur - FREE_GAP_MINS);
+              px += normalPart * BASE_PX_PER_MIN + compressedPart * IDLE_PX_PER_MIN;
+              cursor = gapEnd;
+              if (cursor >= clamped) return px;
+            }
+            if (ivE > cursor) {
+              const actEnd = Math.min(clamped, ivE);
+              px += Math.max(0, actEnd - cursor) * BASE_PX_PER_MIN;
+              cursor = actEnd;
+              if (cursor >= clamped) return px;
+            }
+          }
+          if (clamped > cursor) {
+            px += (clamped - cursor) * BASE_PX_PER_MIN;
+          }
+          return px;
         }
 
-        const itemsHtml = [];
+        const rawBlocks = [];
         for (let i = 0; i < dayEvents.length; i++) {
           const ev = dayEvents[i];
           const evStart = timeToMinutes(ev.startTime);
-          const evEnd = evStart + (Number(ev.duration) || 60);
-          const amt = getItemExactAmount(ev);
-          const curSymbol = ev.currency === "TWD" ? "NT$" : "¥";
-          const costBadge = amt > 0
-            ? `<span>${curSymbol}${amt.toLocaleString()} ${ev.costStatus === "estimated" ? "(估算)" : "(已確認)"}</span>`
-            : `<span>免費 / 無額外支出</span>`;
+          const evDur = Math.max(15, Number(ev.duration) || 60);
+          const evEnd = evStart + evDur;
 
-          let overlapWarn = "";
-          if (i > 0) {
-            const prevEv = dayEvents[i - 1];
-            const prevSeg = daySegments.find(s => s.fromId === prevEv.id && s.toId === ev.id);
-            const prevEndWithTransit = timeToMinutes(prevEv.startTime) + (Number(prevEv.duration) || 0) + (prevSeg ? Number(prevSeg.duration) : 0);
-            if (evStart < prevEndWithTransit) {
-              overlapWarn = `<span class="warn-tag">⚠️ 時間重疊或交通緊湊（建議 ${minutesToTime(prevEndWithTransit)} 後）</span>`;
-            }
-          }
-
-          itemsHtml.push(`
-            <div class="timeline-time-row" data-start-mins="${evStart}" data-end-mins="${evEnd}">
-              <div class="timeline-card cat-${ev.category}" data-ev-id="${ev.id}" tabindex="0">
-                <div class="card-top-row">
-                  <span class="card-time-chip">🕒 ${ev.startTime} – ${minutesToTime(evEnd)} (${formatDurationLabel(ev.duration)})</span>
-                  <div style="display:flex; gap:6px; align-items:center;">
-                    ${ev.locked ? `<span class="card-cat-badge" style="background:#FFF8E7;">🔒 已鎖定</span>` : ""}
-                    <span class="card-cat-badge bg-${ev.category}">${getCategoryLabel(ev.category)}</span>
-                  </div>
-                </div>
-                <div class="card-title-line">
-                  <span>${ev.title}</span>
-                  ${overlapWarn}
-                </div>
-                <div class="card-sub-meta">
-                  ${ev.address ? `<span>📍 ${ev.address}</span>` : ""}
-                  ${costBadge}
-                </div>
-                ${ev.notes ? `<div class="card-note-text">${ev.notes}</div>` : ""}
-              </div>
-            </div>
-          `);
+          rawBlocks.push({
+            kind: "event",
+            ev,
+            index: i,
+            startMins: evStart,
+            endMins: evEnd,
+            durationMins: evDur
+          });
 
           if (i < dayEvents.length - 1) {
             const nextEv = dayEvents[i + 1];
+            const nextStart = timeToMinutes(nextEv.startTime);
             const seg = daySegments.find(s => s.fromId === ev.id && s.toId === nextEv.id);
             if (seg) {
-              const isWalkOnly = seg.mode === "walk";
-              const segAmt = getItemExactAmount(seg);
-              const segCur = seg.currency === "TWD" ? "NT$" : "¥";
-              const segCostTxt = segAmt > 0 ? `${segCur}${segAmt.toLocaleString()}` : "免費";
-              const segEndMins = evEnd + (Number(seg.duration) || 15);
-              const segMidMins = evEnd + Math.round((Number(seg.duration) || 15) / 2);
-
-              itemsHtml.push(`
-                <div class="timeline-time-row" data-start-mins="${segMidMins}" data-end-mins="${segEndMins}">
-                  <div class="timeline-card cat-transport ${isWalkOnly ? "walk-only" : ""}" data-seg-id="${seg.id}" tabindex="0" style="padding:9px 14px;">
-                    <div class="card-top-row" style="margin-bottom:2px;">
-                      <span style="display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:0.86rem;">
-                        ${getModeFaIconSvg(seg.mode)}
-                        <span>${isWalkOnly ? "純步行移動 · " + formatDurationLabel(seg.duration) : getModeLabel(seg.mode) + " · " + formatDurationLabel(seg.duration)}</span>
-                      </span>
-                      <span class="card-cat-badge ${isWalkOnly ? "bg-walk" : "bg-transport"}">${segCostTxt}</span>
-                    </div>
-                    <div style="font-size:0.8rem; opacity:0.86;">${ev.title} → ${nextEv.title}${seg.detail ? "（" + seg.detail + "）" : ""}</div>
-                  </div>
-                </div>
-              `);
+              const legs = normalizeSegmentLegs(seg);
+              const isWalkOnly = legs.every(l => l.mode === "walk");
+              const totalSegMins = legs.reduce((acc, l) => acc + (Number(l.duration) || 0), 0) || Number(seg.duration) || 15;
+              const gapMins = Math.max(0, nextStart - evEnd);
+              const segStart = evEnd;
+              const segEnd = gapMins >= 5 ? Math.min(nextStart, evEnd + totalSegMins) : (evEnd + Math.min(totalSegMins, 15));
+              const effectiveDur = Math.max(8, segEnd - segStart);
+              rawBlocks.push({
+                kind: "segment",
+                seg,
+                fromEv: ev,
+                toEv: nextEv,
+                legs,
+                isWalkOnly,
+                totalSegMins,
+                startMins: segStart,
+                endMins: segStart + effectiveDur,
+                durationMins: effectiveDur
+              });
             }
           }
         }
 
+        const baseTotalPx = Math.max(320, Math.round(mapMinuteToPx(endMins)));
+        document.getElementById("scale-start-label").textContent = minutesToTime(startMins);
+        document.getElementById("scale-end-label").textContent = minutesToTime(endMins);
+
+        const itemsHtml = [];
+        let lastBottomPx = -8;
+
+        rawBlocks.forEach(blk => {
+          const rawTopPx = mapMinuteToPx(blk.startMins);
+          const rawEndPx = mapMinuteToPx(blk.endMins);
+          const minCardH = blk.kind === "segment" ? (blk.isWalkOnly ? 36 : 50) : 76;
+          const heightPx = Math.max(minCardH, rawEndPx - rawTopPx - 4);
+          const topPx = Math.max(rawTopPx, lastBottomPx + 8);
+          lastBottomPx = topPx + heightPx;
+
+          if (blk.kind === "event") {
+            const ev = blk.ev;
+            const i = blk.index;
+            const evStart = blk.startMins;
+            const evEnd = blk.endMins;
+            const amt = getItemExactAmount(ev);
+            const curSymbol = ev.currency === "TWD" ? "NT$" : "¥";
+            const costBadge = amt > 0
+              ? `<span>${curSymbol}${amt.toLocaleString()} ${ev.costStatus === "estimated" ? "(估算)" : "(已確認)"}</span>`
+              : `<span>免費 / 無額外支出</span>`;
+
+            let overlapWarn = "";
+            if (i > 0) {
+              const prevEv = dayEvents[i - 1];
+              const prevSeg = daySegments.find(s => s.fromId === prevEv.id && s.toId === ev.id);
+              const prevEndWithTransit = timeToMinutes(prevEv.startTime) + (Number(prevEv.duration) || 0) + (prevSeg ? Number(prevSeg.duration) : 0);
+              if (evStart < prevEndWithTransit) {
+                overlapWarn = `<span class="warn-tag">⚠️ 時間重疊或交通緊湊（建議 ${minutesToTime(prevEndWithTransit)} 後）</span>`;
+              }
+            }
+
+            itemsHtml.push(`
+              <div class="timeline-time-row" data-start-mins="${evStart}" data-end-mins="${evEnd}" style="top:${topPx.toFixed(1)}px; min-height:${heightPx.toFixed(1)}px;">
+                <div class="timeline-card cat-${ev.category}" data-ev-id="${ev.id}" tabindex="0">
+                  <div class="card-top-row">
+                    <span class="card-time-chip">🕒 ${ev.startTime} – ${minutesToTime(evEnd)} (${formatDurationLabel(ev.duration)})</span>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                      ${ev.locked ? `<span class="card-cat-badge" style="background:#FFF8E7;">🔒 已鎖定</span>` : ""}
+                      <span class="card-cat-badge bg-${ev.category}">${getCategoryLabel(ev.category)}</span>
+                    </div>
+                  </div>
+                  <div class="card-title-line">
+                    <span>${ev.title}</span>
+                    ${overlapWarn}
+                  </div>
+                  <div class="card-sub-meta">
+                    ${ev.address ? `<span>📍 ${ev.address}</span>` : ""}
+                    ${costBadge}
+                  </div>
+                  ${ev.notes ? `<div class="card-note-text">${ev.notes}</div>` : ""}
+                </div>
+              </div>
+            `);
+          } else {
+            const { seg, fromEv, toEv, legs, isWalkOnly, totalSegMins } = blk;
+            const segAmt = getItemExactAmount(seg);
+            const segCur = seg.currency === "TWD" ? "NT$" : "¥";
+            const segCostTxt = segAmt > 0 ? `${segCur}${segAmt.toLocaleString()}` : "免費";
+
+            const headerTitle = isWalkOnly
+              ? `${getModeFaIconSvg("walk")} <span>純步行移動 · 合併總時長 ${formatDurationLabel(totalSegMins)}</span>`
+              : `${getModeFaIconSvg(seg.mode)} <span>${getModeLabel(seg.mode)} · 總車程 ${formatDurationLabel(totalSegMins)}</span>`;
+
+            const primaryModeColor = isWalkOnly ? getModeColor("walk") : getModeColor(seg.mode);
+
+            const legsChipsHtml = isWalkOnly
+              ? ""
+              : `<div class="leg-chips-row">${legs.map((leg, lIdx) => `
+                  <span class="leg-chip" style="border-left: 5px solid ${getModeColor(leg.mode)};">${getModeFaIconSvg(leg.mode)} ${leg.label} ${leg.duration}分</span>
+                  ${lIdx < legs.length - 1 ? `<span class="leg-sep-arrow">→</span>` : ""}
+                `).join("")}</div>`;
+
+            itemsHtml.push(`
+              <div class="timeline-time-row is-segment-row" data-start-mins="${blk.startMins}" data-end-mins="${blk.endMins}" style="top:${topPx.toFixed(1)}px; min-height:${heightPx.toFixed(1)}px;">
+                <div class="timeline-card cat-transport ${isWalkOnly ? "walk-only" : ""}" data-seg-id="${seg.id}" tabindex="0" title="雙擊編輯分段交通" style="--mode-color:${primaryModeColor}; border-left-color:${primaryModeColor};">
+                  <div class="card-top-row" style="margin-bottom:1px;">
+                    <span style="display:inline-flex; align-items:center; gap:5px; font-weight:800; font-size:0.8rem;">
+                      ${headerTitle}
+                    </span>
+                    <span class="card-cat-badge" style="background:${primaryModeColor}; color:#FFFFFF; font-size:0.72rem; padding:0px 7px;">${segCostTxt}</span>
+                  </div>
+                  <div style="font-size:0.75rem; opacity:0.84; line-height:1.35;">${fromEv.title} → ${toEv.title}${seg.detail ? "（" + seg.detail + "）" : ""}</div>
+                  ${legsChipsHtml}
+                </div>
+              </div>
+            `);
+          }
+        });
+
         cardsContainer.innerHTML = itemsHtml.join("");
+
+        function relayoutTimelineCardsNoOverlap() {
+          const renderedRows = Array.from(cardsContainer.querySelectorAll(".timeline-time-row"));
+          if (renderedRows.length === 0) return;
+          // 預留 22px 緩衝間距，確保即使焦點卡片放大 5% (scale 1.05) 也不會壓到上下相鄰卡片
+          const SAFE_GAP_PX = 22;
+          let prevActualBottom = -SAFE_GAP_PX;
+          renderedRows.forEach(rowEl => {
+            const cardEl = rowEl.querySelector(".timeline-card");
+            const baseTop = Number(rowEl.dataset.baseTop);
+            const initialTop = Number.isFinite(baseTop) ? baseTop : (parseFloat(rowEl.style.top) || 0);
+            if (!rowEl.dataset.baseTop) rowEl.dataset.baseTop = String(initialTop);
+
+            const safeTop = Math.max(initialTop, prevActualBottom + SAFE_GAP_PX);
+            rowEl.style.top = safeTop.toFixed(1) + "px";
+
+            const cardHeight = cardEl ? cardEl.getBoundingClientRect().height : 0;
+            const actualHeight = Math.max(
+              cardHeight,
+              cardEl ? cardEl.offsetHeight : 0,
+              parseFloat(rowEl.style.minHeight) || 40
+            );
+            rowEl.style.height = Math.ceil(actualHeight) + "px";
+            prevActualBottom = safeTop + Math.ceil(actualHeight);
+          });
+
+          const finalContainerHeight = Math.max(baseTotalPx, Math.ceil(prevActualBottom + 24));
+          cardsContainer.style.height = finalContainerHeight + "px";
+          updateFocusCardAndScale(startMins, endMins);
+        }
+
+        relayoutTimelineCardsNoOverlap();
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => {
+            if (currentViewMode === "day") relayoutTimelineCardsNoOverlap();
+          });
+        }
+        window._relayoutDayTimeline = relayoutTimelineCardsNoOverlap;
 
         cardsContainer.querySelectorAll("[data-ev-id]").forEach(card => {
           card.addEventListener("click", () => openEventModal(card.dataset.evId));
         });
         cardsContainer.querySelectorAll("[data-seg-id]").forEach(card => {
-          card.addEventListener("click", () => openSegmentModal(card.dataset.segId));
+          card.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            openSegmentModal(card.dataset.segId);
+          });
+          card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openSegmentModal(card.dataset.segId);
+            }
+          });
         });
 
         updateFocusCardAndScale(startMins, endMins);
@@ -2439,40 +2797,57 @@
         const rows = Array.from(document.querySelectorAll("#timeline-cards .timeline-time-row"));
         if (rows.length === 0) return;
 
-        const viewportCenter = window.innerHeight * 0.45;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+        const viewportCenter = vh * 0.5;
+        const maxBlurDist = Math.max(120, vh * 0.55);
+
+        const firstRect = rows[0].getBoundingClientRect();
+        const lastRect = rows[rows.length - 1].getBoundingClientRect();
+        const firstCenter = firstRect.top + firstRect.height / 2;
+        const lastCenter = lastRect.top + lastRect.height / 2;
+
+        // 當第一張卡片仍在可視中央下方，或頁面捲在最頂端時，對齊起點
+        const atStartBound = window.scrollY <= 12 || firstCenter >= viewportCenter - 6;
+        // 當最後一張卡片已抵達或超過可視中央，或頁面捲到底端時，對齊終點
+        const atEndBound = !atStartBound && (
+          lastCenter <= viewportCenter + 6 ||
+          (vh + window.scrollY) >= (document.documentElement.scrollHeight - 12)
+        );
+
         let bestRow = rows[0];
         let bestDist = Infinity;
 
         rows.forEach(r => {
           const rect = r.getBoundingClientRect();
           const rowCenter = rect.top + rect.height / 2;
-          const d = Math.abs(rowCenter - viewportCenter);
-          if (d < bestDist) {
-            bestDist = d;
+          const dist = Math.abs(rowCenter - viewportCenter);
+          const ratio = Math.min(1, dist / maxBlurDist);
+          r.style.setProperty("--dist-ratio", ratio.toFixed(3));
+          if (dist < bestDist) {
+            bestDist = dist;
             bestRow = r;
           }
         });
 
-        const firstRect = rows[0].getBoundingClientRect();
-        const lastRect = rows[rows.length - 1].getBoundingClientRect();
-        const atTop = firstRect.top >= 120 || window.scrollY <= 16;
-        const atBottom = !atTop && (lastRect.bottom <= window.innerHeight - 20 || (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 16);
-
-        if (atTop) bestRow = rows[0];
-        else if (atBottom) bestRow = rows[rows.length - 1];
+        if (atStartBound) bestRow = rows[0];
+        else if (atEndBound) bestRow = rows[rows.length - 1];
 
         const focusIdx = rows.indexOf(bestRow);
 
         rows.forEach((r, idx) => {
-          r.classList.toggle("timeline-current", idx === focusIdx);
+          const isCurrent = idx === focusIdx;
+          r.classList.toggle("timeline-current", isCurrent);
+          if (isCurrent) {
+            r.style.setProperty("--dist-ratio", "0");
+          }
         });
 
-        // 依實際分鐘比例定位黑框白底圓點；捲到兩端時精準對齊起訖端點
+        // 依實際分鐘比例定位黑框白底圓形；捲到兩端時精準對齊起訖端點 (0% 與 100%)
         const span = Math.max(1, dayEndMins - dayStartMins);
         let pct = 0;
-        if (atTop || focusIdx === 0) {
+        if (atStartBound || focusIdx === 0) {
           pct = 0;
-        } else if (atBottom || focusIdx === rows.length - 1) {
+        } else if (atEndBound || focusIdx === rows.length - 1) {
           pct = 100;
         } else {
           const sMins = Number(bestRow.dataset.startMins) || dayStartMins;
@@ -2917,11 +3292,14 @@
       function renderAll(animateDate = false) {
         renderHeader();
         renderDateStations(animateDate);
+        const calPanel = document.getElementById("calendar-panel");
         if (currentViewMode === "day") {
+          if (calPanel) calPanel.classList.add("timelinepreview");
           document.getElementById("day-view-container").style.display = "block";
           document.getElementById("week-view-container").style.display = "none";
           renderDayTimeline();
         } else {
+          if (calPanel) calPanel.classList.remove("timelinepreview");
           document.getElementById("day-view-container").style.display = "none";
           document.getElementById("week-view-container").style.display = "block";
           renderWeekView();
@@ -2934,8 +3312,8 @@
       // Modal 控制
       function openEventModal(evId = null) {
         const modal = document.getElementById("event-modal");
-        const daySelect = document.getElementById("ev-day");
-        daySelect.innerHTML = tripData.days.map((d, idx) => `<option value="${idx}">Day ${idx + 1} (${d.label} ${d.weekday})</option>`).join("");
+        const daySel = document.getElementById("ev-day");
+        daySel.innerHTML = tripData.days.map((d, i) => `<option value="${i}">Day ${i + 1} (${d.label} ${d.weekday})</option>`).join("");
 
         const delBtn = document.getElementById("btn-delete-ev");
         if (evId) {
@@ -2943,25 +3321,25 @@
           if (!ev) return;
           document.getElementById("event-modal-title").textContent = "編輯行程";
           document.getElementById("ev-id").value = ev.id;
-          daySelect.value = String(ev.dayIndex);
-          document.getElementById("ev-cat").value = ev.category;
-          document.getElementById("ev-start").value = ev.startTime;
-          document.getElementById("ev-dur").value = ev.duration;
-          document.getElementById("ev-title").value = ev.title;
+          daySel.value = String(ev.dayIndex);
+          document.getElementById("ev-cat").value = ev.category || "sight";
+          document.getElementById("ev-start").value = ev.startTime || "09:00";
+          document.getElementById("ev-dur").value = ev.duration || 60;
+          document.getElementById("ev-title").value = ev.title || "";
           document.getElementById("ev-address").value = ev.address || "";
           document.getElementById("ev-currency").value = ev.currency || "JPY";
           document.getElementById("ev-cost").value = ev.cost ?? 0;
           document.getElementById("ev-cost-type").value = ev.costType || "group";
-          document.getElementById("ev-status").value = ev.costStatus || "estimated";
+          document.getElementById("ev-status").value = ev.costStatus || "confirmed";
           document.getElementById("ev-locked").checked = Boolean(ev.locked);
           document.getElementById("ev-notes").value = ev.notes || "";
           delBtn.style.display = "inline-block";
         } else {
-          document.getElementById("event-modal-title").textContent = "新增行程";
+          document.getElementById("event-modal-title").textContent = "＋ 新增行程";
           document.getElementById("ev-id").value = "";
-          daySelect.value = String(selectedDayIndex);
+          daySel.value = String(selectedDayIndex);
           document.getElementById("ev-cat").value = "sight";
-          document.getElementById("ev-start").value = "14:00";
+          document.getElementById("ev-start").value = "10:00";
           document.getElementById("ev-dur").value = 60;
           document.getElementById("ev-title").value = "";
           document.getElementById("ev-address").value = "";
@@ -2974,6 +3352,47 @@
           delBtn.style.display = "none";
         }
         modal.classList.add("open");
+      }
+
+      function renderSegmentLegsEditor(legs) {
+        const container = document.getElementById("seg-legs-editor");
+        if (!container) return;
+        container.innerHTML = legs.map((leg, idx) => `
+          <div class="seg-leg-edit-row" style="display:grid; grid-template-columns:110px 1fr 78px 34px; gap:6px; align-items:center;">
+            <select class="leg-mode-sel" style="border:2px solid var(--ink); border-radius:8px; padding:5px 6px; background:var(--bg-washi); font-size:0.84rem;">
+              <option value="train" ${leg.mode === "train" ? "selected" : ""}>火車/JR</option>
+              <option value="subway" ${leg.mode === "subway" ? "selected" : ""}>地鐵</option>
+              <option value="bus" ${leg.mode === "bus" ? "selected" : ""}>公車</option>
+              <option value="walk" ${leg.mode === "walk" ? "selected" : ""}>步行</option>
+              <option value="taxi" ${leg.mode === "taxi" ? "selected" : ""}>計程車</option>
+            </select>
+            <input type="text" class="leg-label-inp" value="${leg.label || ""}" placeholder="分段名稱" style="border:2px solid var(--ink); border-radius:8px; padding:5px 8px; background:var(--bg-washi); font-size:0.84rem;" />
+            <input type="number" class="leg-dur-inp" value="${leg.duration || 10}" min="1" step="1" style="border:2px solid var(--ink); border-radius:8px; padding:5px 6px; background:var(--bg-washi); font-size:0.84rem;" />
+            <button type="button" class="btn-del-leg" data-leg-idx="${idx}" style="border:2px solid var(--alert-red); background:#FDECEB; color:var(--alert-red); border-radius:8px; padding:4px 0; font-weight:800; cursor:pointer;">✕</button>
+          </div>
+        `).join("");
+
+        container.querySelectorAll(".btn-del-leg").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const current = collectSegmentLegsFromEditor();
+            if (current.length <= 1) {
+              showToast("至少需保留 1 個交通分段");
+              return;
+            }
+            current.splice(Number(btn.dataset.legIdx), 1);
+            renderSegmentLegsEditor(current);
+          });
+        });
+      }
+
+      function collectSegmentLegsFromEditor() {
+        const rows = Array.from(document.querySelectorAll("#seg-legs-editor .seg-leg-edit-row"));
+        return rows.map(row => {
+          const mode = row.querySelector(".leg-mode-sel").value;
+          const label = row.querySelector(".leg-label-inp").value.trim() || getModeLabel(mode).split(" ")[0];
+          const duration = Math.max(1, Number(row.querySelector(".leg-dur-inp").value) || 5);
+          return { mode, label, duration };
+        });
       }
 
       function openSegmentModal(segId) {
@@ -2990,6 +3409,7 @@
         document.getElementById("seg-cost-type").value = seg.costType || "per_person";
         document.getElementById("seg-status").value = seg.costStatus || "estimated";
         document.getElementById("seg-detail").value = seg.detail || "";
+        renderSegmentLegsEditor(normalizeSegmentLegs(seg));
         document.getElementById("segment-modal").classList.add("open");
       }
 
@@ -3125,14 +3545,27 @@
         });
 
         // 交通表單送出
+        document.getElementById("btn-add-seg-leg").addEventListener("click", () => {
+          const current = collectSegmentLegsFromEditor();
+          current.push({ mode: "walk", label: "步行", duration: 5 });
+          renderSegmentLegsEditor(current);
+        });
+
         document.getElementById("segment-form").addEventListener("submit", (e) => {
           e.preventDefault();
           const segId = document.getElementById("seg-id").value;
           const seg = tripData.segments.find(s => s.id === segId);
           if (seg) {
             pushUndoSnapshot();
+            const legs = collectSegmentLegsFromEditor();
+            const legsSumDur = legs.reduce((acc, l) => acc + l.duration, 0);
+            const inputDur = Math.max(1, Number(document.getElementById("seg-dur").value) || 10);
             seg.mode = document.getElementById("seg-mode").value;
-            seg.duration = Math.max(1, Number(document.getElementById("seg-dur").value) || 10);
+            seg.legs = legs;
+            seg.duration = legs.length > 1 ? legsSumDur : inputDur;
+            if (legs.length === 1) {
+              seg.legs[0].duration = seg.duration;
+            }
             seg.currency = document.getElementById("seg-currency").value;
             seg.cost = Number(document.getElementById("seg-cost").value) || 0;
             seg.costType = document.getElementById("seg-cost-type").value;
@@ -3141,7 +3574,7 @@
             saveTripData(true);
             document.getElementById("segment-modal").classList.remove("open");
             renderAll();
-            showToast("已更新交通路段");
+            showToast("已更新交通分段與總時長");
           }
         });
         document.getElementById("btn-close-seg").addEventListener("click", () => {
@@ -3395,6 +3828,12 @@
             updateFocusCardAndScale(s, e);
           }
         }, { passive: true });
+
+        window.addEventListener("resize", () => {
+          if (currentViewMode === "day" && typeof window._relayoutDayTimeline === "function") {
+            window._relayoutDayTimeline();
+          }
+        });
 
         // 單日時間軸滑鼠滾輪單次上限 32px
         window.addEventListener("wheel", (e) => {
