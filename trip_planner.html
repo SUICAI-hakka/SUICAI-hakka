@@ -212,7 +212,14 @@
       border: var(--border-w) solid var(--ink);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-ehon);
+    }
+
+    .mappanel, .routepanel {
       overflow: hidden;
+    }
+
+    .calendarpanel {
+      overflow: visible;
     }
 
     .mapheading {
@@ -384,6 +391,7 @@
     .paneltoolbar {
       background: var(--yamabuki);
       border-bottom: var(--border-w) solid var(--ink);
+      border-radius: 17px 17px 0 0;
       padding: 12px 16px;
       display: flex;
       align-items: center;
@@ -533,6 +541,17 @@
       display: inline-block;
     }
 
+    .station-day-theme {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--deep-gold);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 2px;
+    }
+
     .timeline-intro {
       padding: 12px 16px;
       border-bottom: 2px dashed rgba(62, 58, 57, 0.25);
@@ -544,39 +563,62 @@
       background: #FFFDF9;
     }
 
+    /* 單日時間軸：左側比例尺完整延伸包含所有卡片 + 清晰無放大霧化 */
     .timeline-list {
       display: grid;
-      grid-template-columns: 74px 1fr;
-      gap: 12px;
-      padding: 14px 16px;
-      align-items: start;
+      grid-template-columns: 76px 1fr;
+      gap: 14px;
+      padding: 18px 22px 24px 14px;
+      align-items: stretch;
+      position: relative;
     }
 
     .day-time-scale {
-      position: sticky;
-      top: 16px;
-      height: 60vh;
-      min-height: 360px;
-      max-height: 540px;
+      position: relative;
+      height: 100%;
+      min-height: 260px;
       border-right: 3px solid var(--ink);
       padding-right: 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      user-select: none;
+      z-index: 4;
     }
 
     .scale-bound-label {
       font-size: 0.76rem;
       font-weight: 800;
       text-align: right;
+      line-height: 1.2;
+      color: var(--ink);
     }
 
     .scale-track {
       position: relative;
       flex: 1;
-      margin: 6px 0;
+      margin: 10px 0;
     }
 
+    .scale-tick-mark {
+      position: absolute;
+      right: -10px;
+      width: 6px;
+      height: 2px;
+      background: rgba(62, 58, 57, 0.35);
+      transform: translateY(-50%);
+    }
+
+    .scale-tick-text {
+      position: absolute;
+      right: 2px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: rgba(62, 58, 57, 0.65);
+      transform: translateY(-50%);
+    }
+
+    /* 黑框白底圓形追蹤目前可視行程 */
     .scale-focus-dot {
       position: absolute;
       right: -18px;
@@ -585,9 +627,10 @@
       border-radius: 50%;
       background: #FFFFFF;
       border: 3px solid var(--ink);
+      box-shadow: 0 2px 4px rgba(62, 58, 57, 0.25);
       transform: translateY(-50%);
       transition: top 160ms ease-out;
-      z-index: 4;
+      z-index: 5;
     }
 
     .now-time-line {
@@ -615,18 +658,14 @@
     .timeline-cards {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 6px 6px 24px;
+      gap: 14px;
+      padding: 4px 8px 12px 4px;
+      min-width: 0;
     }
 
     .timeline-time-row {
-      transition: transform 160ms ease-out;
-      transform-origin: left center;
-    }
-
-    .timeline-time-row.timeline-current {
-      transform: scale(1.05);
-      z-index: 2;
+      position: relative;
+      min-width: 0;
     }
 
     .timeline-card {
@@ -1107,12 +1146,6 @@
         gap: 8px;
         padding: 12px 10px;
       }
-      .timeline-time-row {
-        transform-origin: center center;
-      }
-      .timeline-time-row.timeline-current {
-        transform: scaleY(1.05);
-      }
       .map-canvas-wrap {
         height: 280px;
       }
@@ -1149,7 +1182,6 @@
         animation: none !important;
       }
       .date-mascot-runner,
-      .timeline-time-row,
       .scale-focus-dot,
       .fab-hamburger {
         transition: none !important;
@@ -1682,25 +1714,150 @@
         return JSON.parse(JSON.stringify(obj));
       }
 
+      function normalizeImportedPayload(rawInput) {
+        const rawTrip = (rawInput && rawInput.tripData && typeof rawInput.tripData === "object")
+          ? rawInput.tripData
+          : rawInput;
+
+        if (!rawTrip || !Array.isArray(rawTrip.days) || rawTrip.days.length === 0) {
+          return null;
+        }
+
+        const meta = rawTrip.meta || {};
+        const catMap = {
+          attraction: "sight",
+          sight: "sight",
+          food: "food",
+          stay: "hotel",
+          hotel: "hotel",
+          transport: "transport",
+          flight: "flight"
+        };
+        const packColors = ["#F6D27A", "#A8D3E6", "#F2A497", "#B9DAA5", "#DED2ED", "#F4C7AA"];
+
+        const normalizedDays = rawTrip.days.map((d, idx) => {
+          const dateStr = d.date || `2027-01-${28 + idx}`;
+          const parts = dateStr.split("-");
+          const autoLabel = parts.length === 3 ? `${Number(parts[1])}/${Number(parts[2])}` : `Day ${idx + 1}`;
+          let wd = d.weekday || "";
+          if (wd && !wd.startsWith("週") && wd.length === 1) wd = "週" + wd;
+          return {
+            date: dateStr,
+            weekday: wd || "週四",
+            label: d.label || d.shortDate || autoLabel,
+            theme: d.theme || "",
+            iconType: d.iconType || d.mascotType || "train"
+          };
+        });
+
+        const normalizedEvents = (Array.isArray(rawTrip.events) ? rawTrip.events : []).map((ev, idx) => {
+          const evTitle = ev.title || ev.name || "未命名行程";
+          let mappedCat = catMap[ev.category] || "sight";
+          if (mappedCat === "transport" && (evTitle.includes("航空") || evTitle.includes("MM02") || evTitle.includes("航班"))) {
+            mappedCat = "flight";
+          }
+          const rawCost = ev.cost !== undefined ? ev.cost : (ev.costAmount !== undefined ? ev.costAmount : 0);
+          const rawScope = ev.costType || ev.costScope || "group";
+          let rawStatus = ev.costStatus;
+          if (!rawStatus) {
+            rawStatus = ev.isEstimated ? "estimated" : "confirmed";
+          }
+          return {
+            id: ev.id || ("ev-imp-" + idx + "-" + Date.now()),
+            dayIndex: Number(ev.dayIndex) || 0,
+            startTime: ev.startTime || "09:00",
+            duration: Number(ev.duration ?? ev.durationMin ?? 60) || 60,
+            category: mappedCat,
+            title: evTitle,
+            address: ev.address || "",
+            lat: Number(ev.lat) || 35.0036,
+            lng: Number(ev.lng) || 135.7681,
+            currency: ev.currency || "JPY",
+            cost: Number(rawCost) || 0,
+            costType: rawScope === "per_person" ? "per_person" : "group",
+            costStatus: rawStatus,
+            locked: Boolean(ev.locked),
+            notes: ev.notes || ""
+          };
+        });
+
+        const normalizedSegments = (Array.isArray(rawTrip.segments) ? rawTrip.segments : [])
+          .filter(seg => (seg.fromId || seg.fromEventId) && (seg.toId || seg.toEventId))
+          .map((seg, idx) => {
+            const rawCost = seg.cost !== undefined ? seg.cost : (seg.costAmount !== undefined ? seg.costAmount : 0);
+            const rawScope = seg.costType || seg.costScope || "per_person";
+            let rawStatus = seg.costStatus;
+            if (!rawStatus) {
+              rawStatus = seg.isEstimated ? "estimated" : "confirmed";
+            }
+            const detailParts = [seg.modeLabel, seg.detail, seg.note].filter(Boolean);
+            return {
+              id: seg.id || ("seg-imp-" + idx + "-" + Date.now()),
+              dayIndex: Number(seg.dayIndex) || 0,
+              fromId: seg.fromId || seg.fromEventId,
+              toId: seg.toId || seg.toEventId,
+              mode: seg.mode || "train",
+              duration: Number(seg.duration ?? seg.durationMin ?? 15) || 15,
+              currency: seg.currency || "JPY",
+              cost: Number(rawCost) || 0,
+              costType: rawScope === "per_person" ? "per_person" : "group",
+              costStatus: rawStatus,
+              detail: detailParts.join("｜")
+            };
+          });
+
+        const normalizedTrip = {
+          title: rawTrip.title || meta.title || DEFAULT_TRIP_DATA.title,
+          destination: rawTrip.destination || meta.destination || DEFAULT_TRIP_DATA.destination,
+          timezone: rawTrip.timezone || meta.timezone || "Asia/Tokyo",
+          travelers: Number(rawTrip.travelers ?? meta.travelers?.adults ?? 2) || 2,
+          fxRateJpyToTwd: Number(rawTrip.fxRateJpyToTwd ?? meta.exchangeRate ?? 0.215) || 0.215,
+          budgetTwdCap: Number(rawTrip.budgetTwdCap ?? meta.budgetTargetTwd ?? 85000) || 85000,
+          updatedAt: Number(rawTrip.updatedAt ?? meta.updatedAt ?? Date.now()),
+          days: normalizedDays,
+          events: normalizedEvents,
+          segments: normalizedSegments
+        };
+
+        let normalizedPacking = null;
+        const rawPackList = (rawInput && Array.isArray(rawInput.packingData))
+          ? rawInput.packingData
+          : (Array.isArray(rawTrip.packingCategories) ? rawTrip.packingCategories : null);
+
+        if (rawPackList) {
+          normalizedPacking = rawPackList.map((g, gIdx) => ({
+            cat: g.cat || g.title || `分類 ${gIdx + 1}`,
+            color: g.color || packColors[gIdx % packColors.length],
+            items: (Array.isArray(g.items) ? g.items : []).map((it, iIdx) => ({
+              id: it.id || `pk-imp-${gIdx}-${iIdx}`,
+              name: it.name || it.title || "未命名物品",
+              qty: it.qty ?? 1,
+              note: it.note || "",
+              done: Boolean(it.done !== undefined ? it.done : it.checked)
+            }))
+          }));
+        }
+
+        return { tripData: normalizedTrip, packingData: normalizedPacking };
+      }
+
       function showToast(msg) {
         const el = document.getElementById("toast-banner");
         if (!el) return;
         el.textContent = msg;
         el.classList.add("show");
         clearTimeout(el._timer);
-        el._timer = setTimeout(() => {
-          el.classList.remove("show");
-        }, 3800);
+        el._timer = setTimeout(() => el.classList.remove("show"), 2600);
       }
 
-      function timeToMinutes(tStr) {
-        if (!tStr || !tStr.includes(":")) return 480;
-        const [h, m] = tStr.split(":").map(Number);
-        return (isNaN(h) ? 8 : h) * 60 + (isNaN(m) ? 0 : m);
+      function timeToMinutes(str) {
+        if (!str || typeof str !== "string") return 0;
+        const [h, m] = str.split(":").map(Number);
+        return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
       }
 
-      function minutesToTime(mins) {
-        const clamped = Math.max(0, Math.min(23 * 60 + 59, Math.round(mins)));
+      function minutesToTime(totalMins) {
+        const clamped = Math.max(0, Math.min(23 * 60 + 59, Math.round(totalMins)));
         const h = Math.floor(clamped / 60);
         const m = clamped % 60;
         return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
@@ -1907,9 +2064,10 @@
           const localTs = Number(tripData.updatedAt || 0);
 
           if (remoteTs > localTs) {
-            tripData = remoteTrip;
-            if (Array.isArray(remoteWrapper.packingData)) {
-              packingData = remoteWrapper.packingData;
+            const normRemote = normalizeImportedPayload(remoteWrapper);
+            if (normRemote) {
+              tripData = normRemote.tripData;
+              if (normRemote.packingData) packingData = normRemote.packingData;
             }
             ensureAllDaysSegmentsSynced();
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ tripData, packingData }));
@@ -1936,9 +2094,10 @@
         if (savedRaw) {
           try {
             const parsed = JSON.parse(savedRaw);
-            if (parsed && parsed.tripData && Array.isArray(parsed.tripData.days)) {
-              tripData = parsed.tripData;
-              packingData = Array.isArray(parsed.packingData) ? parsed.packingData : cloneObj(PACKING_DEFAULTS);
+            const normalized = normalizeImportedPayload(parsed);
+            if (normalized) {
+              tripData = normalized.tripData;
+              packingData = normalized.packingData || cloneObj(PACKING_DEFAULTS);
             }
           } catch (e) {
             // fallback to default
@@ -1948,9 +2107,8 @@
           tripData = cloneObj(DEFAULT_TRIP_DATA);
           packingData = cloneObj(PACKING_DEFAULTS);
         }
-        if (ensureAllDaysSegmentsSynced()) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ tripData, packingData }));
-        }
+        ensureAllDaysSegmentsSynced();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ tripData, packingData }));
       }
 
       function getItemExactAmount(item) {
@@ -2108,6 +2266,7 @@
           return `<button type="button" class="date-station-btn ${activeCls} ${popCls}" data-day-idx="${idx}">
             <span class="station-day-label">Day ${idx + 1} · ${d.weekday}</span>
             <span class="station-day-num">${d.label}</span>
+            ${d.theme ? `<span class="station-day-theme">${d.theme}</span>` : ""}
           </button>`;
         }).join("");
 
@@ -2167,9 +2326,28 @@
 
         const startMins = timeToMinutes(dayEvents[0].startTime);
         const lastEv = dayEvents[dayEvents.length - 1];
-        const endMins = timeToMinutes(lastEv.startTime) + (Number(lastEv.duration) || 60);
+        const endMins = Math.max(startMins + 60, timeToMinutes(lastEv.startTime) + (Number(lastEv.duration) || 60));
         document.getElementById("scale-start-label").textContent = minutesToTime(startMins);
         document.getElementById("scale-end-label").textContent = minutesToTime(endMins);
+
+        const scaleTrack = document.getElementById("scale-track");
+        scaleTrack.querySelectorAll(".scale-tick-mark, .scale-tick-text").forEach(el => el.remove());
+        const firstHour = Math.ceil((startMins + 30) / 60);
+        const lastHour = Math.floor((endMins - 30) / 60);
+        const stepHour = (lastHour - firstHour) > 8 ? 3 : 2;
+        for (let h = firstHour; h <= lastHour; h += stepHour) {
+          const tickMins = h * 60;
+          const pct = ((tickMins - startMins) / (endMins - startMins)) * 100;
+          const mark = document.createElement("div");
+          mark.className = "scale-tick-mark";
+          mark.style.top = pct + "%";
+          const lbl = document.createElement("div");
+          lbl.className = "scale-tick-text";
+          lbl.style.top = pct + "%";
+          lbl.textContent = String(h).padStart(2, "0") + ":00";
+          scaleTrack.appendChild(mark);
+          scaleTrack.appendChild(lbl);
+        }
 
         const itemsHtml = [];
         for (let i = 0; i < dayEvents.length; i++) {
@@ -2223,10 +2401,11 @@
               const segAmt = getItemExactAmount(seg);
               const segCur = seg.currency === "TWD" ? "NT$" : "¥";
               const segCostTxt = segAmt > 0 ? `${segCur}${segAmt.toLocaleString()}` : "免費";
+              const segEndMins = evEnd + (Number(seg.duration) || 15);
               const segMidMins = evEnd + Math.round((Number(seg.duration) || 15) / 2);
 
               itemsHtml.push(`
-                <div class="timeline-time-row" data-start-mins="${segMidMins}" data-end-mins="${segMidMins}">
+                <div class="timeline-time-row" data-start-mins="${segMidMins}" data-end-mins="${segEndMins}">
                   <div class="timeline-card cat-transport ${isWalkOnly ? "walk-only" : ""}" data-seg-id="${seg.id}" tabindex="0" style="padding:9px 14px;">
                     <div class="card-top-row" style="margin-bottom:2px;">
                       <span style="display:inline-flex; align-items:center; gap:6px; font-weight:800; font-size:0.86rem;">
@@ -2260,7 +2439,7 @@
         const rows = Array.from(document.querySelectorAll("#timeline-cards .timeline-time-row"));
         if (rows.length === 0) return;
 
-        const viewportCenter = window.innerHeight * 0.48;
+        const viewportCenter = window.innerHeight * 0.45;
         let bestRow = rows[0];
         let bestDist = Infinity;
 
@@ -2274,14 +2453,34 @@
           }
         });
 
-        if (window.scrollY <= 25) bestRow = rows[0];
-        else if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 30) bestRow = rows[rows.length - 1];
+        const firstRect = rows[0].getBoundingClientRect();
+        const lastRect = rows[rows.length - 1].getBoundingClientRect();
+        const atTop = firstRect.top >= 120 || window.scrollY <= 16;
+        const atBottom = !atTop && (lastRect.bottom <= window.innerHeight - 20 || (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 16);
 
-        rows.forEach(r => r.classList.toggle("timeline-current", r === bestRow));
+        if (atTop) bestRow = rows[0];
+        else if (atBottom) bestRow = rows[rows.length - 1];
 
-        const targetMins = Number(bestRow.dataset.startMins) || dayStartMins;
+        const focusIdx = rows.indexOf(bestRow);
+
+        rows.forEach((r, idx) => {
+          r.classList.toggle("timeline-current", idx === focusIdx);
+        });
+
+        // 依實際分鐘比例定位黑框白底圓點；捲到兩端時精準對齊起訖端點
         const span = Math.max(1, dayEndMins - dayStartMins);
-        const pct = Math.max(0, Math.min(100, ((targetMins - dayStartMins) / span) * 100));
+        let pct = 0;
+        if (atTop || focusIdx === 0) {
+          pct = 0;
+        } else if (atBottom || focusIdx === rows.length - 1) {
+          pct = 100;
+        } else {
+          const sMins = Number(bestRow.dataset.startMins) || dayStartMins;
+          const eMins = Number(bestRow.dataset.endMins) || sMins;
+          const midMins = (sMins + eMins) / 2;
+          pct = Math.max(0, Math.min(100, ((midMins - dayStartMins) / span) * 100));
+        }
+
         const dot = document.getElementById("scale-focus-dot");
         if (dot) dot.style.top = pct + "%";
       }
@@ -2289,23 +2488,28 @@
       function updateNowTimeRedLine(dayStartMins, dayEndMins) {
         const line = document.getElementById("now-time-line");
         const badge = document.getElementById("now-time-badge");
+        const tzClock = document.getElementById("day-tz-clock");
         if (!line || !badge) return;
 
         try {
+          const tz = tripData.timezone || "Asia/Tokyo";
           const parts = new Intl.DateTimeFormat("en-GB", {
-            timeZone: tripData.timezone || "Asia/Tokyo",
+            timeZone: tz,
             hour: "2-digit",
             minute: "2-digit",
             hour12: false
           }).formatToParts(new Date());
           const hh = Number(parts.find(p => p.type === "hour")?.value || 0);
           const mm = Number(parts.find(p => p.type === "minute")?.value || 0);
+          const hhmm = String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+          if (tzClock) tzClock.textContent = `${tz} · ${hhmm}`;
+
           const nowMins = hh * 60 + mm;
           if (nowMins >= dayStartMins && nowMins <= dayEndMins) {
             const pct = ((nowMins - dayStartMins) / Math.max(1, dayEndMins - dayStartMins)) * 100;
             line.style.display = "block";
             line.style.top = pct + "%";
-            badge.textContent = String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+            badge.textContent = hhmm;
           } else {
             line.style.display = "none";
           }
@@ -2686,7 +2890,7 @@
                   <label class="pack-item-row" style="cursor:pointer;">
                     <span style="display:flex; align-items:center; gap:8px;">
                       <input type="checkbox" data-pack-g="${gIdx}" data-pack-id="${it.id}" ${it.done ? "checked" : ""} />
-                      <span style="${it.done ? "text-decoration:line-through; opacity:0.6;" : "font-weight:700;"}">${it.name} ×${it.qty}</span>
+                      <span style="${it.done ? "text-decoration:line-through; opacity:0.6;" : "font-weight:700;"}">${it.name}${it.qty !== undefined && it.qty !== "" ? (typeof it.qty === "number" ? " ×" + it.qty : " (" + it.qty + ")") : ""}</span>
                     </span>
                     <span style="font-size:0.76rem; opacity:0.78;">${it.note || ""}</span>
                   </label>
@@ -3099,25 +3303,17 @@
             try {
               const rawText = String(reader.result || "").replace(/^\uFEFF/, "").trim();
               const parsed = JSON.parse(rawText);
-              const candidateTrip = (parsed && parsed.tripData && typeof parsed.tripData === "object")
-                ? parsed.tripData
-                : (parsed && Array.isArray(parsed.days) ? parsed : null);
+              const normalized = normalizeImportedPayload(parsed);
 
-              if (!candidateTrip || !Array.isArray(candidateTrip.days) || candidateTrip.days.length === 0) {
+              if (!normalized) {
                 showToast("⚠️ JSON 缺少有效的 days 行程陣列");
                 return;
               }
 
               pushUndoSnapshot();
-              tripData = {
-                ...cloneObj(DEFAULT_TRIP_DATA),
-                ...candidateTrip,
-                events: Array.isArray(candidateTrip.events) ? candidateTrip.events : [],
-                segments: Array.isArray(candidateTrip.segments) ? candidateTrip.segments : []
-              };
-
-              if (parsed && Array.isArray(parsed.packingData)) {
-                packingData = parsed.packingData;
+              tripData = normalized.tripData;
+              if (normalized.packingData) {
+                packingData = normalized.packingData;
               }
 
               if (selectedDayIndex >= tripData.days.length) {
@@ -3186,7 +3382,7 @@
           document.getElementById("settings-modal").classList.remove("open");
         });
 
-        // 捲動時更新左側比例尺圓點
+        // 捲動時更新左側比例尺圓點與卡片距離霧化
         window.addEventListener("scroll", () => {
           if (currentViewMode !== "day") return;
           const dayEvents = tripData.events
@@ -3195,7 +3391,7 @@
           if (dayEvents.length > 0) {
             const s = timeToMinutes(dayEvents[0].startTime);
             const last = dayEvents[dayEvents.length - 1];
-            const e = timeToMinutes(last.startTime) + (Number(last.duration) || 60);
+            const e = Math.max(s + 60, timeToMinutes(last.startTime) + (Number(last.duration) || 60));
             updateFocusCardAndScale(s, e);
           }
         }, { passive: true });
@@ -3212,7 +3408,7 @@
           }
         }, { passive: false });
 
-        // 背景定時同步與視窗返回檢查
+        // 背景定時同步與視窗返回檢查（每 15 秒更新當地時區紅線）
         setInterval(() => {
           pullFromFirebase(false, false);
           if (currentViewMode === "day") {
@@ -3222,7 +3418,7 @@
             if (dayEvents.length > 0) {
               const s = timeToMinutes(dayEvents[0].startTime);
               const last = dayEvents[dayEvents.length - 1];
-              const e = timeToMinutes(last.startTime) + (Number(last.duration) || 60);
+              const e = Math.max(s + 60, timeToMinutes(last.startTime) + (Number(last.duration) || 60));
               updateNowTimeRedLine(s, e);
             }
           }
