@@ -2581,8 +2581,9 @@
         });
 
         const BASE_PX_PER_MIN = 1.55;
-        const IDLE_PX_PER_MIN = 0.45;
-        const FREE_GAP_MINS = 35;
+        const IDLE_PX_PER_MIN = 0.25;
+        const FREE_GAP_MINS = 20;
+        const MAX_SINGLE_GAP_PX = 26;
 
         function mapMinuteToPx(targetMin) {
           const clamped = Math.max(startMins, Math.min(endMins, targetMin));
@@ -2596,7 +2597,8 @@
               const gapDur = Math.max(0, gapEnd - cursor);
               const normalPart = Math.min(gapDur, FREE_GAP_MINS);
               const compressedPart = Math.max(0, gapDur - FREE_GAP_MINS);
-              px += normalPart * BASE_PX_PER_MIN + compressedPart * IDLE_PX_PER_MIN;
+              const rawGapPx = normalPart * BASE_PX_PER_MIN + compressedPart * IDLE_PX_PER_MIN;
+              px += Math.min(MAX_SINGLE_GAP_PX, rawGapPx);
               cursor = gapEnd;
               if (cursor >= clamped) return px;
             }
@@ -2608,7 +2610,7 @@
             }
           }
           if (clamped > cursor) {
-            px += (clamped - cursor) * BASE_PX_PER_MIN;
+            px += Math.min(MAX_SINGLE_GAP_PX, (clamped - cursor) * BASE_PX_PER_MIN);
           }
           return px;
         }
@@ -2667,8 +2669,12 @@
         rawBlocks.forEach(blk => {
           const rawTopPx = mapMinuteToPx(blk.startMins);
           const rawEndPx = mapMinuteToPx(blk.endMins);
-          const minCardH = blk.kind === "segment" ? (blk.isWalkOnly ? 36 : 50) : 76;
-          const heightPx = Math.max(minCardH, rawEndPx - rawTopPx - 4);
+          const minCardH = blk.kind === "segment" ? (blk.isWalkOnly ? 36 : 48) : 72;
+          // 交通卡保持精巧緊湊高度，不因車程分鐘數被硬拉高；一般行程卡僅適度反映時長上限
+          const proportionalH = blk.kind === "segment"
+            ? minCardH
+            : Math.min(118, Math.max(minCardH, rawEndPx - rawTopPx - 4));
+          const heightPx = proportionalH;
           const topPx = Math.max(rawTopPx, lastBottomPx + 8);
           lastBottomPx = topPx + heightPx;
 
@@ -2739,7 +2745,7 @@
 
             itemsHtml.push(`
               <div class="timeline-time-row is-segment-row" data-start-mins="${blk.startMins}" data-end-mins="${blk.endMins}" style="top:${topPx.toFixed(1)}px; min-height:${heightPx.toFixed(1)}px;">
-                <div class="timeline-card cat-transport ${isWalkOnly ? "walk-only" : ""}" data-seg-id="${seg.id}" tabindex="0" title="雙擊或點擊右側編輯按鈕修改分段交通" style="--mode-color:${primaryModeColor}; border-left-color:${primaryModeColor};">
+                <div class="timeline-card cat-transport ${isWalkOnly ? "walk-only" : ""}" data-seg-id="${seg.id}" tabindex="0" title="雙擊修改分段交通" style="--mode-color:${primaryModeColor}; border-left-color:${primaryModeColor};">
                   <div class="card-top-row" style="margin-bottom:1px;">
                     <span style="display:inline-flex; align-items:center; gap:5px; font-weight:800; font-size:0.8rem;">
                       ${headerTitle}
@@ -2761,8 +2767,8 @@
         function relayoutTimelineCardsNoOverlap() {
           const renderedRows = Array.from(cardsContainer.querySelectorAll(".timeline-time-row"));
           if (renderedRows.length === 0) return;
-          // 預留 22px 緩衝間距，確保即使焦點卡片放大 5% (scale 1.05) 也不會壓到上下相鄰卡片
-          const SAFE_GAP_PX = 22;
+          // 預留 20px 緩衝間距，確保焦點卡片放大 5% (scale 1.05) 不壓到上下卡片，且不產生多餘空白
+          const SAFE_GAP_PX = 20;
           let prevActualBottom = -SAFE_GAP_PX;
           renderedRows.forEach(rowEl => {
             const cardEl = rowEl.querySelector(".timeline-card");
@@ -2770,20 +2776,25 @@
             const initialTop = Number.isFinite(baseTop) ? baseTop : (parseFloat(rowEl.style.top) || 0);
             if (!rowEl.dataset.baseTop) rowEl.dataset.baseTop = String(initialTop);
 
-            const safeTop = Math.max(initialTop, prevActualBottom + SAFE_GAP_PX);
-            rowEl.style.top = safeTop.toFixed(1) + "px";
+            // 若前一張卡片（例如交通卡）實際高度比預估小，讓下一張卡片緊跟在合理時間距離內，不留大段空洞
+            const maxAllowedGapAfterPrev = prevActualBottom < 0 ? 0 : (prevActualBottom + 44);
+            const clampedTop = prevActualBottom < 0
+              ? 0
+              : Math.min(Math.max(initialTop, prevActualBottom + SAFE_GAP_PX), maxAllowedGapAfterPrev);
+
+            rowEl.style.top = clampedTop.toFixed(1) + "px";
 
             const cardHeight = cardEl ? cardEl.getBoundingClientRect().height : 0;
             const actualHeight = Math.max(
               cardHeight,
               cardEl ? cardEl.offsetHeight : 0,
-              parseFloat(rowEl.style.minHeight) || 40
+              36
             );
             rowEl.style.height = Math.ceil(actualHeight) + "px";
-            prevActualBottom = safeTop + Math.ceil(actualHeight);
+            prevActualBottom = clampedTop + Math.ceil(actualHeight);
           });
 
-          const finalContainerHeight = Math.max(baseTotalPx, Math.ceil(prevActualBottom + 24));
+          const finalContainerHeight = Math.ceil(prevActualBottom + 12);
           cardsContainer.style.height = finalContainerHeight + "px";
           updateFocusCardAndScale(startMins, endMins);
         }
