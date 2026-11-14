@@ -2780,6 +2780,83 @@
         return tripData.segments.filter((s) => s.dayIndex === dayIdx);
       }
 
+      /* 當景點時間或順序變動後，自動保留既有交通設定並補齊新的相鄰交通路段 */
+      function syncDaySegmentsForOrder(dayIdx) {
+        const events = getSortedDayEvents(dayIdx);
+        const existingSegs = tripData.segments.filter((s) => s.dayIndex === dayIdx);
+        const otherDaysSegs = tripData.segments.filter((s) => s.dayIndex !== dayIdx);
+        const updatedDaySegs = [];
+
+        // 保留「住宿出發 → 第一站」的分段（若目標仍是第一站）
+        if (events.length > 0) {
+          const firstEv = events[0];
+          const departSeg = existingSegs.find(
+            (s) => !s.fromEventId && s.toEventId === firstEv.id
+          );
+          if (departSeg) {
+            updatedDaySegs.push(departSeg);
+          }
+        }
+
+        // 依最新時間排序後的每一對相鄰景點建立或保留交通分段
+        for (let i = 0; i < events.length - 1; i++) {
+          const fromEv = events[i];
+          const toEv = events[i + 1];
+
+          // 1. 優先尋找完全相符的既有分段
+          let matched = existingSegs.find(
+            (s) => s.fromEventId === fromEv.id && s.toEventId === toEv.id
+          );
+
+          // 2. 若原本是反向（例如兩景點對調時間），沿用其交通方式與車程
+          if (!matched) {
+            const reverse = existingSegs.find(
+              (s) => s.fromEventId === toEv.id && s.toEventId === fromEv.id
+            );
+            if (reverse) {
+              matched = {
+                ...reverse,
+                id: "seg-" + dayIdx + "-" + fromEv.id + "-" + toEv.id,
+                fromEventId: fromEv.id,
+                toEventId: toEv.id
+              };
+            }
+          }
+
+          // 3. 若為全新相鄰組合，依距離自動估算預設交通方式與時間
+          if (!matched) {
+            const [lat1, lng1] = getEventLatLng(fromEv);
+            const [lat2, lng2] = getEventLatLng(toEv);
+            const distKm =
+              Math.hypot(lat2 - lat1, lng2 - lng1) * 111;
+            const isNearWalk = distKm <= 1.2;
+            const estMin = isNearWalk
+              ? Math.max(5, Math.round(distKm * 15))
+              : Math.max(15, Math.min(75, Math.round(distKm * 3.5 + 12)));
+
+            matched = {
+              id: "seg-" + dayIdx + "-" + fromEv.id + "-" + toEv.id,
+              dayIndex: dayIdx,
+              fromEventId: fromEv.id,
+              toEventId: toEv.id,
+              mode: isNearWalk ? "walk" : "train",
+              modeLabel: isNearWalk ? "純步行" : "大眾運輸（待確認路線）",
+              durationMin: estMin,
+              currency: "JPY",
+              costAmount: isNearWalk ? 0 : 230,
+              costScope: isNearWalk ? "group" : "per_person",
+              isPaid: false,
+              isEstimated: !isNearWalk,
+              note: "行程時間調整後自動建立，點擊可編輯交通方式與時間"
+            };
+          }
+
+          updatedDaySegs.push(matched);
+        }
+
+        tripData.segments = otherDaysSegs.concat(updatedDaySegs);
+      }
+
       function getItemExactAmount(item) {
         const raw = Number(item.costAmount) || 0;
         const mult = item.costScope === "per_person" ? Number(tripData.meta.travelers.adults || 2) : 1;
@@ -3344,6 +3421,7 @@
               if (dragActive) {
                 dragActive = false;
                 block.classList.remove("holding-ready");
+                syncDaySegmentsForOrder(evObj.dayIndex);
                 saveTripData(true);
                 renderAll();
                 showToast("已更新行程時段為 " + evObj.startTime);
@@ -4034,7 +4112,9 @@
 
         if (!isNew) {
           document.getElementById("btn-delete-event").addEventListener("click", () => {
+            const affectedDay = ev.dayIndex;
             tripData.events = tripData.events.filter((x) => x.id !== ev.id);
+            syncDaySegmentsForOrder(affectedDay);
             saveTripData(true);
             closeModal();
             renderAll();
@@ -4046,6 +4126,7 @@
           e.preventDefault();
           const fd = new FormData(e.target);
           const payStatus = fd.get("payStatus");
+          const prevDayIndex = ev.dayIndex;
 
           ev.name = (fd.get("name") || "").trim();
           ev.dayIndex = Number(fd.get("dayIndex"));
@@ -4064,6 +4145,10 @@
           if (isNew) {
             tripData.events.push(ev);
           }
+          if (prevDayIndex !== ev.dayIndex) {
+            syncDaySegmentsForOrder(prevDayIndex);
+          }
+          syncDaySegmentsForOrder(ev.dayIndex);
           selectedDayIndex = ev.dayIndex;
           saveTripData(true);
           closeModal();
