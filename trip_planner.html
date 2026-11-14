@@ -344,6 +344,17 @@
       box-shadow: 0 2px 0 rgba(62, 58, 57, 0.14);
     }
 
+    .ehon-leaflet-tooltip.leaflet-tooltip {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .ehon-leaflet-tooltip.leaflet-tooltip::before {
+      display: none;
+    }
+
     .map-legend {
       position: absolute;
       bottom: 10px;
@@ -716,6 +727,7 @@
 
     .timeline-card {
       position: relative;
+      z-index: 3;
       height: auto;
       box-sizing: border-box;
       background: var(--card-white);
@@ -1635,7 +1647,10 @@
       <h3 style="margin-top:0;">🚃 編輯交通路段</h3>
       <form id="segment-form">
         <input type="hidden" id="seg-id" />
-        <div id="seg-route-label" style="font-weight:800; background:var(--bg-washi); padding:8px 12px; border-radius:10px; border:2px solid var(--ink);"></div>
+        <div class="form-field full" style="margin-bottom:4px;">
+          <label for="seg-title">交通路段標題（可自由修改）</label>
+          <input type="text" id="seg-title" placeholder="例如：關西機場 → RESI STAY MAYU" required style="font-weight:800; background:var(--bg-washi); border:2px solid var(--ink);" />
+        </div>
         <div class="form-grid">
           <div class="form-field">
             <label for="seg-mode">交通方式</label>
@@ -1913,6 +1928,7 @@
               dayIndex: Number(seg.dayIndex) || 0,
               fromId: seg.fromId || seg.fromEventId,
               toId: seg.toId || seg.toEventId,
+              title: seg.title || "",
               mode: seg.mode || "train",
               duration: Number(seg.duration ?? seg.durationMin ?? 15) || 15,
               currency: seg.currency || "JPY",
@@ -2179,6 +2195,7 @@
               dayIndex: targetDay,
               fromId: fromEv.id,
               toId: toEv.id,
+              title: "",
               mode: est.mode,
               duration: est.duration,
               currency: est.currency,
@@ -2376,12 +2393,13 @@
             const dayObj = tripData.days[seg.dayIndex];
             const fromEv = tripData.events.find(e => e.id === seg.fromId);
             const toEv = tripData.events.find(e => e.id === seg.toId);
+            const defaultRouteTitle = (fromEv ? fromEv.title : "起點") + " → " + (toEv ? toEv.title : "終點");
             rows.push({
               type: "segment",
               id: seg.id,
               dayIndex: Number(seg.dayIndex),
               dateLabel: dayObj ? dayObj.label : "",
-              title: (fromEv ? fromEv.title : "起點") + " → " + (toEv ? toEv.title : "終點"),
+              title: (seg.title && seg.title.trim()) ? seg.title.trim() : defaultRouteTitle,
               categoryLabel: "交通",
               currency: cur,
               amount: amt,
@@ -2708,6 +2726,9 @@
               : `${getModeFaIconSvg(seg.mode)} <span>${getModeLabel(seg.mode)} · 總車程 ${formatDurationLabel(totalSegMins)}</span>`;
 
             const primaryModeColor = isWalkOnly ? getModeColor("walk") : getModeColor(seg.mode);
+            const routeTitleDisplay = (seg.title && seg.title.trim())
+              ? seg.title.trim()
+              : `${fromEv.title} → ${toEv.title}`;
 
             const legsChipsHtml = isWalkOnly
               ? ""
@@ -2718,14 +2739,16 @@
 
             itemsHtml.push(`
               <div class="timeline-time-row is-segment-row" data-start-mins="${blk.startMins}" data-end-mins="${blk.endMins}" style="top:${topPx.toFixed(1)}px; min-height:${heightPx.toFixed(1)}px;">
-                <div class="timeline-card cat-transport ${isWalkOnly ? "walk-only" : ""}" data-seg-id="${seg.id}" tabindex="0" title="雙擊編輯分段交通" style="--mode-color:${primaryModeColor}; border-left-color:${primaryModeColor};">
+                <div class="timeline-card cat-transport ${isWalkOnly ? "walk-only" : ""}" data-seg-id="${seg.id}" tabindex="0" title="雙擊或點擊右側編輯按鈕修改分段交通" style="--mode-color:${primaryModeColor}; border-left-color:${primaryModeColor};">
                   <div class="card-top-row" style="margin-bottom:1px;">
                     <span style="display:inline-flex; align-items:center; gap:5px; font-weight:800; font-size:0.8rem;">
                       ${headerTitle}
                     </span>
-                    <span class="card-cat-badge" style="background:${primaryModeColor}; color:#FFFFFF; font-size:0.72rem; padding:0px 7px;">${segCostTxt}</span>
+                    <div style="display:inline-flex; align-items:center; gap:5px;">
+                      <span class="card-cat-badge" style="background:${primaryModeColor}; color:#FFFFFF; font-size:0.72rem; padding:0px 7px;">${segCostTxt}</span>
+                    </div>
                   </div>
-                  <div style="font-size:0.75rem; opacity:0.84; line-height:1.35;">${fromEv.title} → ${toEv.title}${seg.detail ? "（" + seg.detail + "）" : ""}</div>
+                  <div style="font-size:0.76rem; font-weight:700; opacity:0.88; line-height:1.35;">${routeTitleDisplay}${seg.detail ? "（" + seg.detail + "）" : ""}</div>
                   ${legsChipsHtml}
                 </div>
               </div>
@@ -2774,7 +2797,16 @@
         window._relayoutDayTimeline = relayoutTimelineCardsNoOverlap;
 
         cardsContainer.querySelectorAll("[data-ev-id]").forEach(card => {
-          card.addEventListener("click", () => openEventModal(card.dataset.evId));
+          card.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            openEventModal(card.dataset.evId);
+          });
+          card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openEventModal(card.dataset.evId);
+            }
+          });
         });
         cardsContainer.querySelectorAll("[data-seg-id]").forEach(card => {
           card.addEventListener("dblclick", (e) => {
@@ -3056,6 +3088,9 @@
           routeBody.innerHTML = daySegments.map(seg => {
             const fromEv = dayEvents.find(e => e.id === seg.fromId);
             const toEv = dayEvents.find(e => e.id === seg.toId);
+            const routeTitleDisplay = (seg.title && seg.title.trim())
+              ? seg.title.trim()
+              : `${fromEv ? fromEv.title : "起點"} → ${toEv ? toEv.title : "終點"}`;
             const amt = getItemExactAmount(seg);
             const cur = seg.currency === "TWD" ? "NT$" : "¥";
             return `
@@ -3063,7 +3098,7 @@
                 <div>
                   <div style="font-weight:800; font-size:0.86rem;">
                     <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${getModeColor(seg.mode)}; margin-right:5px;"></span>
-                    ${fromEv ? fromEv.title : "起點"} → ${toEv ? toEv.title : "終點"}
+                    ${routeTitleDisplay}
                   </div>
                   <div style="font-size:0.78rem; opacity:0.85;">${getModeLabel(seg.mode)} · ${formatDurationLabel(seg.duration)}${seg.detail ? "｜" + seg.detail : ""}</div>
                 </div>
@@ -3130,7 +3165,7 @@
             permanent: !mapFitAll,
             direction: idx % 2 === 0 ? "top" : "bottom",
             offset: [0, idx % 2 === 0 ? -14 : 14],
-            className: ""
+            className: "ehon-leaflet-tooltip"
           });
           marker.on("click", () => openEventModal(ev.id));
         });
@@ -3352,13 +3387,20 @@
           delBtn.style.display = "none";
         }
         modal.classList.add("open");
+        setTimeout(() => {
+          const titleInp = document.getElementById("ev-title");
+          if (titleInp) {
+            titleInp.focus();
+            titleInp.select();
+          }
+        }, 40);
       }
 
       function renderSegmentLegsEditor(legs) {
         const container = document.getElementById("seg-legs-editor");
         if (!container) return;
         container.innerHTML = legs.map((leg, idx) => `
-          <div class="seg-leg-edit-row" style="display:grid; grid-template-columns:110px 1fr 78px 34px; gap:6px; align-items:center;">
+          <div class="seg-leg-edit-row" data-leg-idx="${idx}" style="display:grid; grid-template-columns:110px 1fr 72px 32px; gap:6px; align-items:center;">
             <select class="leg-mode-sel" style="border:2px solid var(--ink); border-radius:8px; padding:5px 6px; background:var(--bg-washi); font-size:0.84rem;">
               <option value="train" ${leg.mode === "train" ? "selected" : ""}>火車/JR</option>
               <option value="subway" ${leg.mode === "subway" ? "selected" : ""}>地鐵</option>
@@ -3366,31 +3408,31 @@
               <option value="walk" ${leg.mode === "walk" ? "selected" : ""}>步行</option>
               <option value="taxi" ${leg.mode === "taxi" ? "selected" : ""}>計程車</option>
             </select>
-            <input type="text" class="leg-label-inp" value="${leg.label || ""}" placeholder="分段名稱" style="border:2px solid var(--ink); border-radius:8px; padding:5px 8px; background:var(--bg-washi); font-size:0.84rem;" />
-            <input type="number" class="leg-dur-inp" value="${leg.duration || 10}" min="1" step="1" style="border:2px solid var(--ink); border-radius:8px; padding:5px 6px; background:var(--bg-washi); font-size:0.84rem;" />
-            <button type="button" class="btn-del-leg" data-leg-idx="${idx}" style="border:2px solid var(--alert-red); background:#FDECEB; color:var(--alert-red); border-radius:8px; padding:4px 0; font-weight:800; cursor:pointer;">✕</button>
+            <input type="text" class="leg-label-inp" value="${leg.label || ""}" placeholder="路線/分段名稱" style="border:2px solid var(--ink); border-radius:8px; padding:5px 8px; background:var(--bg-washi); font-size:0.84rem;" />
+            <input type="number" class="leg-dur-inp" value="${leg.duration || 10}" min="1" step="1" title="分鐘" style="border:2px solid var(--ink); border-radius:8px; padding:5px 6px; background:var(--bg-washi); font-size:0.84rem;" />
+            <button type="button" class="btn-del-leg" data-del-leg="${idx}" style="border:2px solid var(--alert-red); background:#FDECEB; color:var(--alert-red); border-radius:8px; padding:4px 0; font-weight:800; cursor:pointer;" ${legs.length <= 1 ? "disabled" : ""}>✕</button>
           </div>
         `).join("");
 
         container.querySelectorAll(".btn-del-leg").forEach(btn => {
           btn.addEventListener("click", () => {
+            const delIdx = Number(btn.dataset.delLeg);
             const current = collectSegmentLegsFromEditor();
-            if (current.length <= 1) {
-              showToast("至少需保留 1 個交通分段");
-              return;
+            if (current.length > 1) {
+              current.splice(delIdx, 1);
+              renderSegmentLegsEditor(current);
             }
-            current.splice(Number(btn.dataset.legIdx), 1);
-            renderSegmentLegsEditor(current);
           });
         });
       }
 
       function collectSegmentLegsFromEditor() {
         const rows = Array.from(document.querySelectorAll("#seg-legs-editor .seg-leg-edit-row"));
-        return rows.map(row => {
-          const mode = row.querySelector(".leg-mode-sel").value;
-          const label = row.querySelector(".leg-label-inp").value.trim() || getModeLabel(mode).split(" ")[0];
-          const duration = Math.max(1, Number(row.querySelector(".leg-dur-inp").value) || 5);
+        if (rows.length === 0) return [{ mode: "train", label: "大眾運輸", duration: 15 }];
+        return rows.map(r => {
+          const mode = r.querySelector(".leg-mode-sel")?.value || "train";
+          const label = (r.querySelector(".leg-label-inp")?.value || "").trim() || getModeLabel(mode).split(" ")[0];
+          const duration = Math.max(1, Number(r.querySelector(".leg-dur-inp")?.value) || 5);
           return { mode, label, duration };
         });
       }
@@ -3400,8 +3442,9 @@
         if (!seg) return;
         const fromEv = tripData.events.find(e => e.id === seg.fromId);
         const toEv = tripData.events.find(e => e.id === seg.toId);
+        const defaultTitle = `${fromEv ? fromEv.title : "起點"} → ${toEv ? toEv.title : "終點"}`;
         document.getElementById("seg-id").value = seg.id;
-        document.getElementById("seg-route-label").textContent = `${fromEv ? fromEv.title : "起點"} → ${toEv ? toEv.title : "終點"}`;
+        document.getElementById("seg-title").value = (seg.title && seg.title.trim()) ? seg.title.trim() : defaultTitle;
         document.getElementById("seg-mode").value = seg.mode || "train";
         document.getElementById("seg-dur").value = seg.duration || 15;
         document.getElementById("seg-currency").value = seg.currency || "JPY";
@@ -3411,6 +3454,13 @@
         document.getElementById("seg-detail").value = seg.detail || "";
         renderSegmentLegsEditor(normalizeSegmentLegs(seg));
         document.getElementById("segment-modal").classList.add("open");
+        setTimeout(() => {
+          const titleInp = document.getElementById("seg-title");
+          if (titleInp) {
+            titleInp.focus();
+            titleInp.select();
+          }
+        }, 40);
       }
 
       function bindEvents() {
@@ -3419,12 +3469,12 @@
           tab.addEventListener("click", () => {
             document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
             tab.classList.add("active");
-            const page = tab.dataset.page;
-            document.getElementById("page-plan").classList.toggle("hidden-page", page !== "plan");
-            document.getElementById("page-expenses").classList.toggle("hidden-page", page !== "expenses");
-            document.getElementById("page-packing").classList.toggle("hidden-page", page !== "packing");
-            if (page === "plan" && leafletMap) {
-              setTimeout(() => leafletMap.invalidateSize(), 80);
+            const target = tab.dataset.page;
+            document.getElementById("page-plan").classList.toggle("hidden-page", target !== "plan");
+            document.getElementById("page-expenses").classList.toggle("hidden-page", target !== "expenses");
+            document.getElementById("page-packing").classList.toggle("hidden-page", target !== "packing");
+            if (target === "plan" && leafletMap) {
+              setTimeout(() => leafletMap.invalidateSize(), 60);
             }
           });
         });
@@ -3560,6 +3610,7 @@
             const legs = collectSegmentLegsFromEditor();
             const legsSumDur = legs.reduce((acc, l) => acc + l.duration, 0);
             const inputDur = Math.max(1, Number(document.getElementById("seg-dur").value) || 10);
+            seg.title = document.getElementById("seg-title").value.trim();
             seg.mode = document.getElementById("seg-mode").value;
             seg.legs = legs;
             seg.duration = legs.length > 1 ? legsSumDur : inputDur;
@@ -3574,7 +3625,7 @@
             saveTripData(true);
             document.getElementById("segment-modal").classList.remove("open");
             renderAll();
-            showToast("已更新交通分段與總時長");
+            showToast("已更新交通標題、分段與總時長");
           }
         });
         document.getElementById("btn-close-seg").addEventListener("click", () => {
