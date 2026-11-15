@@ -2881,71 +2881,83 @@
         updateNowTimeRedLine(startMins, endMins);
       }
 
+      // 焦點判定與圓點定位：
+      // 1) 圓點與卡片使用同一個像素座標系（直接取卡片列的版面位置），不再用「分鐘百分比」換算，
+      //    因為卡片實際位置已被壓縮空檔與避免重疊的重排調整過，與分鐘比例不再線性對應。
+      // 2) 模糊強度改以「與焦點卡中心的距離」計算，而不是與螢幕中心的距離，
+      //    這樣捲到頂端或底端、焦點卡不在螢幕中央時，周圍卡片的遠近層次依然正確。
+      // 3) 加入小幅遲滯，避免兩張卡片距離接近時焦點來回跳動。
+      let lastFocusRowEl = null;
+
       function updateFocusCardAndScale(dayStartMins, dayEndMins) {
         const rows = Array.from(document.querySelectorAll("#timeline-cards .timeline-time-row"));
         if (rows.length === 0) return;
 
         const vh = window.innerHeight || document.documentElement.clientHeight || 800;
         const viewportCenter = vh * 0.5;
-        const maxBlurDist = Math.max(120, vh * 0.55);
+        const blurRange = Math.max(120, vh * 0.55);
 
-        const firstRect = rows[0].getBoundingClientRect();
-        const lastRect = rows[rows.length - 1].getBoundingClientRect();
-        const firstCenter = firstRect.top + firstRect.height / 2;
-        const lastCenter = lastRect.top + lastRect.height / 2;
+        const rects = rows.map(r => r.getBoundingClientRect());
+        const centers = rects.map(rc => rc.top + rc.height / 2);
 
-        // 當第一張卡片仍在可視中央下方，或頁面捲在最頂端時，對齊起點
-        const atStartBound = window.scrollY <= 12 || firstCenter >= viewportCenter - 6;
-        // 當最後一張卡片已抵達或超過可視中央，或頁面捲到底端時，對齊終點
+        const atStartBound = window.scrollY <= 12 || centers[0] >= viewportCenter - 6;
         const atEndBound = !atStartBound && (
-          lastCenter <= viewportCenter + 6 ||
+          centers[rows.length - 1] <= viewportCenter + 6 ||
           (vh + window.scrollY) >= (document.documentElement.scrollHeight - 12)
         );
 
-        let bestRow = rows[0];
+        let focusIdx = 0;
         let bestDist = Infinity;
-
-        rows.forEach(r => {
-          const rect = r.getBoundingClientRect();
-          const rowCenter = rect.top + rect.height / 2;
-          const dist = Math.abs(rowCenter - viewportCenter);
-          const ratio = Math.min(1, dist / maxBlurDist);
-          r.style.setProperty("--dist-ratio", ratio.toFixed(3));
-          if (dist < bestDist) {
-            bestDist = dist;
-            bestRow = r;
-          }
+        centers.forEach((c, i) => {
+          const d = Math.abs(c - viewportCenter);
+          if (d < bestDist) { bestDist = d; focusIdx = i; }
         });
 
-        if (atStartBound) bestRow = rows[0];
-        else if (atEndBound) bestRow = rows[rows.length - 1];
+        if (atStartBound) {
+          focusIdx = 0;
+        } else if (atEndBound) {
+          focusIdx = rows.length - 1;
+        } else {
+          const prevIdx = lastFocusRowEl ? rows.indexOf(lastFocusRowEl) : -1;
+          if (prevIdx >= 0 && prevIdx !== focusIdx) {
+            const prevDist = Math.abs(centers[prevIdx] - viewportCenter);
+            if (prevDist - bestDist < 14) focusIdx = prevIdx;
+          }
+        }
+        lastFocusRowEl = rows[focusIdx];
 
-        const focusIdx = rows.indexOf(bestRow);
-
+        const focusCenter = centers[focusIdx];
         rows.forEach((r, idx) => {
           const isCurrent = idx === focusIdx;
           r.classList.toggle("timeline-current", isCurrent);
-          if (isCurrent) {
-            r.style.setProperty("--dist-ratio", "0");
-          }
+          const ratio = isCurrent ? 0 : Math.min(1, Math.abs(centers[idx] - focusCenter) / blurRange);
+          r.style.setProperty("--dist-ratio", ratio.toFixed(3));
         });
 
-        // 依實際分鐘比例定位黑框白底圓形；捲到兩端時精準對齊起訖端點 (0% 與 100%)
-        const span = Math.max(1, dayEndMins - dayStartMins);
-        let pct = 0;
-        if (atStartBound || focusIdx === 0) {
-          pct = 0;
-        } else if (atEndBound || focusIdx === rows.length - 1) {
-          pct = 100;
-        } else {
-          const sMins = Number(bestRow.dataset.startMins) || dayStartMins;
-          const eMins = Number(bestRow.dataset.endMins) || sMins;
-          const midMins = (sMins + eMins) / 2;
-          pct = Math.max(0, Math.min(100, ((midMins - dayStartMins) / span) * 100));
+        // 圓點：平常與焦點卡垂直置中對齊。
+        // 起訖兩端不直接跳到端點，而是跟著「螢幕中線」從時間軸上緣滑到第一張卡中心（或從最後一張卡中心滑到下緣），
+        // 所以長卡片（例如手機版）也不會出現一次跳一大段的情形；頁面捲到最頂端或最底端時精準停在起點與終點。
+        const lastRow = rows[rows.length - 1];
+        const trackEndPx = lastRow.offsetTop + lastRow.offsetHeight;
+        const container = document.getElementById("timeline-cards");
+        const lineInTrack = viewportCenter - container.getBoundingClientRect().top;
+        const focusMid = rows[focusIdx].offsetTop + rows[focusIdx].offsetHeight / 2;
+        let dotPx = focusMid;
+        if (window.scrollY <= 12) {
+          dotPx = 0;
+        } else if (focusIdx === 0 && atStartBound) {
+          dotPx = Math.max(0, Math.min(focusMid, lineInTrack));
+        } else if (focusIdx === rows.length - 1 && atEndBound) {
+          const pageBottom = (vh + window.scrollY) >= (document.documentElement.scrollHeight - 12);
+          dotPx = pageBottom ? trackEndPx : Math.max(focusMid, Math.min(trackEndPx, lineInTrack));
         }
 
         const dot = document.getElementById("scale-focus-dot");
-        if (dot) dot.style.top = pct + "%";
+        if (dot) dot.style.top = dotPx.toFixed(1) + "px";
+
+        // 終點標籤對齊最後一張卡的下緣，而不是容器底部多出的緩衝空間
+        const endLabel = document.getElementById("scale-end-label");
+        if (endLabel) endLabel.style.top = trackEndPx.toFixed(1) + "px";
       }
 
       function updateNowTimeRedLine(dayStartMins, dayEndMins) {
