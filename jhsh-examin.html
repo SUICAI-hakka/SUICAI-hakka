@@ -1608,6 +1608,19 @@
         width: 100%;
       }
     }
+    .tt-days {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .tt-tools {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 10px 0 6px;
+    }
   </style>
 </head>
 <body>
@@ -1738,6 +1751,7 @@
               <div>
                 <strong id="day-theme-title">Day 1</strong>
                 <span id="day-theme-sub" style="font-size:0.84rem; opacity:0.85; margin-left:8px;"></span>
+                <button type="button" id="btn-edit-themes" class="btn-secondary" style="padding:2px 10px; font-size:0.78rem; margin-left:8px;" aria-label="編輯旅程名稱與每日主題">✎ 編輯主題</button>
               </div>
               <span id="day-tz-clock" style="font-size:0.82rem; font-weight:700;">Asia/Tokyo</span>
             </div>
@@ -1847,6 +1861,7 @@
   <!-- 底部浮動工具籤 -->
   <div class="floating-tools-wrap">
     <div id="tools-menu-popover" class="tools-menu-popover" role="menu">
+      <button type="button" class="tool-menu-item" id="tool-edit-themes">✏️ 旅程名稱與每日主題</button>
       <button type="button" class="tool-menu-item" id="tool-cloud-sync">☁️ 雲端同步狀態與設定</button>
       <button type="button" class="tool-menu-item" id="tool-map-key">🗺️ 地圖圖磚 API 設定</button>
       <button type="button" class="tool-menu-item" id="tool-export-ics">📅 匯出 ICS 行事曆</button>
@@ -4499,6 +4514,72 @@
         });
       }
 
+      // 手動編輯：旅程名稱、目的地、每日主題（日期按鈕下方的文字）
+      function suggestDayTheme(dayIdx) {
+        const all = getDayEventsSorted(dayIdx);
+        let pick = all.filter(e => e.category === "sight");
+        if (!pick.length) pick = all.filter(e => e.category !== "flight" && e.category !== "hotel");
+        pick = pick.slice(0, 2);
+        if (!pick.length) return all.some(e => e.category === "flight") ? "航班移動日" : "";
+        return pick.map(e => {
+          const s = String(e.title).split(/[・（(｜|]/)[0].trim();
+          return s.length > 14 ? s.slice(0, 14) : s;
+        }).join("・");
+      }
+
+      function openTitleThemeModal(focusDayIdx) {
+        const modal = document.getElementById("settings-modal");
+        document.getElementById("settings-modal-title").textContent = "✏️ 旅程名稱與每日主題";
+        document.getElementById("settings-modal-body").innerHTML = `
+          <div class="form-grid">
+            <div class="form-field full">
+              <label for="tt-title">旅程名稱（顯示在頁面最上方）</label>
+              <input type="text" id="tt-title" value="${esc(tripData.title)}" />
+            </div>
+            <div class="form-field full">
+              <label for="tt-dest">目的地</label>
+              <input type="text" id="tt-dest" value="${esc(tripData.destination)}" />
+            </div>
+          </div>
+          <h4 style="margin:14px 0 4px;">每日主題（顯示在日期按鈕與時間軸標題旁）</h4>
+          <div class="tt-tools">
+            <button type="button" id="tt-suggest" class="btn-secondary">依各天行程帶入建議（尚未儲存，可再修改）</button>
+          </div>
+          <div class="tt-days">
+            ${tripData.days.map((d, i) => `
+              <div class="form-field">
+                <label for="tt-day-${i}">Day ${i + 1} · ${esc(d.label)} ${esc(d.weekday)}</label>
+                <input type="text" id="tt-day-${i}" value="${esc(d.theme)}" placeholder="例如：貴船神社・伏見稻荷大社" />
+              </div>`).join("")}
+          </div>
+          <div style="margin-top:14px; text-align:right;">
+            <button type="button" id="tt-save" class="btn-primary">儲存</button>
+          </div>
+        `;
+        modal.classList.add("open");
+        document.getElementById("tt-suggest").addEventListener("click", () => {
+          tripData.days.forEach((d, i) => {
+            const s = suggestDayTheme(i);
+            if (s) document.getElementById("tt-day-" + i).value = s;
+          });
+        });
+        document.getElementById("tt-save").addEventListener("click", () => {
+          pushUndoSnapshot();
+          tripData.title = document.getElementById("tt-title").value.trim() || tripData.title;
+          tripData.destination = document.getElementById("tt-dest").value.trim() || tripData.destination;
+          tripData.days.forEach((d, i) => {
+            const inp = document.getElementById("tt-day-" + i);
+            if (inp) d.theme = inp.value.trim();
+          });
+          saveTripData(true);
+          modal.classList.remove("open");
+          renderAll();
+          showToast("已更新旅程名稱與每日主題");
+        });
+        const target = document.getElementById("tt-day-" + (Number.isInteger(focusDayIdx) ? focusDayIdx : 0));
+        if (target && Number.isInteger(focusDayIdx)) setTimeout(() => target.focus(), 50);
+      }
+
       function bindEvents() {
         // 分頁切換
         document.querySelectorAll(".nav-tab").forEach(tab => {
@@ -4924,6 +5005,14 @@
             pullFromFirebase(false, false);
           }
         }, 30000);
+
+        // 旅程名稱與每日主題
+        document.getElementById("btn-edit-themes").addEventListener("click", () => openTitleThemeModal(selectedDayIndex));
+        document.getElementById("tool-edit-themes").addEventListener("click", () => {
+          pop.classList.remove("open");
+          fab.classList.remove("open");
+          openTitleThemeModal();
+        });
 
         // 週視圖預覽：點外面或按 Esc 關閉
         document.addEventListener("pointerdown", (e) => {
