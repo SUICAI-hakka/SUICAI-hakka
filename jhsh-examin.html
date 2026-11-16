@@ -1621,6 +1621,22 @@
       align-items: center;
       margin: 10px 0 6px;
     }
+    .seg-leg-edit-row {
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr) 92px 32px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    @media (max-width: 520px) {
+      .seg-leg-edit-row {
+        grid-template-columns: minmax(0, 1fr) 96px 32px;
+      }
+      .seg-leg-edit-row .leg-label-inp {
+        grid-row: 2;
+        grid-column: 1 / -1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2025,9 +2041,10 @@
             <input type="text" id="seg-detail" />
           </div>
           <div class="form-field full">
-            <label>分段明細（可設定多段轉乘方式與時間）</label>
+            <label>分段明細（可設定多段轉乘方式與車資）</label>
             <div id="seg-legs-editor" style="display:flex; flex-direction:column; gap:8px; margin-top:4px;"></div>
             <button type="button" id="btn-add-seg-leg" class="btn-secondary" style="margin-top:8px; align-self:flex-start; padding:4px 12px; font-size:0.82rem;">＋ 新增轉乘分段</button>
+            <div style="font-size:0.78rem; opacity:0.8; margin-top:6px;">每段只需填車資；總時間請填上方「預估車程（分鐘）」。有填車資時，合計會自動帶入「交通費用」。</div>
           </div>
         </div>
         <div class="modal-footer-btns">
@@ -2315,11 +2332,7 @@
               costType: rawScope === "per_person" ? "per_person" : "group",
               costStatus: rawStatus,
               detail: detailParts.join("｜"),
-              legs: rawLegs ? rawLegs.map(l => ({
-                mode: l.mode || seg.mode || "train",
-                label: l.label || getModeLabel(l.mode || seg.mode || "train"),
-                duration: Number(l.duration) || 10
-              })) : buildDefaultLegsForSegment(seg.mode || "train", Number(seg.duration ?? seg.durationMin ?? 15) || 15, detailParts.join("｜"))
+              legs: toFareLegs(rawLegs || buildDefaultLegsForSegment(seg.mode || "train", Number(seg.duration ?? seg.durationMin ?? 15) || 15, detailParts.join("｜")), seg.mode)
             };
           });
 
@@ -2448,15 +2461,23 @@
         return [{ mode: mode, label: getModeLabel(mode).split(" ")[0], duration: dur }];
       }
 
+      // 分段明細只記錄「交通方式、路線名稱、車資」；時間統一記在路段的「預估車程（分鐘）」
+      function toFareLegs(legs, fallbackMode) {
+        return (Array.isArray(legs) ? legs : []).map(l => {
+          const mode = l.mode || fallbackMode || "train";
+          return {
+            mode,
+            label: l.label || getModeLabel(mode).split(" ")[0],
+            fare: normCost(l.fare !== undefined ? l.fare : l.cost)
+          };
+        });
+      }
+
       function normalizeSegmentLegs(seg) {
         if (Array.isArray(seg.legs) && seg.legs.length > 0) {
-          return seg.legs.map(l => ({
-            mode: l.mode || seg.mode || "train",
-            label: l.label || getModeLabel(l.mode || seg.mode || "train").split(" ")[0],
-            duration: Math.max(1, Math.round(Number(l.duration) || 5))
-          }));
+          return toFareLegs(seg.legs, seg.mode);
         }
-        return buildDefaultLegsForSegment(seg.mode || "train", seg.duration || 15, seg.detail || "");
+        return toFareLegs(buildDefaultLegsForSegment(seg.mode || "train", seg.duration || 15, seg.detail || ""), seg.mode);
       }
 
       function estimateTransitBetween(evA, evB) {
@@ -2582,7 +2603,7 @@
               costType: est.costType,
               costStatus: est.costStatus,
               detail: est.detail,
-              legs: est.legs
+              legs: toFareLegs(est.legs, est.mode)
             });
             changed = true;
           }
@@ -3141,7 +3162,7 @@
             if (seg) {
               const legs = normalizeSegmentLegs(seg);
               const isWalkOnly = legs.every(l => l.mode === "walk");
-              const totalSegMins = legs.reduce((acc, l) => acc + (Number(l.duration) || 0), 0) || Number(seg.duration) || 15;
+              const totalSegMins = Number(seg.duration) || 15;
               const gapMins = Math.max(0, nextStart - evEnd);
               const segStart = evEnd;
               const segEnd = gapMins >= 5 ? Math.min(nextStart, evEnd + totalSegMins) : (evEnd + Math.min(totalSegMins, 15));
@@ -3242,7 +3263,7 @@
             const legsChipsHtml = isWalkOnly
               ? ""
               : `<div class="leg-chips-row">${legs.map((leg, lIdx) => `
-                  <span class="leg-chip" style="border-left: 5px solid ${getModeColor(leg.mode)};">${getModeFaIconSvg(leg.mode)} ${esc(leg.label)} ${leg.duration}分</span>
+                  <span class="leg-chip" style="border-left: 5px solid ${getModeColor(leg.mode)};">${getModeFaIconSvg(leg.mode)} ${esc(leg.label)}${hasAmount({ cost: leg.fare }) ? " " + (seg.currency === "TWD" ? "NT$" : "¥") + Number(leg.fare).toLocaleString() : ""}</span>
                   ${lIdx < legs.length - 1 ? `<span class="leg-sep-arrow">→</span>` : ""}
                 `).join("")}</div>`;
 
@@ -4314,8 +4335,9 @@
       function renderSegmentLegsEditor(legs) {
         const container = document.getElementById("seg-legs-editor");
         if (!container) return;
+        const inpStyle = "border:2px solid var(--ink); border-radius:8px; padding:5px 8px; background:var(--bg-washi); font-size:0.84rem; min-width:0;";
         container.innerHTML = legs.map((leg, idx) => `
-          <div class="seg-leg-edit-row" data-leg-idx="${idx}" style="display:grid; grid-template-columns:110px 1fr 72px 32px; gap:6px; align-items:center;">
+          <div class="seg-leg-edit-row" data-leg-idx="${idx}">
             <select class="leg-mode-sel" style="border:2px solid var(--ink); border-radius:8px; padding:5px 6px; background:var(--bg-washi); font-size:0.84rem;">
               <option value="train" ${leg.mode === "train" ? "selected" : ""}>火車/JR</option>
               <option value="subway" ${leg.mode === "subway" ? "selected" : ""}>地鐵</option>
@@ -4323,8 +4345,8 @@
               <option value="walk" ${leg.mode === "walk" ? "selected" : ""}>步行</option>
               <option value="taxi" ${leg.mode === "taxi" ? "selected" : ""}>計程車</option>
             </select>
-            <input type="text" class="leg-label-inp" value="${esc(leg.label || "")}" placeholder="路線/分段名稱" style="border:2px solid var(--ink); border-radius:8px; padding:5px 8px; background:var(--bg-washi); font-size:0.84rem;" />
-            <input type="number" class="leg-dur-inp" value="${leg.duration || 10}" min="1" step="1" title="分鐘" style="border:2px solid var(--ink); border-radius:8px; padding:5px 6px; background:var(--bg-washi); font-size:0.84rem;" />
+            <input type="text" class="leg-label-inp" value="${esc(leg.label || "")}" placeholder="路線/分段名稱" style="${inpStyle}" />
+            <input type="number" class="leg-fare-inp" value="${hasAmount({ cost: leg.fare }) ? esc(leg.fare) : ""}" min="0" step="any" inputmode="decimal" placeholder="車資" title="這一段的車資（與上方幣別、計價方式相同）" style="${inpStyle}" />
             <button type="button" class="btn-del-leg" data-del-leg="${idx}" style="border:2px solid var(--alert-red); background:#FDECEB; color:var(--alert-red); border-radius:8px; padding:4px 0; font-weight:800; cursor:pointer;" ${legs.length <= 1 ? "disabled" : ""}>✕</button>
           </div>
         `).join("");
@@ -4336,19 +4358,32 @@
             if (current.length > 1) {
               current.splice(delIdx, 1);
               renderSegmentLegsEditor(current);
+              syncSegCostFromLegs();
             }
           });
         });
+        container.querySelectorAll(".leg-fare-inp").forEach(inp => {
+          inp.addEventListener("input", syncSegCostFromLegs);
+        });
+      }
+
+      // 各段車資有填寫時，合計自動帶入上方「交通費用」（之後仍可手動修改）
+      function syncSegCostFromLegs() {
+        const fares = collectSegmentLegsFromEditor().map(l => l.fare).filter(f => f !== null);
+        if (!fares.length) return;
+        const sum = fares.reduce((a, b) => a + b, 0);
+        document.getElementById("seg-cost").value = Math.round(sum * 100) / 100;
       }
 
       function collectSegmentLegsFromEditor() {
         const rows = Array.from(document.querySelectorAll("#seg-legs-editor .seg-leg-edit-row"));
-        if (rows.length === 0) return [{ mode: "train", label: "大眾運輸", duration: 15 }];
+        if (rows.length === 0) return [{ mode: "train", label: "大眾運輸", fare: null }];
         return rows.map(r => {
           const mode = r.querySelector(".leg-mode-sel")?.value || "train";
           const label = (r.querySelector(".leg-label-inp")?.value || "").trim() || getModeLabel(mode).split(" ")[0];
-          const duration = Math.max(1, Number(r.querySelector(".leg-dur-inp")?.value) || 5);
-          return { mode, label, duration };
+          const fareRaw = String(r.querySelector(".leg-fare-inp")?.value ?? "").trim();
+          const fare = fareRaw === "" ? null : (Number.isFinite(Number(fareRaw)) && Number(fareRaw) >= 0 ? Number(fareRaw) : null);
+          return { mode, label, fare };
         });
       }
 
@@ -4722,7 +4757,7 @@
         // 交通表單送出
         document.getElementById("btn-add-seg-leg").addEventListener("click", () => {
           const current = collectSegmentLegsFromEditor();
-          current.push({ mode: "walk", label: "步行", duration: 5 });
+          current.push({ mode: "walk", label: "步行", fare: null });
           renderSegmentLegsEditor(current);
         });
 
@@ -4733,15 +4768,11 @@
           if (seg) {
             pushUndoSnapshot();
             const legs = collectSegmentLegsFromEditor();
-            const legsSumDur = legs.reduce((acc, l) => acc + l.duration, 0);
             const inputDur = Math.max(1, Number(document.getElementById("seg-dur").value) || 10);
             seg.title = document.getElementById("seg-title").value.trim();
             seg.mode = document.getElementById("seg-mode").value;
             seg.legs = legs;
-            seg.duration = legs.length > 1 ? legsSumDur : inputDur;
-            if (legs.length === 1) {
-              seg.legs[0].duration = seg.duration;
-            }
+            seg.duration = inputDur;
             seg.currency = document.getElementById("seg-currency").value;
             seg.cost = parseCostInput("seg-cost");
             seg.costType = document.getElementById("seg-cost-type").value;
@@ -4750,7 +4781,7 @@
             saveTripData(true);
             document.getElementById("segment-modal").classList.remove("open");
             renderAll();
-            showToast("已更新交通標題、分段與總時長");
+            showToast("已更新交通標題、分段車資與總時長");
           }
         });
         document.getElementById("btn-close-seg").addEventListener("click", () => {
