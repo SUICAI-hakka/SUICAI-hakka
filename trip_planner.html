@@ -1457,6 +1457,160 @@
 
     .pack-btn:hover { background: var(--yamabuki); }
 
+    /* ===== 費用頁：類別篩選 ===== */
+    .expense-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 6px 0 10px;
+    }
+
+    .filter-chip {
+      border: 2px solid var(--ink);
+      background: var(--chip, #FFFFFF);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+      font-family: inherit;
+      opacity: 0.75;
+    }
+
+    .filter-chip.active {
+      opacity: 1;
+      box-shadow: 0 3px 0 rgba(62, 58, 57, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .filter-chip:focus-visible,
+    .pie-legend-btn:focus-visible {
+      outline: 3px solid var(--deep-gold);
+      outline-offset: 2px;
+    }
+
+    .expense-filter-summary {
+      display: none;
+      background: var(--chip, #FFFFFF);
+      border: 3px solid var(--ink);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+
+    .efs-title { font-weight: 800; font-size: 0.9rem; }
+    .efs-total { font-weight: 800; font-size: 1.4rem; }
+    .efs-pct { font-size: 0.9rem; font-weight: 700; }
+    .efs-sub { font-size: 0.84rem; margin: 2px 0 8px; }
+    .efs-clear { padding: 3px 12px; font-size: 0.8rem; }
+
+    .exp-subtotal td { background: rgba(246, 210, 122, 0.25); cursor: default; }
+    .exp-empty:hover { background: transparent !important; }
+
+    .pie-slice {
+      cursor: pointer;
+      transition: opacity 160ms ease-out, transform 160ms ease-out;
+    }
+
+    .pie-slice:hover { opacity: 0.85; }
+    .pie-slice:focus-visible { outline: none; stroke: var(--deep-gold); stroke-width: 5; }
+    .pie-slice.is-dim { opacity: 0.35; }
+
+    .pie-legend-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      background: transparent;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: inherit;
+      color: inherit;
+      text-align: left;
+    }
+
+    .pie-legend-btn:hover { background: #FFF8E7; }
+    .pie-legend-btn.active { border-color: var(--ink); background: #FFF8E7; }
+
+    /* ===== 交通特票試算 ===== */
+    .pass-box { grid-column: 1 / -1; }
+    .pass-intro { font-size: 0.9rem; margin: 6px 0 10px; }
+    .pass-verdict {
+      border: 3px solid var(--ink);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .pass-verdict.buy { background: #EDF7E6; }
+    .pass-verdict.maybe { background: #FFF1C9; }
+    .pass-verdict.no { background: #FFF8E7; }
+
+    .pass-alert {
+      background: #FFF8E7;
+      border: 2px dashed var(--ink);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 0.84rem;
+      margin-bottom: 10px;
+    }
+    .pass-alert ul { margin: 6px 0 0; padding-left: 18px; }
+    .pass-mini-btn { padding: 1px 10px; font-size: 0.76rem; margin-left: 6px; }
+
+    .pass-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .pass-card {
+      background: var(--card-white);
+      border: 3px solid var(--ink);
+      border-left-width: 10px;
+      border-radius: 14px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+    .pass-card.verdict-buy { border-left-color: var(--wakatake); }
+    .pass-card.verdict-maybe { border-left-color: var(--yamabuki); }
+    .pass-card.verdict-no { border-left-color: rgba(62, 58, 57, 0.35); }
+
+    .pass-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+    .pass-badge, .src-badge {
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      padding: 1px 10px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .pass-badge.buy { background: #EDF7E6; }
+    .pass-badge.maybe { background: #FFF1C9; }
+    .pass-badge.no { background: #F2F2F2; }
+    .src-badge.official { background: #EDF7E6; }
+    .src-badge.unverified { background: #FFF1C9; border-style: dashed; }
+    .pass-meta { font-size: 0.82rem; opacity: 0.85; }
+    .pass-line { font-size: 0.86rem; font-weight: 700; }
+    .pass-note { font-size: 0.78rem; opacity: 0.82; }
+    .pass-source { font-size: 0.76rem; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .pass-source a { color: inherit; word-break: break-all; }
+    .pass-details { font-size: 0.8rem; }
+    .pass-details ul { margin: 4px 0 0; padding-left: 18px; }
+    .pass-card-actions { display: flex; justify-content: flex-end; }
+    .pass-card-actions button { padding: 3px 12px; font-size: 0.78rem; }
+    .pass-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .pass-disclaimer { font-size: 0.76rem; opacity: 0.78; margin-top: 10px; }
+    .pass-mode-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.86rem; }
+    .pass-mode-opt { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+
     /* 響應式斷點 */
     @media (max-width: 850px) {
       .workspace {
@@ -1825,7 +1979,9 @@
         <div id="budget-warning-box" style="font-size:0.86rem; font-weight:700;"></div>
         <div id="expense-notes" class="expense-notes"></div>
 
-        <h3 style="margin:16px 0 6px; font-size:1rem;">費用明細（點擊任一列可直接修改金額）</h3>
+        <h3 id="expense-detail-heading" style="margin:16px 0 6px; font-size:1rem;">費用明細（點擊任一列可直接修改金額）</h3>
+        <div id="expense-filter-bar" class="expense-filter-bar" role="group" aria-label="依類別篩選費用"></div>
+        <div id="expense-filter-summary" class="expense-filter-summary" aria-live="polite"></div>
         <div style="overflow-x:auto;">
           <table class="expense-table">
             <thead>
@@ -1848,7 +2004,10 @@
           <svg id="expense-pie-svg" viewBox="0 0 220 220" width="210" height="210"></svg>
           <div id="expense-pie-legend" style="display:flex; flex-direction:column; gap:10px; min-width:170px;"></div>
         </div>
+        <p style="font-size:0.78rem; opacity:0.78; margin:8px 0 0;">點圓餅圖的顏色或旁邊的項目，可只看該類別的金額與明細；再點一次取消。</p>
       </div>
+
+      <div class="ehon-box pass-box" id="pass-section"></div>
     </section>
 
     <!-- 攜帶用品頁 -->
@@ -2240,6 +2399,90 @@
       let lastFocusKey = null;
       let mapFocusTimer = null;
 
+      // ===== 交通特票預設資料（2026/11/17 查證；購買前請再到官網確認） =====
+      const PASS_MODE_OPTIONS = [
+        { key: "subway", label: "地鐵" },
+        { key: "bus", label: "巴士" },
+        { key: "train", label: "鐵路" },
+        { key: "shinkansen", label: "新幹線" },
+        { key: "taxi", label: "計程車" }
+      ];
+
+      const DEFAULT_PASSES = [
+        {
+          id: "pass-kyoto-subbus-1d", name: "京都市 地下鐵・巴士 1 日券", type: "day", days: 1, price: 1100, currency: "JPY",
+          modes: ["subway", "bus"], include: [], exclude: ["京阪", "近鐵", "近鉄", "阪急", "嵐電", "JR"],
+          note: "京都市營地下鐵全線、市巴士全線，加上京都巴士、京阪巴士、西日本 JR 巴士（部分路線除外），含週末假日行駛的觀光特急巴士。大人價，小學生半價。巴士若不是市營，請自行確認是否在適用路線內。",
+          source: "https://www.city.kyoto.lg.jp/kotsu/cmsfiles/contents/0000344/344075/hodo.pdf", sourceLabel: "京都市交通局（官方）", verified: "2026-11-17", status: "official"
+        },
+        {
+          id: "pass-kyoto-sub-1d", name: "京都市 地下鐵 1 日券", type: "day", days: 1, price: 800, currency: "JPY",
+          modes: ["subway"], include: [], exclude: [],
+          note: "京都市營地下鐵全線 1 日乘車自由，不含巴士。大人價，小學生半價。",
+          source: "https://www.city.kyoto.lg.jp/kotsu/cmsfiles/contents/0000356/356678/ACK2026.pdf", sourceLabel: "京都市交通局（官方）", verified: "2026-11-17", status: "official"
+        },
+        {
+          id: "pass-westqr-kansai-1d", name: "WEST QR 關西周遊券 1 日", type: "window", days: 1, price: 2700, currency: "JPY",
+          modes: ["train"], include: ["JR", "HARUKA"], exclude: ["近鐵", "近鉄", "京阪電", "阪急"],
+          note: "JR 西日本的普通、快速、新快速列車，以及關空特急 HARUKA 普通車自由席。2026/9/30 停售紙本券，改為 QR 票券，且僅在海外旅行社販售。價格來自第三方整理，尚未在 JR 西日本官網確認。",
+          source: "https://www.japan-travel-kit.com/guides/attractions/kansai-area-pass", sourceLabel: "第三方整理（待確認）", verified: "2026-11-17", status: "unverified"
+        },
+        {
+          id: "pass-westqr-kansai-2d", name: "WEST QR 關西周遊券 2 日", type: "window", days: 2, price: 4700, currency: "JPY",
+          modes: ["train"], include: ["JR", "HARUKA"], exclude: ["近鐵", "近鉄", "京阪電", "阪急"],
+          note: "連續 2 天，適用範圍同 1 日券。價格來自第三方整理，尚未在 JR 西日本官網確認。",
+          source: "https://www.japan-travel-kit.com/guides/attractions/kansai-area-pass", sourceLabel: "第三方整理（待確認）", verified: "2026-11-17", status: "unverified"
+        },
+        {
+          id: "pass-westqr-kansai-3d", name: "WEST QR 關西周遊券 3 日", type: "window", days: 3, price: 5500, currency: "JPY",
+          modes: ["train"], include: ["JR", "HARUKA"], exclude: ["近鐵", "近鉄", "京阪電", "阪急"],
+          note: "連續 3 天，適用範圍同 1 日券。價格來自第三方整理，尚未在 JR 西日本官網確認。",
+          source: "https://www.japan-travel-kit.com/guides/attractions/kansai-area-pass", sourceLabel: "第三方整理（待確認）", verified: "2026-11-17", status: "unverified"
+        },
+        {
+          id: "pass-westqr-kansai-4d", name: "WEST QR 關西周遊券 4 日", type: "window", days: 4, price: 6700, currency: "JPY",
+          modes: ["train"], include: ["JR", "HARUKA"], exclude: ["近鐵", "近鉄", "京阪電", "阪急"],
+          note: "連續 4 天，適用範圍同 1 日券。價格來自第三方整理，尚未在 JR 西日本官網確認。",
+          source: "https://www.japan-travel-kit.com/guides/attractions/kansai-area-pass", sourceLabel: "第三方整理（待確認）", verified: "2026-11-17", status: "unverified"
+        },
+        {
+          id: "pass-jr-7d", name: "Japan Rail Pass 7 日（普通車）", type: "window", days: 7, price: 53000, currency: "JPY",
+          modes: ["train", "shinkansen"], include: ["JR", "HARUKA", "新幹線", "特急"], exclude: ["近鐵", "近鉄", "京阪電", "阪急"],
+          note: "全國 JR 7 日券，海外旅行社售價自 2026/10/1 起為 ¥53,000；官方網站目前仍標示 ¥50,000（限期優惠，未公布結束日）。適合跨區長程移動，只在關西走動通常不划算。",
+          source: "https://www.japan.travel/en/ca/news/price-increases-are-coming-to-the-nationwide-japan-rail-pass-2026/", sourceLabel: "日本政府觀光局（官方）", verified: "2026-11-17", status: "official"
+        }
+      ];
+
+      function splitKeywordList(v) {
+        const arr = Array.isArray(v) ? v : String(v || "").split(/[,，、\n]/);
+        return arr.map(x => String(x).trim()).filter(Boolean).slice(0, 20);
+      }
+
+      function normalizePasses(raw) {
+        if (!Array.isArray(raw)) return JSON.parse(JSON.stringify(DEFAULT_PASSES));
+        const validModes = PASS_MODE_OPTIONS.map(m => m.key);
+        return raw.filter(p => p && typeof p === "object").map((p, idx) => {
+          const src = String(p.source || "").trim();
+          const days = Math.max(1, Math.min(31, Math.round(Number(p.days) || 1)));
+          return {
+            id: String(p.id || ("pass-" + idx + "-" + Date.now())),
+            name: String(p.name || "未命名票券"),
+            type: p.type === "window" ? "window" : "day",
+            days: p.type === "window" ? days : 1,
+            price: Math.max(0, Number(p.price) || 0),
+            currency: p.currency === "TWD" ? "TWD" : "JPY",
+            modes: (Array.isArray(p.modes) ? p.modes : []).filter(m => validModes.includes(m)),
+            include: splitKeywordList(p.include),
+            exclude: splitKeywordList(p.exclude),
+            note: String(p.note || ""),
+            source: /^https:\/\//i.test(src) ? src : "",
+            sourceLabel: String(p.sourceLabel || ""),
+            verified: String(p.verified || ""),
+            status: p.status === "official" ? "official" : "unverified"
+          };
+        });
+      }
+
       function normalizeImportedPayload(rawInput) {
         const rawTrip = (rawInput && rawInput.tripData && typeof rawInput.tripData === "object")
           ? rawInput.tripData
@@ -2346,7 +2589,8 @@
           updatedAt: Number(rawTrip.updatedAt ?? meta.updatedAt ?? Date.now()),
           days: normalizedDays,
           events: normalizedEvents,
-          segments: normalizedSegments
+          segments: normalizedSegments,
+          passes: normalizePasses(rawTrip.passes)
         };
 
         let normalizedPacking = null;
@@ -2868,6 +3112,8 @@
               currency: cur,
               amount: amt,
               blank,
+              group: groupOfCategory(ev.category),
+              twd: twdVal,
               scope: ev.costType,
               status: ev.costStatus
             });
@@ -2901,6 +3147,8 @@
               currency: cur,
               amount: amt,
               blank,
+              group: "flight_transport",
+              twd: twdVal,
               scope: seg.costType,
               status: seg.costStatus
             });
@@ -4057,6 +4305,27 @@
         if (!mapFitAll) upgradeRoutes(targetSegments, mapToken);
       }
 
+      // ===== 費用總覽：類別篩選（點圓餅圖、圖例或上方標籤） =====
+      const EXPENSE_GROUPS = [
+        { key: "flight_transport", label: "機票與交通", color: "#B9DAA5" },
+        { key: "hotel", label: "住宿", color: "#A8D3E6" },
+        { key: "food", label: "餐飲", color: "#F2A497" },
+        { key: "sight", label: "景點門票", color: "#F6D27A" }
+      ];
+      let expenseCatFilter = null;
+
+      function groupOfCategory(cat) {
+        if (cat === "sight") return "sight";
+        if (cat === "food") return "food";
+        if (cat === "hotel") return "hotel";
+        return "flight_transport";
+      }
+
+      function setExpenseFilter(key) {
+        expenseCatFilter = (expenseCatFilter === key) ? null : key;
+        renderExpensesPage();
+      }
+
       function renderExpensesPage() {
         const rateInput = document.getElementById("input-fx-rate");
         const capInput = document.getElementById("input-budget-cap");
@@ -4086,8 +4355,65 @@
         const notesEl = document.getElementById("expense-notes");
         if (notesEl) notesEl.innerHTML = notes.map(n => `<div>${esc(n)}</div>`).join("");
 
+        // 各類別小計（以換算台幣）
+        const groupTotals = {};
+        const groupCounts = {};
+        EXPENSE_GROUPS.forEach(g => { groupTotals[g.key] = fin.catTwdTotals[g.key] || 0; groupCounts[g.key] = 0; });
+        fin.rows.forEach(r => { if (groupCounts[r.group] !== undefined) groupCounts[r.group]++; });
+        const rawSum = EXPENSE_GROUPS.reduce((acc, g) => acc + groupTotals[g.key], 0);
+        const sumVal = rawSum || 1;
+        if (expenseCatFilter && !EXPENSE_GROUPS.some(g => g.key === expenseCatFilter)) expenseCatFilter = null;
+
+        // 篩選標籤
+        const bar = document.getElementById("expense-filter-bar");
+        if (bar) {
+          const chips = [{ key: null, label: "全部", color: "#FFFFFF" }].concat(EXPENSE_GROUPS);
+          bar.innerHTML = chips.map(c => {
+            const active = (c.key === expenseCatFilter) || (c.key === null && !expenseCatFilter);
+            return `<button type="button" class="filter-chip ${active ? "active" : ""}" data-cat-key="${c.key || ""}" aria-pressed="${active}" style="--chip:${c.color};">${esc(c.label)}</button>`;
+          }).join("");
+          bar.querySelectorAll(".filter-chip").forEach(btn => {
+            btn.addEventListener("click", () => {
+              const key = btn.dataset.catKey || null;
+              expenseCatFilter = key;
+              renderExpensesPage();
+            });
+          });
+        }
+
+        // 篩選摘要：該類別總額與筆數
+        const sumEl = document.getElementById("expense-filter-summary");
+        const visibleRows = expenseCatFilter ? fin.rows.filter(r => r.group === expenseCatFilter) : fin.rows;
+        if (sumEl) {
+          if (expenseCatFilter) {
+            const g = EXPENSE_GROUPS.find(x => x.key === expenseCatFilter);
+            const jpySum = visibleRows.filter(r => r.currency !== "TWD").reduce((a, r) => a + r.amount, 0);
+            const twdSum = visibleRows.filter(r => r.currency === "TWD").reduce((a, r) => a + r.amount, 0);
+            const pct = Math.round((groupTotals[g.key] / sumVal) * 100);
+            const parts = [];
+            if (jpySum) parts.push("¥" + Math.round(jpySum).toLocaleString());
+            if (twdSum) parts.push("NT$" + Math.round(twdSum).toLocaleString());
+            sumEl.style.display = "block";
+            sumEl.style.setProperty("--chip", g.color);
+            sumEl.innerHTML = `
+              <div class="efs-title">${esc(g.label)}</div>
+              <div class="efs-total">NT$${Math.round(groupTotals[g.key]).toLocaleString()} <span class="efs-pct">（佔 ${pct}%）</span></div>
+              <div class="efs-sub">共 ${visibleRows.length} 筆${parts.length ? "・原幣別 " + esc(parts.join(" + ")) : ""}</div>
+              <button type="button" class="btn-secondary efs-clear">顯示全部類別</button>`;
+            sumEl.querySelector(".efs-clear").addEventListener("click", () => { expenseCatFilter = null; renderExpensesPage(); });
+          } else {
+            sumEl.style.display = "none";
+            sumEl.innerHTML = "";
+          }
+        }
+        const headingEl = document.getElementById("expense-detail-heading");
+        if (headingEl) {
+          const g = expenseCatFilter && EXPENSE_GROUPS.find(x => x.key === expenseCatFilter);
+          headingEl.textContent = g ? `費用明細・${g.label}（點擊任一列可直接修改金額）` : "費用明細（點擊任一列可直接修改金額）";
+        }
+
         const tbody = document.getElementById("expense-table-body");
-        tbody.innerHTML = fin.rows.map(r => {
+        let rowsHtml = visibleRows.map(r => {
           const sym = currencySymbol(r.currency);
           const amountCell = r.blank
             ? `<span class="blank-badge">未填</span>`
@@ -4103,8 +4429,15 @@
             </tr>
           `;
         }).join("");
+        if (!visibleRows.length) {
+          rowsHtml = `<tr class="exp-empty"><td colspan="5" style="text-align:center; opacity:0.7; cursor:default;">這個類別目前沒有費用項目</td></tr>`;
+        } else if (expenseCatFilter) {
+          const subTwd = visibleRows.reduce((a, r) => a + (Number(r.twd) || 0), 0);
+          rowsHtml += `<tr class="exp-subtotal"><td colspan="3"><strong>小計（${visibleRows.length} 筆，換算台幣）</strong></td><td colspan="2"><strong>NT$${Math.round(subTwd).toLocaleString()}</strong></td></tr>`;
+        }
+        tbody.innerHTML = rowsHtml;
 
-        tbody.querySelectorAll("tr").forEach(tr => {
+        tbody.querySelectorAll("tr.exp-row").forEach(tr => {
           const open = () => {
             if (tr.dataset.rowType === "event") openEventModal(tr.dataset.rowId);
             else openSegmentModal(tr.dataset.rowId);
@@ -4118,53 +4451,428 @@
           });
         });
 
-        // 圓餅圖
-        const slices = [
-          { label: "機票與交通", val: fin.catTwdTotals.flight_transport, color: "#B9DAA5" },
-          { label: "住宿", val: fin.catTwdTotals.hotel, color: "#A8D3E6" },
-          { label: "餐飲", val: fin.catTwdTotals.food, color: "#F2A497" },
-          { label: "景點門票", val: fin.catTwdTotals.sight, color: "#F6D27A" }
-        ];
-        const rawSum = slices.reduce((acc, s) => acc + s.val, 0);
-        const sumVal = rawSum || 1;
+        // 圓餅圖：每一片都能點，再點一次取消
         const pieSvg = document.getElementById("expense-pie-svg");
         const legendEl = document.getElementById("expense-pie-legend");
-
         let currentAngle = -Math.PI / 2;
-        const cx = 110, cy = 110, r = 92;
+        const cx = 110, cy = 110, r = 90;
         let pathsHtml = "";
         if (!rawSum) {
           pathsHtml = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#FFFCF6" stroke="#3E3A39" stroke-width="3" stroke-dasharray="8 8"/><text x="${cx}" y="${cy + 5}" text-anchor="middle" font-size="15" font-weight="700" fill="#3E3A39">尚無金額</text>`;
         }
-        slices.forEach(s => {
-          if (s.val <= 0) return;
-          const angle = (s.val / sumVal) * Math.PI * 2;
+        EXPENSE_GROUPS.forEach(g => {
+          const val = groupTotals[g.key];
+          if (val <= 0) return;
+          const angle = (val / sumVal) * Math.PI * 2;
+          const mid = currentAngle + angle / 2;
+          const selected = expenseCatFilter === g.key;
+          const dim = expenseCatFilter && !selected;
+          const off = selected ? 7 : 0;
+          const tf = off ? ` transform="translate(${(Math.cos(mid) * off).toFixed(2)} ${(Math.sin(mid) * off).toFixed(2)})"` : "";
+          const common = `class="pie-slice${selected ? " is-selected" : ""}${dim ? " is-dim" : ""}" data-cat-key="${g.key}" role="button" tabindex="0" aria-pressed="${selected}" aria-label="${esc(g.label)} NT$${Math.round(val).toLocaleString()}，點擊查看明細"${tf}`;
           if (angle >= Math.PI * 1.999) {
-            pathsHtml += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${s.color}" stroke="#3E3A39" stroke-width="3"/>`;
+            pathsHtml += `<circle ${common} cx="${cx}" cy="${cy}" r="${r}" fill="${g.color}" stroke="#3E3A39" stroke-width="3"/>`;
           } else {
             const x1 = cx + r * Math.cos(currentAngle);
             const y1 = cy + r * Math.sin(currentAngle);
             const x2 = cx + r * Math.cos(currentAngle + angle);
             const y2 = cy + r * Math.sin(currentAngle + angle);
             const largeArc = angle > Math.PI ? 1 : 0;
-            pathsHtml += `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${s.color}" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/>`;
+            pathsHtml += `<path ${common} d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${g.color}" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/>`;
           }
           currentAngle += angle;
         });
         pieSvg.innerHTML = pathsHtml;
+        pieSvg.querySelectorAll(".pie-slice").forEach(el => {
+          el.addEventListener("click", () => setExpenseFilter(el.dataset.catKey));
+          el.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setExpenseFilter(el.dataset.catKey);
+            }
+          });
+        });
 
-        legendEl.innerHTML = slices.map(s => {
-          const pct = Math.round((s.val / sumVal) * 100);
+        legendEl.innerHTML = EXPENSE_GROUPS.map(g => {
+          const val = groupTotals[g.key];
+          const pct = Math.round((val / sumVal) * 100);
+          const active = expenseCatFilter === g.key;
           return `
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <button type="button" class="pie-legend-btn ${active ? "active" : ""}" data-cat-key="${g.key}" aria-pressed="${active}">
               <span style="display:flex; align-items:center; gap:8px; font-weight:700;">
-                <i style="display:inline-block; width:14px; height:14px; border-radius:4px; background:${s.color}; border:2px solid #3E3A39;"></i>
-                ${s.label}
+                <i style="display:inline-block; width:14px; height:14px; border-radius:4px; background:${g.color}; border:2px solid #3E3A39;"></i>
+                ${esc(g.label)}
               </span>
-              <span style="font-weight:800;">NT$${Math.round(s.val).toLocaleString()} (${pct}%)</span>
-            </div>
+              <span style="font-weight:800;">NT$${Math.round(val).toLocaleString()} (${pct}%)</span>
+            </button>
           `;
         }).join("");
+        legendEl.querySelectorAll(".pie-legend-btn").forEach(btn => {
+          btn.addEventListener("click", () => setExpenseFilter(btn.dataset.catKey));
+        });
+
+        renderPassSection();
+      }
+
+      // ===== 交通特票試算：把行程裡的交通路段，對照票券的適用範圍與票價 =====
+      function getPasses() {
+        if (!Array.isArray(tripData.passes)) tripData.passes = JSON.parse(JSON.stringify(DEFAULT_PASSES));
+        return tripData.passes;
+      }
+
+      function toJpy(amount, cur) {
+        const rate = Number(tripData.fxRateJpyToTwd) || 0.215;
+        return cur === "TWD" ? amount / rate : amount;
+      }
+
+      function segmentLabel(seg) {
+        const f = tripData.events.find(e => e.id === seg.fromId);
+        const t = tripData.events.find(e => e.id === seg.toId);
+        return (f ? f.title : "起點") + " → " + (t ? t.title : "終點");
+      }
+
+      function passMatchesLeg(pass, leg) {
+        if (!leg || leg.mode === "walk") return false;
+        if (!Array.isArray(pass.modes) || !pass.modes.includes(leg.mode)) return false;
+        const label = String(leg.label || "").toLowerCase();
+        if ((pass.exclude || []).some(k => k && label.includes(String(k).toLowerCase()))) return false;
+        const inc = (pass.include || []).filter(Boolean);
+        if (inc.length && !inc.some(k => label.includes(String(k).toLowerCase()))) return false;
+        return true;
+      }
+
+      // 回傳這一段有多少金額（日圓、全體旅客合計）可被票券涵蓋
+      function analyzeSegmentForPass(pass, seg) {
+        const legs = normalizeSegmentLegs(seg).filter(l => l.mode !== "walk");
+        if (!legs.length || !hasAmount(seg)) return { covered: 0, uncertain: 0, missingFare: 0 };
+        const total = toJpy(getItemExactAmount(seg), seg.currency || "JPY");
+        if (total <= 0) return { covered: 0, uncertain: 0, missingFare: 0 };
+        const matches = legs.map(l => passMatchesLeg(pass, l));
+        const anyFare = legs.some(l => l.fare !== null && l.fare !== undefined);
+        if (anyFare) {
+          const factor = seg.costType === "per_person" ? (Number(tripData.travelers) || 1) : 1;
+          let covered = 0;
+          let missing = 0;
+          legs.forEach((l, i) => {
+            const hasFare = l.fare !== null && l.fare !== undefined;
+            if (!matches[i]) return;
+            if (!hasFare) { missing++; return; }
+            covered += toJpy((Number(l.fare) || 0) * factor, seg.currency || "JPY");
+          });
+          return { covered, uncertain: 0, missingFare: missing };
+        }
+        if (matches.every(Boolean)) return { covered: total, uncertain: 0, missingFare: 0 };
+        if (!matches.some(Boolean)) return { covered: 0, uncertain: 0, missingFare: 0 };
+        return { covered: 0, uncertain: total, missingFare: 0 };
+      }
+
+      function evaluatePass(pass) {
+        const travelers = Number(tripData.travelers) || 1;
+        const unitJpy = toJpy(Number(pass.price) || 0, pass.currency || "JPY");
+        const unitTotal = unitJpy * travelers;
+        const dayCount = tripData.days.length;
+        const perDay = Array.from({ length: dayCount }, (_, d) => ({ day: d, covered: 0, uncertain: 0, rides: [], uncertainSegs: [] }));
+
+        tripData.segments.forEach(seg => {
+          const d = Number(seg.dayIndex);
+          if (!perDay[d]) return;
+          const r = analyzeSegmentForPass(pass, seg);
+          if (r.covered > 0) { perDay[d].covered += r.covered; perDay[d].rides.push({ seg, amount: r.covered }); }
+          if (r.uncertain > 0) { perDay[d].uncertain += r.uncertain; perDay[d].uncertainSegs.push({ seg, amount: r.uncertain }); }
+        });
+
+        let chosen = [];
+        let passCount = 0;
+        if (pass.type === "day") {
+          chosen = perDay.filter(x => x.covered > unitTotal).map(x => x.day);
+          passCount = chosen.length;
+          if (!chosen.length) {
+            const best = perDay.slice().sort((a, b) => b.covered - a.covered)[0];
+            if (best && best.covered > 0) { chosen = [best.day]; passCount = 1; }
+          }
+        } else {
+          const n = Math.max(1, Math.min(dayCount, Number(pass.days) || 1));
+          let bestStart = 0;
+          let bestScore = -1;
+          for (let s = 0; s + n <= dayCount; s++) {
+            let score = 0;
+            for (let k = s; k < s + n; k++) score += perDay[k].covered;
+            if (score > bestScore) { bestScore = score; bestStart = s; }
+          }
+          if (bestScore > 0) {
+            chosen = Array.from({ length: n }, (_, i) => bestStart + i);
+            passCount = 1;
+          }
+        }
+
+        const covered = chosen.reduce((a, d) => a + perDay[d].covered, 0);
+        const uncertainDays = chosen.length ? chosen : perDay.map(x => x.day);
+        const uncertain = uncertainDays.reduce((a, d) => a + perDay[d].uncertain, 0);
+        const cost = unitTotal * passCount;
+        const saving = covered - cost;
+        const verdict = (passCount > 0 && saving > 0) ? "buy" : "no";
+        return {
+          pass, unitJpy, unitTotal, travelers, perDay, chosen, passCount, covered, uncertain, cost, saving, verdict,
+          shortfall: Math.max(0, cost - covered)
+        };
+      }
+
+      function analyzeAllPasses() {
+        const results = getPasses().map(evaluatePass);
+        const rate = Number(tripData.fxRateJpyToTwd) || 0.215;
+        let transitJpy = 0;
+        let blankSegs = 0;
+        tripData.segments.forEach(seg => {
+          const hasPaying = normalizeSegmentLegs(seg).some(l => l.mode !== "walk");
+          if (!hasPaying) return;
+          if (!hasAmount(seg)) { blankSegs++; return; }
+          transitJpy += toJpy(getItemExactAmount(seg), seg.currency || "JPY");
+        });
+        const buyList = results.filter(r => r.verdict === "buy").sort((a, b) => b.saving - a.saving);
+        return { results, transitJpy, transitTwd: transitJpy * rate, blankSegs, best: buyList[0] || null };
+      }
+
+      function fmtJpy(n) {
+        return "¥" + Math.round(n).toLocaleString();
+      }
+
+      function fmtTwdFromJpy(jpy) {
+        const rate = Number(tripData.fxRateJpyToTwd) || 0.215;
+        return "NT$" + Math.round(jpy * rate).toLocaleString();
+      }
+
+      function renderPassSection() {
+        const box = document.getElementById("pass-section");
+        if (!box) return;
+        const a = analyzeAllPasses();
+        const travelers = Number(tripData.travelers) || 1;
+
+        const pendingCount = new Set(a.results.flatMap(r => (r.chosen.length ? r.chosen : r.perDay.map(x => x.day)).flatMap(d => r.perDay[d].uncertainSegs.map(x => x.seg.id)))).size;
+        let verdictHtml;
+        if (a.best) {
+          verdictHtml = `<div class="pass-verdict buy">✅ 建議購買「${esc(a.best.pass.name)}」，預估可省 ${fmtJpy(a.best.saving)}（約 ${fmtTwdFromJpy(a.best.saving)}）</div>`;
+        } else {
+          verdictHtml = `<div class="pass-verdict no">👍 以目前已填的車資，單程購票（或 IC 卡）比買特票划算，暫時不需要買特票。${pendingCount ? `<br><span style="font-weight:600; font-size:0.84rem;">另有 ${pendingCount} 個混合路段（例如機場接駁）還沒拆分車資，補上後結果可能改變。</span>` : ""}</div>`;
+        }
+
+        const uncertainMap = new Map();
+        a.results.forEach(r => (r.chosen.length ? r.chosen : r.perDay.map(x => x.day)).forEach(d => r.perDay[d].uncertainSegs.forEach(u => uncertainMap.set(u.seg.id, u))));
+
+        const harukaSegs = tripData.segments.filter(seg => {
+          if (!hasAmount(seg) || seg.costType !== "per_person") return false;
+          const hasHaruka = normalizeSegmentLegs(seg).some(l => String(l.label || "").toUpperCase().includes("HARUKA"));
+          return hasHaruka && toJpy(Number(seg.cost) || 0, seg.currency || "JPY") < 2700;
+        });
+
+        const cards = a.results.map(r => {
+          const p = r.pass;
+          const unitTxt = `${fmtJpy(r.unitJpy)}／人 × ${r.travelers} 人`;
+          const typeTxt = p.type === "day" ? "單日券（可只買需要的那幾天）" : `連續 ${p.days} 天`;
+          const dayName = d => "Day " + (d + 1);
+          let line = "";
+          if (r.passCount === 0) {
+            line = "目前行程裡沒有可以確定被這張票券涵蓋的路段。";
+          } else if (p.type === "day") {
+            const days = r.chosen.map(dayName).join("、");
+            if (r.verdict === "buy") line = `建議使用日：${days}。這幾天可涵蓋 ${fmtJpy(r.covered)}，票價共 ${fmtJpy(r.cost)}。`;
+            else line = `涵蓋最多的是 ${days}：可涵蓋 ${fmtJpy(r.covered)}，需要 ${fmtJpy(r.cost)} 才回本，還差 ${fmtJpy(r.shortfall)}。`;
+          } else {
+            const range = r.chosen.length > 1 ? `${dayName(r.chosen[0])}～${dayName(r.chosen[r.chosen.length - 1])}` : dayName(r.chosen[0]);
+            if (r.verdict === "buy") line = `最佳使用期間：${range}。可涵蓋 ${fmtJpy(r.covered)}，票價 ${fmtJpy(r.cost)}。`;
+            else line = `涵蓋最多的期間是 ${range}：可涵蓋 ${fmtJpy(r.covered)}，票價 ${fmtJpy(r.cost)}，差 ${fmtJpy(r.shortfall)}。`;
+          }
+          if (r.uncertain > 0) line += ` 另有 ${fmtJpy(r.uncertain)} 屬於混合路段，無法拆分，未計入（補上分段車資後可能改變結果）。`;
+
+          const rides = [];
+          r.chosen.forEach(d => r.perDay[d].rides.forEach(x => rides.push(`<li>${dayName(d)}・${esc(segmentLabel(x.seg))}：${fmtJpy(x.amount)}</li>`)));
+          const detailHtml = rides.length
+            ? `<details class="pass-details"><summary>被涵蓋的路段（${rides.length} 段）</summary><ul>${rides.join("")}</ul></details>`
+            : "";
+
+          const badge = r.verdict === "buy"
+            ? `<span class="pass-badge buy">✅ 划算・省 ${fmtJpy(r.saving)}</span>`
+            : `<span class="pass-badge no">❌ 目前不划算</span>`;
+          const statusBadge = p.status === "official"
+            ? `<span class="src-badge official">官方來源</span>`
+            : `<span class="src-badge unverified">待確認</span>`;
+          const srcLink = p.source ? `<a href="${esc(p.source)}" target="_blank" rel="noopener noreferrer">${esc(p.sourceLabel || "來源")}</a>` : esc(p.sourceLabel || "自訂");
+
+          return `
+            <div class="pass-card verdict-${r.verdict}">
+              <div class="pass-head"><strong>${esc(p.name)}</strong>${badge}</div>
+              <div class="pass-meta">${typeTxt}・${esc(unitTxt)} = ${fmtJpy(r.unitTotal)}（約 ${fmtTwdFromJpy(r.unitTotal)}）</div>
+              <div class="pass-line">${esc(line)}</div>
+              ${detailHtml}
+              <div class="pass-note">${esc(p.note)}</div>
+              <div class="pass-source">${statusBadge} ${srcLink}${p.verified ? "・查證日 " + esc(p.verified) : ""}</div>
+              <div class="pass-card-actions"><button type="button" class="btn-secondary" data-pass-edit="${esc(p.id)}">編輯票券</button></div>
+            </div>`;
+        }).join("");
+
+        const uncertainHtml = uncertainMap.size ? `
+          <div class="pass-alert">
+            <strong>這些混合路段需要補上分段車資，才能精準判斷：</strong>
+            <ul>${Array.from(uncertainMap.values()).map(u => `<li>${esc(segmentLabel(u.seg))}（合計 ${fmtJpy(u.amount)}） <button type="button" class="btn-secondary pass-mini-btn" data-seg-edit="${esc(u.seg.id)}">填分段車資</button></li>`).join("")}</ul>
+          </div>` : "";
+
+        const harukaHtml = harukaSegs.length ? `
+          <div class="pass-alert">
+            <strong>HARUKA 估價提醒：</strong>JR 西日本官網的 HARUKA 優惠單程票（關西機場→京都），2026/11/1 起為 ¥2,700（需在海外購買；不含轉乘地鐵）。你的 ${harukaSegs.length} 個 HARUKA 路段目前每人估價低於這個價格，建議確認。
+            <a href="https://www.westjr.co.jp/global/en/ticket/westqr/haruka/" target="_blank" rel="noopener noreferrer">官方頁面</a>
+            <ul>${harukaSegs.map(s => `<li>${esc(segmentLabel(s))}（每人 ${fmtJpy(toJpy(Number(s.cost) || 0, s.currency || "JPY"))}） <button type="button" class="btn-secondary pass-mini-btn" data-seg-edit="${esc(s.id)}">編輯路段</button></li>`).join("")}</ul>
+          </div>` : "";
+
+        box.innerHTML = `
+          <h2 style="margin-top:0;">🎫 交通特票試算</h2>
+          <p class="pass-intro">把行程裡的付費交通路段（${esc(String(a.results.length))} 張票券逐一比對），看買特票會不會比單程購票便宜。目前交通花費合計 <strong>${fmtJpy(a.transitJpy)}</strong>（約 ${fmtTwdFromJpy(a.transitJpy)}，${travelers} 人）${a.blankSegs ? `，另有 ${a.blankSegs} 段尚未填車資` : ""}。</p>
+          ${verdictHtml}
+          ${harukaHtml}
+          ${uncertainHtml}
+          <div class="pass-list">${cards || `<div style="opacity:0.7;">目前沒有票券，可以按下方「新增自訂票券」。</div>`}</div>
+          <div class="pass-actions">
+            <button type="button" class="btn-primary" id="btn-add-pass">＋ 新增自訂票券</button>
+            <button type="button" class="btn-secondary" id="btn-reset-passes">還原預設票券</button>
+          </div>
+          <p class="pass-disclaimer">試算方式：依路段分段明細的交通方式與路線名稱判斷是否在票券範圍內；單日券只挑「涵蓋金額高於票價」的日子，連續券挑涵蓋最多的連續天數。各票券分開比較，沒有計算多張票券組合購買。票價與適用範圍會調整，購買前請以官方網站為準。</p>`;
+
+        box.querySelectorAll("[data-pass-edit]").forEach(btn => btn.addEventListener("click", () => openPassModal(btn.dataset.passEdit)));
+        box.querySelectorAll("[data-seg-edit]").forEach(btn => btn.addEventListener("click", () => openSegmentModal(btn.dataset.segEdit)));
+        const addBtn = document.getElementById("btn-add-pass");
+        if (addBtn) addBtn.addEventListener("click", () => openPassModal(null));
+        const resetBtn = document.getElementById("btn-reset-passes");
+        if (resetBtn) resetBtn.addEventListener("click", () => {
+          if (!window.confirm("確定要還原成預設票券清單嗎？你新增與修改過的票券會被取代（可按「復原」還原）。")) return;
+          pushUndoSnapshot();
+          tripData.passes = JSON.parse(JSON.stringify(DEFAULT_PASSES));
+          saveTripData(true);
+          renderExpensesPage();
+          showToast("已還原預設票券");
+        });
+      }
+
+      function openPassModal(passId) {
+        const modal = document.getElementById("settings-modal");
+        const passes = getPasses();
+        const editing = passId !== null && passId !== undefined;
+        const p = editing ? passes.find(x => x.id === passId) : null;
+        if (editing && !p) return;
+        const cur = p || { name: "", type: "day", days: 1, price: 0, currency: "JPY", modes: ["subway", "bus"], include: [], exclude: [], note: "", source: "", sourceLabel: "", verified: "", status: "unverified" };
+        document.getElementById("settings-modal-title").textContent = editing ? "✎ 編輯票券" : "＋ 新增自訂票券";
+        document.getElementById("settings-modal-body").innerHTML = `
+          <div class="form-grid">
+            <div class="form-field full">
+              <label for="ps-name">票券名稱</label>
+              <input type="text" id="ps-name" value="${esc(cur.name)}" />
+            </div>
+            <div class="form-field">
+              <label for="ps-type">票券類型</label>
+              <select id="ps-type">
+                <option value="day" ${cur.type === "day" ? "selected" : ""}>單日券（每天各買一張）</option>
+                <option value="window" ${cur.type === "window" ? "selected" : ""}>連續 N 天券</option>
+              </select>
+            </div>
+            <div class="form-field" id="ps-days-wrap" style="${cur.type === "window" ? "" : "display:none;"}">
+              <label for="ps-days">連續天數</label>
+              <input type="number" id="ps-days" min="1" max="31" value="${esc(cur.days)}" />
+            </div>
+            <div class="form-field">
+              <label for="ps-price">票價（每人）</label>
+              <input type="number" id="ps-price" min="0" step="any" value="${esc(cur.price)}" />
+            </div>
+            <div class="form-field">
+              <label for="ps-currency">幣別</label>
+              <select id="ps-currency">
+                <option value="JPY" ${cur.currency === "JPY" ? "selected" : ""}>日圓 JPY</option>
+                <option value="TWD" ${cur.currency === "TWD" ? "selected" : ""}>台幣 TWD</option>
+              </select>
+            </div>
+            <div class="form-field full">
+              <label>適用的交通方式</label>
+              <div class="pass-mode-row">
+                ${PASS_MODE_OPTIONS.map(m => `<label class="pass-mode-opt"><input type="checkbox" name="ps-mode" value="${m.key}" ${cur.modes.includes(m.key) ? "checked" : ""} /> ${esc(m.label)}</label>`).join("")}
+              </div>
+            </div>
+            <div class="form-field full">
+              <label for="ps-include">路線名稱必須包含（用逗號分隔，留白＝不限）</label>
+              <input type="text" id="ps-include" value="${esc(cur.include.join("，"))}" placeholder="例如：JR，HARUKA" />
+            </div>
+            <div class="form-field full">
+              <label for="ps-exclude">路線名稱含有這些字就不適用（用逗號分隔）</label>
+              <input type="text" id="ps-exclude" value="${esc(cur.exclude.join("，"))}" placeholder="例如：近鐵，阪急" />
+            </div>
+            <div class="form-field full">
+              <label for="ps-note">適用範圍與注意事項</label>
+              <textarea id="ps-note" rows="3">${esc(cur.note)}</textarea>
+            </div>
+            <div class="form-field full">
+              <label for="ps-source">來源網址（https）</label>
+              <input type="text" id="ps-source" value="${esc(cur.source)}" />
+            </div>
+            <div class="form-field">
+              <label for="ps-status">資料狀態</label>
+              <select id="ps-status">
+                <option value="unverified" ${cur.status !== "official" ? "selected" : ""}>待確認</option>
+                <option value="official" ${cur.status === "official" ? "selected" : ""}>已在官方來源確認</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="ps-verified">查證日期</label>
+              <input type="date" id="ps-verified" value="${esc(cur.verified)}" />
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap;">
+            ${editing ? `<button type="button" id="ps-delete" class="btn-danger" style="margin-right:auto;">刪除票券</button>` : ""}
+            <button type="button" id="ps-save" class="btn-primary">${editing ? "儲存變更" : "加入清單"}</button>
+          </div>
+        `;
+        modal.classList.add("open");
+        const typeSel = document.getElementById("ps-type");
+        typeSel.addEventListener("change", () => {
+          document.getElementById("ps-days-wrap").style.display = typeSel.value === "window" ? "" : "none";
+        });
+        document.getElementById("ps-save").addEventListener("click", () => {
+          const name = document.getElementById("ps-name").value.trim();
+          if (!name) { showToast("請輸入票券名稱"); return; }
+          const modes = Array.from(document.querySelectorAll('input[name="ps-mode"]:checked')).map(x => x.value);
+          const raw = {
+            id: editing ? p.id : "pass-" + Date.now(),
+            name,
+            type: typeSel.value,
+            days: Number(document.getElementById("ps-days").value) || 1,
+            price: Number(document.getElementById("ps-price").value) || 0,
+            currency: document.getElementById("ps-currency").value,
+            modes,
+            include: document.getElementById("ps-include").value,
+            exclude: document.getElementById("ps-exclude").value,
+            note: document.getElementById("ps-note").value,
+            source: document.getElementById("ps-source").value,
+            sourceLabel: editing ? (p.sourceLabel || "") : "自訂",
+            verified: document.getElementById("ps-verified").value,
+            status: document.getElementById("ps-status").value
+          };
+          const clean = normalizePasses([raw])[0];
+          pushUndoSnapshot();
+          if (editing) {
+            const idx = passes.findIndex(x => x.id === p.id);
+            passes[idx] = clean;
+          } else {
+            passes.push(clean);
+          }
+          saveTripData(true);
+          modal.classList.remove("open");
+          renderExpensesPage();
+          showToast((editing ? "已更新票券：" : "已新增票券：") + name);
+        });
+        const delBtn = document.getElementById("ps-delete");
+        if (delBtn) delBtn.addEventListener("click", () => {
+          if (!window.confirm("確定要刪除這張票券嗎？（可按「復原」還原）")) return;
+          pushUndoSnapshot();
+          tripData.passes = passes.filter(x => x.id !== p.id);
+          saveTripData(true);
+          modal.classList.remove("open");
+          renderExpensesPage();
+          showToast("已刪除票券");
+        });
       }
 
       function renderPackingPage() {
