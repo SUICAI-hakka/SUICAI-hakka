@@ -1602,6 +1602,39 @@
     .pass-note { font-size: 0.78rem; opacity: 0.82; }
     .pass-source { font-size: 0.76rem; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .pass-source a { color: inherit; word-break: break-all; }
+    .pass-best { background: #FFFBEF; border: 2px solid var(--ink); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .pass-best.none { font-size: 0.84rem; background: #F6F4EE; border-style: dashed; }
+    .pb-title { font-weight: 800; font-size: 0.82rem; }
+    .pb-days { font-weight: 800; font-size: 1rem; }
+    .pb-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pb-facts div { display: flex; flex-direction: column; font-size: 0.74rem; }
+    .pb-facts b { font-size: 1.15rem; }
+    .pb-meter { position: relative; height: 14px; border: 2px solid var(--ink); border-radius: 999px; background: #FFFFFF; overflow: visible; }
+    .pb-meter-fill { height: 100%; background: var(--yamabuki); border-radius: 999px; }
+    .pb-meter-fill.ok { background: var(--wakatake); }
+    .pb-meter-line { position: absolute; right: -2px; top: -5px; bottom: -5px; border-right: 3px solid var(--ink); }
+    .pb-meter-line span { position: absolute; right: 4px; top: 100%; font-size: 0.64rem; font-weight: 700; white-space: nowrap; }
+    .pb-result { font-size: 0.88rem; font-weight: 800; margin-top: 8px; }
+    .pb-good { color: #2D6A4F; }
+    .pb-bad { color: var(--alert-red); }
+    .pb-rides-title { font-size: 0.76rem; font-weight: 800; border-top: 2px dashed rgba(62, 58, 57, 0.35); padding-top: 6px; }
+    .pb-day-head { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; margin-top: 2px; }
+    .pb-rides { list-style: none; margin: 3px 0 4px; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+    .pb-rides li { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: 0.78rem; border-top: 1px solid rgba(62, 58, 57, 0.15); padding-top: 3px; }
+    .pb-ride-how { opacity: 0.8; }
+    .pb-ride-amt { font-weight: 800; white-space: nowrap; }
+    .pass-warn { font-size: 0.76rem; background: #FFF1C9; border: 2px dashed var(--ink); border-radius: 10px; padding: 4px 10px; }
+    .pd-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+    .pd-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 0.78rem; }
+    .pd-row.is-best .pd-day { font-weight: 800; }
+    .pd-bar { position: relative; height: 12px; border: 2px solid var(--ink); border-radius: 999px; background: #FFFFFF; overflow: hidden; }
+    .pd-fill { height: 100%; background: rgba(184, 218, 165, 0.9); }
+    .pd-row.is-best .pd-fill { background: var(--yamabuki); }
+    .pd-line { position: absolute; top: -2px; bottom: -2px; border-left: 3px solid var(--ink); }
+    .pd-amt { white-space: nowrap; font-weight: 700; }
+    .pd-amt small { font-weight: 600; opacity: 0.75; margin-left: 4px; }
+    @media (max-width: 600px) { .pb-rides li { grid-template-columns: 1fr auto; } .pb-ride-how { grid-column: 1 / -1; order: 3; } }
+
     .pass-details { font-size: 0.8rem; }
     .pass-details ul { margin: 4px 0 0; padding-left: 18px; }
     .pass-card-actions { display: flex; justify-content: flex-end; }
@@ -4531,6 +4564,10 @@
         return (f ? f.title : "起點") + " → " + (t ? t.title : "終點");
       }
 
+      function transitLabelShort(mode) {
+        return ({ train: "鐵路", subway: "地鐵", bus: "巴士", shinkansen: "新幹線", taxi: "計程車" })[mode] || mode;
+      }
+
       function passMatchesLeg(pass, leg) {
         if (!leg || leg.mode === "walk") return false;
         if (!Array.isArray(pass.modes) || !pass.modes.includes(leg.mode)) return false;
@@ -4544,26 +4581,31 @@
       // 回傳這一段有多少金額（日圓、全體旅客合計）可被票券涵蓋
       function analyzeSegmentForPass(pass, seg) {
         const legs = normalizeSegmentLegs(seg).filter(l => l.mode !== "walk");
-        if (!legs.length || !hasAmount(seg)) return { covered: 0, uncertain: 0, missingFare: 0 };
+        if (!legs.length || !hasAmount(seg)) return { covered: 0, uncertain: 0, missingFare: 0, labels: [] };
         const total = toJpy(getItemExactAmount(seg), seg.currency || "JPY");
-        if (total <= 0) return { covered: 0, uncertain: 0, missingFare: 0 };
+        if (total <= 0) return { covered: 0, uncertain: 0, missingFare: 0, labels: [] };
         const matches = legs.map(l => passMatchesLeg(pass, l));
+        const labels = legs.filter((l, i) => matches[i]).map(l => l.label || transitLabelShort(l.mode));
         const anyFare = legs.some(l => l.fare !== null && l.fare !== undefined);
         if (anyFare) {
           const factor = seg.costType === "per_person" ? (Number(tripData.travelers) || 1) : 1;
+          let used = 0;
           let covered = 0;
-          let missing = 0;
           legs.forEach((l, i) => {
             const hasFare = l.fare !== null && l.fare !== undefined;
-            if (!matches[i]) return;
-            if (!hasFare) { missing++; return; }
-            covered += toJpy((Number(l.fare) || 0) * factor, seg.currency || "JPY");
+            if (!hasFare) return;
+            const a = toJpy((Number(l.fare) || 0) * factor, seg.currency || "JPY");
+            used += a;
+            if (matches[i]) covered += a;
           });
-          return { covered, uncertain: 0, missingFare: missing };
+          // 與每日交通花費一致：總額以路段總費用為準，分段車資加總超過總額時等比例縮小
+          if (used > total && used > 0) covered = covered * (total / used);
+          const missing = legs.filter((l, i) => matches[i] && (l.fare === null || l.fare === undefined)).length;
+          return { covered, uncertain: 0, missingFare: missing, labels };
         }
-        if (matches.every(Boolean)) return { covered: total, uncertain: 0, missingFare: 0 };
-        if (!matches.some(Boolean)) return { covered: 0, uncertain: 0, missingFare: 0 };
-        return { covered: 0, uncertain: total, missingFare: 0 };
+        if (matches.every(Boolean)) return { covered: total, uncertain: 0, missingFare: 0, labels };
+        if (!matches.some(Boolean)) return { covered: 0, uncertain: 0, missingFare: 0, labels: [] };
+        return { covered: 0, uncertain: total, missingFare: 0, labels: [] };
       }
 
       function evaluatePass(pass) {
@@ -4577,7 +4619,7 @@
           const d = Number(seg.dayIndex);
           if (!perDay[d]) return;
           const r = analyzeSegmentForPass(pass, seg);
-          if (r.covered > 0) { perDay[d].covered += r.covered; perDay[d].rides.push({ seg, amount: r.covered }); }
+          if (r.covered > 0) { perDay[d].covered += r.covered; perDay[d].rides.push({ seg, amount: r.covered, labels: r.labels }); }
           if (r.uncertain > 0) { perDay[d].uncertain += r.uncertain; perDay[d].uncertainSegs.push({ seg, amount: r.uncertain }); }
         });
 
@@ -4668,25 +4710,57 @@
           const p = r.pass;
           const unitTxt = `${fmtJpy(r.unitJpy)}／人 × ${r.travelers} 人`;
           const typeTxt = p.type === "day" ? "單日券（可只買需要的那幾天）" : `連續 ${p.days} 天`;
-          const dayName = d => "Day " + (d + 1);
-          let line = "";
-          if (r.passCount === 0) {
-            line = "目前行程裡沒有可以確定被這張票券涵蓋的路段。";
-          } else if (p.type === "day") {
-            const days = r.chosen.map(dayName).join("、");
-            if (r.verdict === "buy") line = `建議使用日：${days}。這幾天可涵蓋 ${fmtJpy(r.covered)}，票價共 ${fmtJpy(r.cost)}。`;
-            else line = `涵蓋最多的是 ${days}：可涵蓋 ${fmtJpy(r.covered)}，需要 ${fmtJpy(r.cost)} 才回本，還差 ${fmtJpy(r.shortfall)}。`;
-          } else {
-            const range = r.chosen.length > 1 ? `${dayName(r.chosen[0])}～${dayName(r.chosen[r.chosen.length - 1])}` : dayName(r.chosen[0]);
-            if (r.verdict === "buy") line = `最佳使用期間：${range}。可涵蓋 ${fmtJpy(r.covered)}，票價 ${fmtJpy(r.cost)}。`;
-            else line = `涵蓋最多的期間是 ${range}：可涵蓋 ${fmtJpy(r.covered)}，票價 ${fmtJpy(r.cost)}，差 ${fmtJpy(r.shortfall)}。`;
-          }
-          if (r.uncertain > 0) line += ` 另有 ${fmtJpy(r.uncertain)} 屬於混合路段，無法拆分，未計入（補上分段車資後可能改變結果）。`;
+          const dayFull = d => `Day ${d + 1}（${esc(tripData.days[d].label)} ${esc(tripData.days[d].weekday)}）`;
+          const shortName = esc(p.name);
 
-          const rides = [];
-          r.chosen.forEach(d => r.perDay[d].rides.forEach(x => rides.push(`<li>${dayName(d)}・${esc(segmentLabel(x.seg))}：${fmtJpy(x.amount)}</li>`)));
-          const detailHtml = rides.length
-            ? `<details class="pass-details"><summary>被涵蓋的路段（${rides.length} 段）</summary><ul>${rides.join("")}</ul></details>`
+          // 最有機會回本的那一天（或連續期間）：花在這張票上多少、哪幾段、各多少
+          let bestHtml = "";
+          if (r.passCount === 0) {
+            bestHtml = `<div class="pass-best none">目前行程裡沒有確定被這張票券涵蓋的路段。</div>`;
+          } else {
+            const focusTitle = p.type === "day"
+              ? (r.verdict === "buy" && r.chosen.length > 1 ? "這幾天用這張票都划算" : "最有機會回本的一天")
+              : `最有機會回本的連續 ${r.chosen.length} 天`;
+            const focusDays = p.type === "day" || r.chosen.length === 1
+              ? r.chosen.map(dayFull).join("、")
+              : `${dayFull(r.chosen[0])} ～ ${dayFull(r.chosen[r.chosen.length - 1])}`;
+            const ratio = r.cost > 0 ? r.covered / r.cost : 0;
+            const meterPct = Math.min(100, ratio * 100);
+            const result = r.verdict === "buy"
+              ? `<span class="pb-good">買票比單程購票省 ${fmtJpy(r.saving)}（約 ${fmtTwdFromJpy(r.saving)}）</span>`
+              : `<span class="pb-bad">還差 ${fmtJpy(r.shortfall)} 才回本</span>`;
+            const groups = r.chosen.map(d => {
+              const day = r.perDay[d];
+              if (!day.rides.length) return "";
+              const lis = day.rides.map(x => `<li><span class="pb-ride-name">${esc(segmentLabel(x.seg))}</span><span class="pb-ride-how">${esc((x.labels || []).join("＋"))}</span><span class="pb-ride-amt">${fmtJpy(x.amount)}</span></li>`).join("");
+              return `<div class="pb-day"><div class="pb-day-head"><strong>${dayFull(d)}</strong><span>小計 ${fmtJpy(day.covered)}</span></div><ul class="pb-rides">${lis}</ul></div>`;
+            }).join("");
+            bestHtml = `
+              <div class="pass-best">
+                <div class="pb-title">🏆 ${focusTitle}</div>
+                <div class="pb-days">${focusDays}</div>
+                <div class="pb-facts">
+                  <div><span>那${r.chosen.length > 1 ? "幾天" : "天"}花在這張票上</span><b>${fmtJpy(r.covered)}</b></div>
+                  <div><span>票價${p.type === "day" && r.chosen.length > 1 ? "（" + r.chosen.length + " 張）" : ""}</span><b>${fmtJpy(r.cost)}</b></div>
+                </div>
+                <div class="pb-meter" role="img" aria-label="涵蓋金額為票價的 ${Math.round(ratio * 100)}%"><div class="pb-meter-fill ${r.verdict === "buy" ? "ok" : ""}" style="width:${meterPct.toFixed(1)}%;"></div><div class="pb-meter-line"><span>回本線</span></div></div>
+                <div class="pb-result">${result}</div>
+                <div class="pb-rides-title">用到「${shortName}」的路段與車資</div>
+                ${groups}
+              </div>`;
+          }
+          const unc = r.uncertain > 0 ? `<div class="pass-warn">另有 ${fmtJpy(r.uncertain)} 屬於混合路段（例如機場接駁），還沒拆分各段車資，未計入；補上分段車資後結果可能改變。</div>` : "";
+
+          // 各天涵蓋金額一覽（收合）
+          const maxCovered = Math.max(r.cost, ...r.perDay.map(x => x.covered), 1);
+          const dayRows = r.perDay.filter(x => x.covered > 0 || x.uncertain > 0).map(x => {
+            const isBest = r.chosen.includes(x.day);
+            const w = Math.min(100, (x.covered / maxCovered) * 100);
+            const costPct = Math.min(100, (r.unitTotal / maxCovered) * 100);
+            return `<div class="pd-row${isBest ? " is-best" : ""}"><span class="pd-day">Day ${x.day + 1}</span><div class="pd-bar"><div class="pd-fill" style="width:${w.toFixed(1)}%;"></div><div class="pd-line" style="left:${costPct.toFixed(1)}%;"></div></div><span class="pd-amt">${x.covered > 0 ? fmtJpy(x.covered) : "—"}${x.uncertain > 0 ? `<small>＋混合 ${fmtJpy(x.uncertain)}</small>` : ""}</span></div>`;
+          }).join("");
+          const overviewHtml = dayRows
+            ? `<details class="pass-details"><summary>各天花在這張票上的金額（豎線＝單張票價）</summary><div class="pd-list">${dayRows}</div></details>`
             : "";
 
           const badge = r.verdict === "buy"
@@ -4701,8 +4775,9 @@
             <div class="pass-card verdict-${r.verdict}">
               <div class="pass-head"><strong>${esc(p.name)}</strong>${badge}</div>
               <div class="pass-meta">${typeTxt}・${esc(unitTxt)} = ${fmtJpy(r.unitTotal)}（約 ${fmtTwdFromJpy(r.unitTotal)}）</div>
-              <div class="pass-line">${esc(line)}</div>
-              ${detailHtml}
+              ${bestHtml}
+              ${unc}
+              ${overviewHtml}
               <div class="pass-note">${esc(p.note)}</div>
               <div class="pass-source">${statusBadge} ${srcLink}${p.verified ? "・查證日 " + esc(p.verified) : ""}</div>
               <div class="pass-card-actions"><button type="button" class="btn-secondary" data-pass-edit="${esc(p.id)}">編輯票券</button></div>
@@ -4724,7 +4799,7 @@
 
         box.innerHTML = `
           <h2 style="margin-top:0;">🎫 交通特票試算</h2>
-          <p class="pass-intro">把行程裡的付費交通路段（${esc(String(a.results.length))} 張票券逐一比對），看買特票會不會比單程購票便宜。目前交通花費合計 <strong>${fmtJpy(a.transitJpy)}</strong>（約 ${fmtTwdFromJpy(a.transitJpy)}，${travelers} 人）${a.blankSegs ? `，另有 ${a.blankSegs} 段尚未填車資` : ""}。</p>
+          <p class="pass-intro">把行程裡的付費交通路段（${esc(String(a.results.length))} 張票券逐一比對），看買特票會不會比單程購票便宜。每張票券卡片會告訴你：哪一天最有機會回本、那天花了多少、是哪幾段路各多少錢。目前交通花費合計 <strong>${fmtJpy(a.transitJpy)}</strong>（約 ${fmtTwdFromJpy(a.transitJpy)}，${travelers} 人）${a.blankSegs ? `，另有 ${a.blankSegs} 段尚未填車資` : ""}。</p>
           ${verdictHtml}
           ${harukaHtml}
           ${uncertainHtml}
