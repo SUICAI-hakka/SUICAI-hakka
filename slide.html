@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>簡報批註工具</title>
+<style>
+:root{--bg:#1b1d22;--bar:#262a32;--fg:#eceef3;--line:#3a4050;--acc:#ffb703}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);overflow:hidden;
+  font:14px/1.4 system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+#stage{position:absolute;inset:0 0 60px 0;display:flex;align-items:center;justify-content:center}
+body.fs #stage{bottom:0}
+#wrap{position:relative;display:none;background:#fff;box-shadow:0 10px 36px #0009}
+#wrap canvas{display:block}
+#ink{position:absolute;left:0;top:0;touch-action:none}
+#drop{text-align:center;padding:48px 40px;border:2px dashed var(--line);border-radius:14px;max-width:min(520px,90vw)}
+#drop.over{border-color:var(--acc)}
+#drop h1{margin:0 0 8px;font-size:22px}
+#drop p{margin:0 0 20px;color:#a9afbd}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:38px;height:38px;padding:0 12px;
+  background:transparent;color:var(--fg);border:1px solid transparent;border-radius:8px;font:inherit;cursor:pointer}
+.btn:hover{background:#ffffff14}
+.btn.on{border-color:var(--acc);background:#ffb70322}
+.btn:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.primary{background:var(--acc);color:#1b1d22;font-weight:600;padding:0 20px}
+.primary:hover{background:#ffc43a}
+#bar{position:fixed;left:0;right:0;bottom:0;height:60px;background:var(--bar);border-top:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;gap:4px;padding:0 8px;overflow-x:auto;transition:opacity .25s}
+body.fs #bar{opacity:.96;border-radius:12px 12px 0 0;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:100%}
+body.fs #bar.idle{opacity:0;pointer-events:none}
+.sep{width:1px;height:26px;background:var(--line);margin:0 6px;flex:none}
+.sw{width:26px;height:26px;min-width:26px;padding:0;border-radius:50%;border:2px solid #0006}
+.sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--acc)}
+#pg{min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+select{height:34px;background:var(--bar);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:0 6px;font:inherit}
+#bar>*{flex:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="drop">
+    <h1>上傳簡報，直接在上面寫字</h1>
+    <p>拖曳 PDF 或圖片到這裡，或按下方按鈕選擇檔案。<br>PowerPoint 請先另存為 PDF。</p>
+    <label class="btn primary" for="file">選擇檔案</label>
+  </div>
+  <div id="wrap"><canvas id="base"></canvas><canvas id="ink"></canvas></div>
+</div>
+
+<div id="bar">
+  <label class="btn" for="file" title="開啟檔案">📂</label>
+  <input id="file" type="file" accept="application/pdf,image/*" multiple hidden>
+  <span class="sep"></span>
+  <button class="btn" id="prev" title="上一頁（←）">◀</button>
+  <span id="pg">0 / 0</span>
+  <button class="btn" id="next" title="下一頁（→ 或空白鍵）">▶</button>
+  <span class="sep"></span>
+  <button class="btn tool on" data-t="pen" title="畫筆（P）">✏️</button>
+  <button class="btn tool" data-t="hl" title="螢光筆（H）">🖍</button>
+  <button class="btn tool" data-t="er" title="橡皮擦（E）">🧽</button>
+  <button class="btn tool" data-t="view" title="瀏覽模式：點左右半邊翻頁（V）">👆</button>
+  <span class="sep"></span>
+  <button class="btn sw on" data-c="#e53935" style="background:#e53935" aria-label="紅"></button>
+  <button class="btn sw" data-c="#1e88e5" style="background:#1e88e5" aria-label="藍"></button>
+  <button class="btn sw" data-c="#43a047" style="background:#43a047" aria-label="綠"></button>
+  <button class="btn sw" data-c="#fdd835" style="background:#fdd835" aria-label="黃"></button>
+  <button class="btn sw" data-c="#111111" style="background:#111" aria-label="黑"></button>
+  <button class="btn sw" data-c="#ffffff" style="background:#fff" aria-label="白"></button>
+  <select id="mult" aria-label="粗細">
+    <option value="0.6">細</option><option value="1" selected>中</option><option value="2">粗</option>
+  </select>
+  <span class="sep"></span>
+  <button class="btn" id="undo" title="復原（Ctrl+Z）">↶</button>
+  <button class="btn" id="clear" title="清除本頁（Delete）">🗑</button>
+  <button class="btn" id="full" title="全螢幕（F）">⛶</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const $=s=>document.querySelector(s);
+const base=$('#base'),ink=$('#ink'),bctx=base.getContext('2d'),ictx=ink.getContext('2d');
+let doc=null,imgs=null,total=0,cur=1,strokes={},tool='pen',color='#e53935',mult=1,token=0,task=null,drawing=null;
+const W0={pen:3,hl:16,er:22};
+
+async function openFiles(list){
+  const files=[...list];if(!files.length)return;
+  const pdf=files.find(f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name));
+  try{
+    if(pdf){
+      doc=await pdfjsLib.getDocument({data:await pdf.arrayBuffer()}).promise;imgs=null;total=doc.numPages;
+    }else{
+      const im=files.filter(f=>f.type.startsWith('image/')).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+      if(!im.length){alert('請選擇 PDF 或圖片檔。PowerPoint 請先另存為 PDF。');return}
+      imgs=await Promise.all(im.map(f=>createImageBitmap(f)));doc=null;total=imgs.length;
+    }
+  }catch(err){alert('檔案無法開啟：'+err.message);return}
+  strokes={};cur=1;
+  $('#drop').style.display='none';$('#wrap').style.display='block';
+  render();
+}
+
+async function render(){
+  if(!doc&&!imgs)return;
+  const t=++token,st=$('#stage'),aw=st.clientWidth-16,ah=st.clientHeight-16,dpr=window.devicePixelRatio||1;
+  if(task){try{task.cancel()}catch(e){}}
+  let w,h,page,vp,bmp;
+  if(doc){
+    page=await doc.getPage(cur);if(t!==token)return;
+    const v=page.getViewport({scale:1}),f=Math.min(aw/v.width,ah/v.height);
+    vp=page.getViewport({scale:f*dpr});w=vp.width;h=vp.height;
+  }else{
+    bmp=imgs[cur-1];const f=Math.min(aw/bmp.width,ah/bmp.height);w=bmp.width*f*dpr;h=bmp.height*f*dpr;
+  }
+  w=Math.round(w);h=Math.round(h);
+  base.width=ink.width=w;base.height=ink.height=h;
+  $('#wrap').style.width=(w/dpr)+'px';$('#wrap').style.height=(h/dpr)+'px';
+  base.style.width=ink.style.width=(w/dpr)+'px';base.style.height=ink.style.height=(h/dpr)+'px';
+  $('#pg').textContent=cur+' / '+total;
+  redraw();
+  if(doc){
+    task=page.render({canvasContext:bctx,viewport:vp});
+    try{await task.promise}catch(e){}
+  }else{
+    bctx.fillStyle='#fff';bctx.fillRect(0,0,w,h);bctx.drawImage(bmp,0,0,w,h);
+  }
+}
+
+function go(n){
+  if(!total)return;
+  n=Math.max(1,Math.min(total,n));
+  if(n===cur)return;
+  cur=n;render();
+}
+
+function redraw(){
+  ictx.clearRect(0,0,ink.width,ink.height);
+  (strokes[cur]||[]).forEach(drawStroke);
+}
+function drawStroke(s){
+  const W=ink.width,H=ink.height,p=s.pts;if(!p.length)return;
+  ictx.save();
+  ictx.lineCap=ictx.lineJoin='round';
+  ictx.lineWidth=s.w*W/1000;
+  ictx.strokeStyle=s.c;
+  if(s.t==='er')ictx.globalCompositeOperation='destination-out';
+  if(s.t==='hl'){ictx.globalAlpha=.38;ictx.lineCap='butt'}
+  ictx.beginPath();
+  ictx.moveTo(p[0][0]*W,p[0][1]*H);
+  if(p.length===1)ictx.lineTo(p[0][0]*W+.01,p[0][1]*H);
+  for(let i=1;i<p.length-1;i++){
+    ictx.quadraticCurveTo(p[i][0]*W,p[i][1]*H,(p[i][0]+p[i+1][0])/2*W,(p[i][1]+p[i+1][1])/2*H);
+  }
+  if(p.length>1){const l=p[p.length-1];ictx.lineTo(l[0]*W,l[1]*H)}
+  ictx.stroke();ictx.restore();
+}
+
+const pt=e=>{const r=ink.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]};
+ink.addEventListener('pointerdown',e=>{
+  if(e.button>0)return;
+  if(tool==='view'){go(cur+(pt(e)[0]>.5?1:-1));return}
+  ink.setPointerCapture(e.pointerId);
+  const s={t:tool,c:color,w:W0[tool]*mult,pts:[pt(e)]};
+  (strokes[cur]=strokes[cur]||[]).push(s);drawing=s;redraw();
+});
+ink.addEventListener('pointermove',e=>{if(drawing){drawing.pts.push(pt(e));redraw()}});
+['pointerup','pointercancel'].forEach(ev=>ink.addEventListener(ev,()=>drawing=null));
+
+function setTool(t){
+  tool=t;
+  document.querySelectorAll('.tool').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  ink.style.cursor=t==='view'?'pointer':'crosshair';
+}
+const undo=()=>{(strokes[cur]||[]).pop();redraw()};
+const clearPage=()=>{strokes[cur]=[];redraw()};
+const toggleFull=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();
+
+document.querySelectorAll('.tool').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
+document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{
+  color=b.dataset.c;
+  document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b));
+  if(tool==='er'||tool==='view')setTool('pen');
+});
+$('#mult').onchange=e=>mult=+e.target.value;
+$('#prev').onclick=()=>go(cur-1);
+$('#next').onclick=()=>go(cur+1);
+$('#undo').onclick=undo;
+$('#clear').onclick=clearPage;
+$('#full').onclick=toggleFull;
+$('#file').onchange=e=>{openFiles(e.target.files);e.target.value=''};
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='SELECT')return;
+  const k=e.key;
+  if(k==='ArrowRight'||k==='PageDown'||k===' '){e.preventDefault();go(cur+1)}
+  else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();go(cur-1)}
+  else if((e.ctrlKey||e.metaKey)&&k.toLowerCase()==='z'){e.preventDefault();undo()}
+  else if(k==='Delete'||k==='Backspace')clearPage();
+  else if(e.ctrlKey||e.metaKey||e.altKey)return;
+  else if(k==='p'||k==='P')setTool('pen');
+  else if(k==='h'||k==='H')setTool('hl');
+  else if(k==='e'||k==='E')setTool('er');
+  else if(k==='v'||k==='V')setTool('view');
+  else if(k==='f'||k==='F')toggleFull();
+});
+
+let idleT;
+function wake(){
+  const bar=$('#bar');bar.classList.remove('idle');clearTimeout(idleT);
+  if(document.fullscreenElement)idleT=setTimeout(()=>bar.classList.add('idle'),2500);
+}
+document.addEventListener('pointermove',wake);
+document.addEventListener('fullscreenchange',()=>{
+  document.body.classList.toggle('fs',!!document.fullscreenElement);wake();setTimeout(render,80);
+});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(render,120)});
+
+const dz=$('#drop');
+window.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+window.addEventListener('dragleave',()=>dz.classList.remove('over'));
+window.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');openFiles(e.dataTransfer.files)});
+setTool('pen');
+</script>
+</body>
+</html>
