@@ -12,10 +12,12 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);overflow:hid
   font:14px/1.4 system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
 #stage{position:absolute;inset:0 0 64px 0;overflow:hidden}
 body.fs #stage{bottom:0}
-#base,#ink{position:absolute;left:0;top:0;width:100%;height:100%;display:none}
+#base,#ink,#laser{position:absolute;left:0;top:0;width:100%;height:100%;display:none}
+#laser{pointer-events:none}
+[hidden]{display:none!important}
 #base{transform-origin:0 0}
 #ink{touch-action:none}
-body.has #base,body.has #ink{display:block}
+body.has #base,body.has #ink,body.has #laser{display:block}
 body.has #drop{display:none}
 #drop{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:48px 40px;
   border:2px dashed var(--line);border-radius:14px;width:min(520px,90vw)}
@@ -56,6 +58,7 @@ select{height:40px;background:var(--bar);color:var(--fg);border:1px solid var(--
   </div>
   <canvas id="base"></canvas>
   <canvas id="ink"></canvas>
+  <canvas id="laser"></canvas>
 </div>
 
 <div id="bar">
@@ -72,6 +75,7 @@ select{height:40px;background:var(--bar);color:var(--fg);border:1px solid var(--
   <button class="btn tool" data-t="rect" title="方形（R）：接近正方形時會自動變正方形">▭</button>
   <button class="btn tool" data-t="ell" title="圓形（O）：接近正圓時會自動變正圓">◯</button>
   <button class="btn tool" data-t="er" title="橡皮擦（E）">🧽</button>
+  <button class="btn tool" data-t="laser" title="雷射筆（B）：紅色光暈＋白色細線，3 秒後自動消失，不會留在頁面上">🔴</button>
   <button class="btn tool" data-t="pan" title="平移畫面（V）">🖐</button>
   <span class="sep"></span>
   <button class="btn sw on" data-c="#e53935" style="background:#e53935" aria-label="紅"></button>
@@ -101,6 +105,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 const $=s=>document.querySelector(s);
 const stage=$('#stage'),base=$('#base'),ink=$('#ink'),bctx=base.getContext('2d'),ictx=ink.getContext('2d');
 const off=document.createElement('canvas'),octx=off.getContext('2d');
+const laserC=$('#laser'),lctx=laserC.getContext('2d');
 let doc=null,imgs=null,curPage=null,total=0,cur=1,nav=0,strokes={};
 let tool='pen',color='#e53935',mult=1,touchDraw=true;
 let pw=0,ph=0;                 // 目前頁面原始尺寸
@@ -131,7 +136,7 @@ async function load(n){
   n=Math.max(1,Math.min(total,n));const t=++nav;
   if(doc){const p=await doc.getPage(n);if(t!==nav)return;curPage=p;const v=p.getViewport({scale:1});pw=v.width;ph=v.height}
   else{const b=imgs[n-1];pw=b.width;ph=b.height}
-  cur=n;V.z=1;clampV();render();
+  cur=n;laser=[];lcur=null;V.z=1;clampV();render();
 }
 const go=n=>{if(total&&n>=1&&n<=total&&n!==cur)load(n)};
 
@@ -173,7 +178,7 @@ async function render(){
   }
   if(t!==token)return;
   if(base.width!==off.width||base.height!==off.height){
-    base.width=ink.width=off.width;base.height=ink.height=off.height;
+    base.width=ink.width=laserC.width=off.width;base.height=ink.height=laserC.height=off.height;
   }
   bctx.clearRect(0,0,base.width,base.height);bctx.drawImage(off,0,0);
   R={w,x,y};setTransform();redraw();updateUI();
@@ -254,6 +259,7 @@ ink.addEventListener('pointerdown',e=>{
     G={k:'pinch',d0:Math.hypot(a.x-b.x,a.y-b.y)||1,z0:V.z,u:(m[0]-V.x)/cw(),v:(m[1]-V.y)/ch()};
     return;
   }
+  if(tool==='laser'){lpush(e,true,true);return}
   if(tool==='pan'||(e.pointerType==='touch'&&!touchDraw)){
     G={k:'pan',id:e.pointerId,sx:e.clientX,sy:e.clientY,vx:V.x,vy:V.y};return;
   }
@@ -261,14 +267,17 @@ ink.addEventListener('pointerdown',e=>{
   beginStroke(e);
 });
 ink.addEventListener('pointermove',e=>{
-  const p=P.get(e.pointerId);if(!p)return;p.x=e.clientX;p.y=e.clientY;
+  const p=P.get(e.pointerId);
+  if(!p){if(tool==='laser'&&e.pointerType==='mouse')lpush(e,false,false);return}
+  p.x=e.clientX;p.y=e.clientY;
   if(G&&G.k==='pinch'&&P.size>=2){
     const [a,b]=[...P.values()],m=rel((a.x+b.x)/2,(a.y+b.y)/2);
     V.z=Math.max(1,Math.min(8,G.z0*Math.hypot(a.x-b.x,a.y-b.y)/G.d0));
     V.x=m[0]-G.u*cw();V.y=m[1]-G.v*ch();clampV();applyLive();
   }else if(G&&G.k==='pan'&&G.id===e.pointerId){
     V.x=G.vx+e.clientX-G.sx;V.y=G.vy+e.clientY-G.sy;clampV();applyLive();
-  }else if(drawing&&drawing.id===e.pointerId)extendStroke(e);
+  }else if(tool==='laser')lpush(e,false,true);
+  else if(drawing&&drawing.id===e.pointerId)extendStroke(e);
 });
 const up=e=>{
   P.delete(e.pointerId);
@@ -281,6 +290,46 @@ ink.addEventListener('wheel',e=>{
   e.preventDefault();const [x,y]=rel(e.clientX,e.clientY);
   zoomAt(x,y,V.z*Math.exp(-e.deltaY*(e.ctrlKey?.01:.0015)));
 },{passive:false});
+
+/* ---------- 雷射筆：暫時性軌跡，數秒後自動淡出（不會存進頁面、也不能復原） ---------- */
+const LASER_COLOR='#ff1f1f',LASER_LIFE=3000,LASER_W=7;   // 固定：紅色光暈、3 秒消失、粗細不受其他筆影響
+let laser=[],lcur=null,lraf=0;
+function lpush(e,fresh,held){
+  const r=stage.getBoundingClientRect(),now=performance.now();
+  if(fresh||!lcur||(!held&&now-lcur.pts[lcur.pts.length-1].t>150)){lcur={pts:[],c:LASER_COLOR};laser.push(lcur)}
+  const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];
+  for(const c of (evs.length?evs:[e])){
+    const x=c.clientX-r.left,y=c.clientY-r.top,l=lcur.pts[lcur.pts.length-1];
+    if(l&&Math.hypot(x-l.x,y-l.y)<1.5)continue;
+    lcur.pts.push({x,y,t:now});
+  }
+  if(!lcur.pts.length)lcur.pts.push({x:e.clientX-r.left,y:e.clientY-r.top,t:now});
+  if(!lraf)lraf=requestAnimationFrame(ldraw);
+}
+function ldraw(){
+  lraf=0;
+  const d=dpr(),now=performance.now(),life=LASER_LIFE,bw=LASER_W;
+  lctx.setTransform(1,0,0,1,0,0);lctx.clearRect(0,0,laserC.width,laserC.height);
+  lctx.setTransform(d,0,0,d,0,0);lctx.lineCap=lctx.lineJoin='round';
+  laser=laser.filter(s=>{s.pts=s.pts.filter(p=>now-p.t<life);return s.pts.length});
+  if(lcur&&!laser.includes(lcur))lcur=null;
+  for(const s of laser){
+    const p=s.pts;
+    for(let i=1;i<p.length;i++){
+      const a=1-(now-p[i].t)/life,k=.35+.65*a;
+      lctx.beginPath();lctx.moveTo(p[i-1].x,p[i-1].y);lctx.lineTo(p[i].x,p[i].y);
+      lctx.strokeStyle=s.c;lctx.globalAlpha=a*.25;lctx.lineWidth=bw*2.6*k;lctx.stroke();
+      lctx.globalAlpha=a*.9;lctx.lineWidth=bw*k;lctx.stroke();
+      lctx.strokeStyle='#fff';lctx.globalAlpha=a*.75;lctx.lineWidth=bw*.3*k;lctx.stroke();
+    }
+    const l=p[p.length-1],a=1-(now-l.t)/life;
+    lctx.globalAlpha=a*.3;lctx.fillStyle=s.c;lctx.beginPath();lctx.arc(l.x,l.y,bw*1.9,0,Math.PI*2);lctx.fill();
+    lctx.globalAlpha=a;lctx.beginPath();lctx.arc(l.x,l.y,bw*.9,0,Math.PI*2);lctx.fill();
+    lctx.fillStyle='#fff';lctx.beginPath();lctx.arc(l.x,l.y,bw*.35,0,Math.PI*2);lctx.fill();
+  }
+  lctx.globalAlpha=1;
+  if(laser.length)lraf=requestAnimationFrame(ldraw);
+}
 
 /* ---------- 工具列 ---------- */
 function setTool(t){
@@ -315,7 +364,7 @@ document.addEventListener('keydown',e=>{
   else if(k==='+'||k==='=')zoomBtn(1.4);
   else if(k==='-')zoomBtn(1/1.4);
   else if(k==='0')zoomAt(SW()/2,SH()/2,1);
-  else{const m={p:'pen',h:'hl',l:'line',r:'rect',o:'ell',e:'er',v:'pan'};if(m[K])setTool(m[K]);else if(K==='f')toggleFull()}
+  else{const m={p:'pen',h:'hl',l:'line',r:'rect',o:'ell',e:'er',b:'laser',v:'pan'};if(m[K])setTool(m[K]);else if(K==='f')toggleFull()}
 });
 
 /* 全螢幕：工具列自動收起，右下角 ☰ 可叫回 */
