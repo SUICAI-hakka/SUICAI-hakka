@@ -75,7 +75,7 @@ select{height:40px;background:var(--bar);color:var(--fg);border:1px solid var(--
   <button class="btn tool" data-t="rect" title="方形（R）：接近正方形時會自動變正方形">▭</button>
   <button class="btn tool" data-t="ell" title="圓形（O）：接近正圓時會自動變正圓">◯</button>
   <button class="btn tool" data-t="er" title="橡皮擦（E）">🧽</button>
-  <button class="btn tool" data-t="laser" title="雷射筆（B）：紅色光暈＋白色細線，3 秒後自動消失，不會留在頁面上">🔴</button>
+  <button class="btn tool" data-t="laser" title="雷射筆（B）：按住左鍵或觸控拖曳，紅色光暈＋白色細線，放開後 1 秒內整條一起淡出，不會留在頁面上">🔴</button>
   <button class="btn tool" data-t="pan" title="平移畫面（V）">🖐</button>
   <span class="sep"></span>
   <button class="btn sw on" data-c="#e53935" style="background:#e53935" aria-label="紅"></button>
@@ -259,7 +259,7 @@ ink.addEventListener('pointerdown',e=>{
     G={k:'pinch',d0:Math.hypot(a.x-b.x,a.y-b.y)||1,z0:V.z,u:(m[0]-V.x)/cw(),v:(m[1]-V.y)/ch()};
     return;
   }
-  if(tool==='laser'){lpush(e,true,true);return}
+  if(tool==='laser'){if(e.button<=0)lpush(e,true);return}
   if(tool==='pan'||(e.pointerType==='touch'&&!touchDraw)){
     G={k:'pan',id:e.pointerId,sx:e.clientX,sy:e.clientY,vx:V.x,vy:V.y};return;
   }
@@ -268,7 +268,7 @@ ink.addEventListener('pointerdown',e=>{
 });
 ink.addEventListener('pointermove',e=>{
   const p=P.get(e.pointerId);
-  if(!p){if(tool==='laser'&&e.pointerType==='mouse')lpush(e,false,false);return}
+  if(!p)return;
   p.x=e.clientX;p.y=e.clientY;
   if(G&&G.k==='pinch'&&P.size>=2){
     const [a,b]=[...P.values()],m=rel((a.x+b.x)/2,(a.y+b.y)/2);
@@ -276,11 +276,13 @@ ink.addEventListener('pointermove',e=>{
     V.x=m[0]-G.u*cw();V.y=m[1]-G.v*ch();clampV();applyLive();
   }else if(G&&G.k==='pan'&&G.id===e.pointerId){
     V.x=G.vx+e.clientX-G.sx;V.y=G.vy+e.clientY-G.sy;clampV();applyLive();
-  }else if(tool==='laser')lpush(e,false,true);
+  }else if(tool==='laser'){if(e.buttons||e.pointerType!=='mouse')lpush(e,false)}
   else if(drawing&&drawing.id===e.pointerId)extendStroke(e);
 });
 const up=e=>{
   P.delete(e.pointerId);
+  for(const s of laser)if(s.id===e.pointerId&&!s.end)s.end=performance.now();
+  if(laser.length&&!lraf)lraf=requestAnimationFrame(ldraw);
   if(G&&(G.k==='pinch'?P.size<2:G.id===e.pointerId))G=null;
   if(drawing&&drawing.id===e.pointerId)endStroke();
 };
@@ -291,12 +293,12 @@ ink.addEventListener('wheel',e=>{
   zoomAt(x,y,V.z*Math.exp(-e.deltaY*(e.ctrlKey?.01:.0015)));
 },{passive:false});
 
-/* ---------- 雷射筆：暫時性軌跡，數秒後自動淡出（不會存進頁面、也不能復原） ---------- */
-const LASER_COLOR='#ff1f1f',LASER_LIFE=3000,LASER_W=7;   // 固定：紅色光暈、3 秒消失、粗細不受其他筆影響
+/* ---------- 雷射筆：按住拖曳畫出軌跡，放開後整條（光暈、紅線、白芯）一起在 1 秒內淡出 ---------- */
+const LASER_COLOR='#ff1f1f',LASER_LIFE=1000,LASER_W=12;   // 固定：紅色光暈、1 秒淡出、粗細
 let laser=[],lcur=null,lraf=0;
-function lpush(e,fresh,held){
+function lpush(e,fresh){
   const r=stage.getBoundingClientRect(),now=performance.now();
-  if(fresh||!lcur||(!held&&now-lcur.pts[lcur.pts.length-1].t>150)){lcur={pts:[],c:LASER_COLOR};laser.push(lcur)}
+  if(fresh||!lcur||lcur.end){lcur={pts:[],c:LASER_COLOR,id:e.pointerId,end:0};laser.push(lcur)}
   const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];
   for(const c of (evs.length?evs:[e])){
     const x=c.clientX-r.left,y=c.clientY-r.top,l=lcur.pts[lcur.pts.length-1];
@@ -308,24 +310,24 @@ function lpush(e,fresh,held){
 }
 function ldraw(){
   lraf=0;
-  const d=dpr(),now=performance.now(),life=LASER_LIFE,bw=LASER_W;
+  const d=dpr(),now=performance.now(),bw=LASER_W,OFF=laserC.width/d+400;
   lctx.setTransform(1,0,0,1,0,0);lctx.clearRect(0,0,laserC.width,laserC.height);
   lctx.setTransform(d,0,0,d,0,0);lctx.lineCap=lctx.lineJoin='round';
-  laser=laser.filter(s=>{s.pts=s.pts.filter(p=>now-p.t<life);return s.pts.length});
+  laser=laser.filter(s=>!s.end||now-s.end<LASER_LIFE);
   if(lcur&&!laser.includes(lcur))lcur=null;
   for(const s of laser){
-    const p=s.pts;
-    for(let i=1;i<p.length;i++){
-      const a=1-(now-p[i].t)/life,k=.35+.65*a;
-      lctx.beginPath();lctx.moveTo(p[i-1].x,p[i-1].y);lctx.lineTo(p[i].x,p[i].y);
-      lctx.strokeStyle=s.c;lctx.globalAlpha=a*.25;lctx.lineWidth=bw*2.6*k;lctx.stroke();
-      lctx.globalAlpha=a*.9;lctx.lineWidth=bw*k;lctx.stroke();
-      lctx.strokeStyle='#fff';lctx.globalAlpha=a*.75;lctx.lineWidth=bw*.3*k;lctx.stroke();
-    }
-    const l=p[p.length-1],a=1-(now-l.t)/life;
-    lctx.globalAlpha=a*.3;lctx.fillStyle=s.c;lctx.beginPath();lctx.arc(l.x,l.y,bw*1.9,0,Math.PI*2);lctx.fill();
-    lctx.globalAlpha=a;lctx.beginPath();lctx.arc(l.x,l.y,bw*.9,0,Math.PI*2);lctx.fill();
-    lctx.fillStyle='#fff';lctx.beginPath();lctx.arc(l.x,l.y,bw*.35,0,Math.PI*2);lctx.fill();
+    const p=s.pts,a=s.end?1-(now-s.end)/LASER_LIFE:1;   // 整條軌跡共用同一個透明度，所以是同時淡出
+    const path=new Path2D();path.moveTo(p[0].x,p[0].y);
+    if(p.length===1)path.lineTo(p[0].x+.01,p[0].y);
+    for(let i=1;i<p.length;i++)path.lineTo(p[i].x,p[i].y);
+    // 光暈：把粗線本體畫到畫面外，只讓它的高斯模糊影子偏移回畫面內（光暈範圍不受下方實心紅線影響）
+    lctx.save();
+    lctx.translate(-OFF,0);lctx.shadowOffsetX=OFF*d;lctx.shadowColor=s.c;lctx.strokeStyle=s.c;lctx.lineWidth=bw;
+    lctx.shadowBlur=44*d;lctx.globalAlpha=a*.55;lctx.stroke(path);   // 大範圍柔光
+    lctx.shadowBlur=16*d;lctx.globalAlpha=a*.9;lctx.stroke(path);    // 貼近線條的柔光
+    lctx.restore();
+    lctx.strokeStyle=s.c;lctx.globalAlpha=a*.9;lctx.lineWidth=bw*.7;lctx.stroke(path);           // 實心紅線（兩側各比白芯窄）
+    lctx.strokeStyle='#fff';lctx.globalAlpha=a*.85;lctx.lineWidth=bw*.3;lctx.stroke(path);   // 白芯
   }
   lctx.globalAlpha=1;
   if(laser.length)lraf=requestAnimationFrame(ldraw);
