@@ -15,6 +15,7 @@ body.fs #stage{bottom:0}
 #base,#ink,#laser{position:absolute;left:0;top:0;width:100%;height:100%;display:none}
 #laser{pointer-events:none}
 [hidden]{display:none!important}
+#busy{position:absolute;right:16px;top:14px;z-index:3;padding:6px 14px;border-radius:999px;background:var(--bar);border:1px solid var(--line);pointer-events:none}
 #base{transform-origin:0 0}
 #ink{touch-action:none}
 body.has #base,body.has #ink,body.has #laser{display:block}
@@ -59,6 +60,7 @@ select{height:40px;background:var(--bar);color:var(--fg);border:1px solid var(--
   <canvas id="base"></canvas>
   <canvas id="ink"></canvas>
   <canvas id="laser"></canvas>
+  <div id="busy" hidden>載入中…</div>
 </div>
 
 <div id="bar">
@@ -110,15 +112,19 @@ let doc=null,imgs=null,curPage=null,total=0,cur=1,nav=0,strokes={};
 let tool='pen',color='#e53935',mult=1,touchDraw=true;
 let pw=0,ph=0;                 // 目前頁面原始尺寸
 let V={z:1,x:0,y:0};           // 檢視：放大倍率、頁面左上角在畫面上的位置（css px）
-let R={w:1,x:0,y:0};           // 底圖最後一次清晰渲染時的狀態
-let token=0,task=null,drawing=null,raf=0,settle=0;
+let token=0,task=null,drawing=null,raf=0,settle=0,pf=0;
 const W0={pen:3,hl:16,er:22,line:3,rect:3,ell:3};
-const dpr=()=>window.devicePixelRatio||1;
+// 畫布像素數量設上限（約 900 萬點），避免大螢幕 + 高 dpr 時畫布太大而變慢
+const dpr=()=>Math.max(1,Math.min(window.devicePixelRatio||1,Math.sqrt(9e6/((stage.clientWidth*stage.clientHeight)||1))));
 const SW=()=>stage.clientWidth,SH=()=>stage.clientHeight;
 const fit=()=>Math.min((SW()-24)/pw,(SH()-24)/ph);
 const cw=()=>pw*fit()*V.z,ch=()=>ph*fit()*V.z;
 
 /* ---------- 開檔與換頁 ---------- */
+// 加速重點：每一頁先畫成一張「整頁底圖」存起來（並在背景預先畫好前後頁）。
+// 翻頁、縮小、移動時直接把底圖貼上去，不必重新解析 PDF；只有放大時才另外重畫清晰版。
+const cache=new Map(),pend=new Map();let gen=0,E=null;
+const busy=on=>{$('#busy').hidden=!on};
 async function openFiles(list){
   const files=[...list];if(!files.length)return;
   const pdf=files.find(f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name));
@@ -130,15 +136,48 @@ async function openFiles(list){
       imgs=await Promise.all(im.map(f=>createImageBitmap(f)));doc=null;total=imgs.length;
     }
   }catch(err){alert('檔案無法開啟：'+err.message);return}
-  strokes={};document.body.classList.add('has');load(1);
+  strokes={};gen++;cache.clear();pend.clear();E=null;pw=0;
+  document.body.classList.add('has');load(1);
+}
+function pageBmp(n){
+  if(cache.has(n)){const e=cache.get(n);cache.delete(n);cache.set(n,e);return Promise.resolve(e)}
+  if(pend.has(n))return pend.get(n);
+  const g=gen;
+  const pr=(async()=>{
+    const page=await doc.getPage(n),v=page.getViewport({scale:1});
+    const f=Math.min((SW()-24)/v.width,(SH()-24)/v.height)*dpr();
+    const c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(v.width*f));c.height=Math.max(1,Math.round(v.height*f));
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+    await page.render({canvasContext:x,viewport:page.getViewport({scale:f})}).promise;
+    const e={c,page,pw:v.width,ph:v.height};
+    if(g===gen){cache.set(n,e);while(cache.size>4)cache.delete(cache.keys().next().value)}
+    return e;
+  })();
+  pend.set(n,pr);
+  pr.then(()=>pend.delete(n),()=>pend.delete(n));
+  return pr;
+}
+async function prefetchAround(n,t){
+  for(const m of [n+1,n-1]){
+    if(t!==nav)return;
+    if(m>=1&&m<=total&&!cache.has(m)){try{await pageBmp(m)}catch(e){}}
+  }
 }
 async function load(n){
   n=Math.max(1,Math.min(total,n));const t=++nav;
-  if(doc){const p=await doc.getPage(n);if(t!==nav)return;curPage=p;const v=p.getViewport({scale:1});pw=v.width;ph=v.height}
-  else{const b=imgs[n-1];pw=b.width;ph=b.height}
-  cur=n;laser=[];lcur=null;V.z=1;clampV();render();
+  if(doc){
+    if(!cache.has(n))busy(true);
+    let e;try{e=await pageBmp(n)}catch(err){if(t===nav)busy(false);return}
+    if(t!==nav)return;
+    busy(false);E=e;curPage=e.page;pw=e.pw;ph=e.ph;
+  }else{const b=imgs[n-1];pw=b.width;ph=b.height}
+  token++;if(task){try{task.cancel()}catch(e){}task=null}
+  cur=n;laser=[];lcur=null;V.z=1;clampV();paint();redraw();updateUI();
+  if(doc)setTimeout(()=>{if(t===nav)prefetchAround(n,t)},60);
 }
 const go=n=>{if(total&&n>=1&&n<=total&&n!==cur)load(n)};
+let rf;function refit(){clearTimeout(rf);rf=setTimeout(()=>{if(!pw)return;gen++;cache.clear();pend.clear();load(cur)},150)}
 
 /* ---------- 檢視（縮放、平移） ---------- */
 function clampV(){
@@ -150,38 +189,34 @@ function zoomAt(cx,cy,z){
   z=Math.max(1,Math.min(8,z));const u=(cx-V.x)/cw(),v=(cy-V.y)/ch();
   V.z=z;V.x=cx-u*cw();V.y=cy-v*ch();clampV();applyLive();
 }
-function setTransform(){
-  const k=cw()/R.w;
-  base.style.transform=`translate(${V.x-R.x*k}px,${V.y-R.y*k}px) scale(${k})`;
-}
-function applyLive(){        // 手勢進行中：底圖用 CSS 即時縮放，筆跡向量即時重畫，停手後再清晰重繪
-  setTransform();sched();updateUI();
-  clearTimeout(settle);settle=setTimeout(render,140);
-}
-const sched=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;redraw()})};
 function updateUI(){$('#pg').textContent=cur+' / '+total;$('#zl').textContent=Math.round(V.z*100)+'%'}
 
-/* ---------- 渲染 ---------- */
-async function render(){
+// 立刻用整頁底圖貼到目前的縮放與位置（幾乎零延遲，放大時會暫時模糊）
+function paint(){
   if(!total||!pw)return;
-  const t=++token,d=dpr(),W=SW(),H=SH(),w=cw(),h=ch(),x=V.x,y=V.y;
+  const d=dpr(),Wd=Math.round(SW()*d),Hd=Math.round(SH()*d);
+  if(base.width!==Wd||base.height!==Hd){base.width=ink.width=laserC.width=Wd;base.height=ink.height=laserC.height=Hd}
+  bctx.setTransform(1,0,0,1,0,0);bctx.clearRect(0,0,Wd,Hd);
+  bctx.imageSmoothingQuality='high';
+  bctx.drawImage(doc?E.c:imgs[cur-1],V.x*d,V.y*d,cw()*d,ch()*d);
+}
+function applyLive(){        // 手勢進行中
+  token++;if(task){try{task.cancel()}catch(e){}task=null}   // 停掉進行中的清晰重畫，讓畫面先跟手
+  if(!pf)pf=requestAnimationFrame(()=>{pf=0;paint();redraw();updateUI()});
+  clearTimeout(settle);settle=setTimeout(crisp,90);
+}
+// 放大後停手：只針對目前看到的範圍重畫清晰版（圖片檔本身是原圖，不需要）
+async function crisp(){
+  if(!doc||!E||V.z<1.06)return;
+  const t=++token,d=dpr(),Wd=Math.round(SW()*d),Hd=Math.round(SH()*d),w=cw(),x=V.x,y=V.y,page=curPage;
   if(task){try{task.cancel()}catch(e){}task=null}
-  off.width=Math.round(W*d);off.height=Math.round(H*d);
-  octx.save();octx.shadowColor='#000a';octx.shadowBlur=24*d;octx.fillStyle='#fff';
-  octx.fillRect(x*d,y*d,w*d,h*d);octx.restore();
-  if(doc&&curPage){
-    const vp=curPage.getViewport({scale:w/pw*d});
-    task=curPage.render({canvasContext:octx,viewport:vp,transform:[1,0,0,1,x*d,y*d]});
-    try{await task.promise}catch(e){return}
-  }else if(imgs){
-    octx.imageSmoothingQuality='high';octx.drawImage(imgs[cur-1],x*d,y*d,w*d,h*d);
-  }
+  if(off.width!==Wd||off.height!==Hd){off.width=Wd;off.height=Hd}
+  octx.setTransform(1,0,0,1,0,0);octx.clearRect(0,0,Wd,Hd);
+  octx.fillStyle='#fff';octx.fillRect(x*d,y*d,w*d,ch()*d);
+  task=page.render({canvasContext:octx,viewport:page.getViewport({scale:w/pw*d}),transform:[1,0,0,1,x*d,y*d]});
+  try{await task.promise}catch(e){return}
   if(t!==token)return;
-  if(base.width!==off.width||base.height!==off.height){
-    base.width=ink.width=laserC.width=off.width;base.height=ink.height=laserC.height=off.height;
-  }
-  bctx.clearRect(0,0,base.width,base.height);bctx.drawImage(off,0,0);
-  R={w,x,y};setTransform();redraw();updateUI();
+  bctx.setTransform(1,0,0,1,0,0);bctx.clearRect(0,0,base.width,base.height);bctx.drawImage(off,0,0);
 }
 
 /* ---------- 筆跡 ---------- */
@@ -382,9 +417,9 @@ document.addEventListener('pointermove',e=>{
 });
 document.addEventListener('fullscreenchange',()=>{
   document.body.classList.toggle('fs',!!document.fullscreenElement);showBar();
-  setTimeout(()=>{if(pw){clampV();render()}},120);
+  setTimeout(()=>{refit()},120);
 });
-let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(pw){clampV();render()}},120)});
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{refit()},120)});
 
 const dz=$('#drop');
 window.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
