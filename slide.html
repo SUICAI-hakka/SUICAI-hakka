@@ -12,13 +12,13 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);overflow:hid
   font:14px/1.4 system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
 #stage{position:absolute;inset:0 0 64px 0;overflow:hidden}
 body.fs #stage{bottom:0}
-#base,#ink,#laser{position:absolute;left:0;top:0;width:100%;height:100%;display:none}
-#laser{pointer-events:none}
+#base,#ink,#live,#laser{position:absolute;left:0;top:0;width:100%;height:100%;display:none}
+#live,#laser{pointer-events:none}
 [hidden]{display:none!important}
 #busy{position:absolute;right:16px;top:14px;z-index:3;padding:6px 14px;border-radius:999px;background:var(--bar);border:1px solid var(--line);pointer-events:none}
 #base{transform-origin:0 0}
 #ink{touch-action:none}
-body.has #base,body.has #ink,body.has #laser{display:block}
+body.has #base,body.has #ink,body.has #live,body.has #laser{display:block}
 body.has #drop{display:none}
 #drop{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:48px 40px;
   border:2px dashed var(--line);border-radius:14px;width:min(520px,90vw)}
@@ -59,6 +59,7 @@ select{height:40px;background:var(--bar);color:var(--fg);border:1px solid var(--
   </div>
   <canvas id="base"></canvas>
   <canvas id="ink"></canvas>
+  <canvas id="live"></canvas>
   <canvas id="laser"></canvas>
   <div id="busy" hidden>載入中…</div>
 </div>
@@ -107,7 +108,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 const $=s=>document.querySelector(s);
 const stage=$('#stage'),base=$('#base'),ink=$('#ink'),bctx=base.getContext('2d'),ictx=ink.getContext('2d');
 const off=document.createElement('canvas'),octx=off.getContext('2d');
-const laserC=$('#laser'),lctx=laserC.getContext('2d');
+const laserC=$('#laser'),lctx=laserC.getContext('2d'),live=$('#live'),vctx=live.getContext('2d');
 let doc=null,imgs=null,curPage=null,total=0,cur=1,nav=0,strokes={};
 let tool='pen',color='#e53935',mult=1,touchDraw=true;
 let pw=0,ph=0;                 // 目前頁面原始尺寸
@@ -201,7 +202,7 @@ function updateUI(){$('#pg').textContent=cur+' / '+total;$('#zl').textContent=Ma
 function paint(){
   if(!total||!pw)return;
   const d=dpr(),Wd=Math.round(SW()*d),Hd=Math.round(SH()*d);
-  if(base.width!==Wd||base.height!==Hd){base.width=ink.width=laserC.width=Wd;base.height=ink.height=laserC.height=Hd}
+  if(base.width!==Wd||base.height!==Hd){base.width=ink.width=live.width=laserC.width=Wd;base.height=ink.height=live.height=laserC.height=Hd}
   bctx.setTransform(1,0,0,1,0,0);bctx.clearRect(0,0,Wd,Hd);
   bctx.imageSmoothingQuality=V.z>1.02?'medium':'high';
   bctx.drawImage(doc?E.c:imgs[cur-1],V.x*d,V.y*d,cw()*d,ch()*d);
@@ -233,34 +234,60 @@ function redraw(){
   const d=dpr();
   ictx.setTransform(1,0,0,1,0,0);ictx.clearRect(0,0,ink.width,ink.height);
   ictx.setTransform(d,0,0,d,0,0);
-  (strokes[cur]||[]).forEach(drawStroke);
+  for(const s of (strokes[cur]||[])){
+    if(s===drawing&&s.t!=='pen'&&s.t!=='er')continue;   // 正在畫的螢光筆／圖形在即時層，不重複畫
+    drawStroke(s,ictx);
+  }
 }
-function drawStroke(s){
+function drawStroke(s,c){
   const w=cw(),h=ch(),X=u=>V.x+u*w,Y=v=>V.y+v*h,p=s.pts;if(!p.length)return;
-  ictx.save();
-  ictx.lineCap=ictx.lineJoin='round';ictx.lineWidth=s.w*w/1000;ictx.strokeStyle=s.c;
-  if(s.t==='er')ictx.globalCompositeOperation='destination-out';
-  if(s.t==='hl'){ictx.globalAlpha=.38;ictx.lineCap='butt'}
-  ictx.beginPath();
-  if(s.t==='line'){ictx.moveTo(X(p[0][0]),Y(p[0][1]));ictx.lineTo(X(p[1][0]),Y(p[1][1]))}
-  else if(s.t==='rect'){ictx.rect(X(p[0][0]),Y(p[0][1]),(p[1][0]-p[0][0])*w,(p[1][1]-p[0][1])*h)}
+  c.save();
+  c.lineCap=c.lineJoin='round';c.lineWidth=s.w*w/1000;c.strokeStyle=s.c;
+  if(s.t==='er')c.globalCompositeOperation='destination-out';
+  if(s.t==='hl'){c.globalAlpha=.38;c.lineCap='butt'}
+  c.beginPath();
+  if(s.t==='line'){c.moveTo(X(p[0][0]),Y(p[0][1]));c.lineTo(X(p[1][0]),Y(p[1][1]))}
+  else if(s.t==='rect'){c.rect(X(p[0][0]),Y(p[0][1]),(p[1][0]-p[0][0])*w,(p[1][1]-p[0][1])*h)}
   else if(s.t==='ell'){
     const cx=(X(p[0][0])+X(p[1][0]))/2,cy=(Y(p[0][1])+Y(p[1][1]))/2;
-    ictx.ellipse(cx,cy,Math.abs(p[1][0]-p[0][0])*w/2,Math.abs(p[1][1]-p[0][1])*h/2,0,0,Math.PI*2);
+    c.ellipse(cx,cy,Math.abs(p[1][0]-p[0][0])*w/2,Math.abs(p[1][1]-p[0][1])*h/2,0,0,Math.PI*2);
   }else{
-    ictx.moveTo(X(p[0][0]),Y(p[0][1]));
-    if(p.length===1)ictx.lineTo(X(p[0][0])+.01,Y(p[0][1]));
-    for(let i=1;i<p.length-1;i++)ictx.quadraticCurveTo(X(p[i][0]),Y(p[i][1]),X((p[i][0]+p[i+1][0])/2),Y((p[i][1]+p[i+1][1])/2));
-    if(p.length>1){const l=p[p.length-1];ictx.lineTo(X(l[0]),Y(l[1]))}
+    c.moveTo(X(p[0][0]),Y(p[0][1]));
+    if(p.length===1)c.lineTo(X(p[0][0])+.01,Y(p[0][1]));
+    for(let i=1;i<p.length-1;i++)c.quadraticCurveTo(X(p[i][0]),Y(p[i][1]),X((p[i][0]+p[i+1][0])/2),Y((p[i][1]+p[i+1][1])/2));
+    if(p.length>1){const l=p[p.length-1];c.lineTo(X(l[0]),Y(l[1]))}
   }
-  ictx.stroke();ictx.restore();
+  c.stroke();c.restore();
+}
+// 即時書寫：畫筆、橡皮擦只把「新增的線段」直接補畫在筆跡層；螢光筆與圖形只重畫這一筆到即時層。
+// 都不必重畫整頁所有筆跡，所以筆一碰到就立刻出現。
+function incDraw(s,final){
+  const p=s.pts,n=p.length,d=dpr(),w=cw(),h=ch(),X=u=>V.x+u*w,Y=v=>V.y+v*h,c=ictx;
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  c.save();c.setTransform(d,0,0,d,0,0);
+  c.lineCap=c.lineJoin='round';c.lineWidth=s.w*w/1000;c.strokeStyle=s.c;
+  if(s.t==='er')c.globalCompositeOperation='destination-out';
+  c.beginPath();
+  if(!s.n){c.moveTo(X(p[0][0]),Y(p[0][1]));c.lineTo(X(p[0][0])+.01,Y(p[0][1]));s.n=1}
+  for(let i=s.n;i<n;i++){
+    const a=i>=2?mid(p[i-2],p[i-1]):p[0],b=mid(p[i-1],p[i]);
+    c.moveTo(X(a[0]),Y(a[1]));c.quadraticCurveTo(X(p[i-1][0]),Y(p[i-1][1]),X(b[0]),Y(b[1]));
+  }
+  if(n>s.n)s.n=n;
+  if(final&&n>=2){const a=mid(p[n-2],p[n-1]);c.moveTo(X(a[0]),Y(a[1]));c.lineTo(X(p[n-1][0]),Y(p[n-1][1]))}
+  c.stroke();c.restore();
+}
+function clearLive(){vctx.setTransform(1,0,0,1,0,0);vctx.clearRect(0,0,live.width,live.height)}
+function paintLive(s){
+  if(s.t==='pen'||s.t==='er'){incDraw(s);return}
+  const d=dpr();clearLive();vctx.setTransform(d,0,0,d,0,0);drawStroke(s,vctx);
 }
 const pt=e=>{const r=stage.getBoundingClientRect();return[(e.clientX-r.left-V.x)/cw(),(e.clientY-r.top-V.y)/ch()]};
 const isShape=t=>t==='line'||t==='rect'||t==='ell';
 
 function beginStroke(e){
   const q=pt(e),s={t:tool,c:color,w:W0[tool]*mult,pts:isShape(tool)?[q,q.slice()]:[q],id:e.pointerId,t0:performance.now()};
-  (strokes[cur]=strokes[cur]||[]).push(s);drawing=s;sched();
+  (strokes[cur]=strokes[cur]||[]).push(s);drawing=s;paintLive(s);
 }
 function extendStroke(e){
   const s=drawing;
@@ -276,17 +303,18 @@ function extendStroke(e){
     }
     s.pts[1]=[a[0]+dx/w,a[1]+dy/h];
   }
-  sched();
+  paintLive(s);
 }
 function endStroke(){
   const s=drawing;drawing=null;if(!s)return;
-  if(isShape(s.t)){
-    const dx=(s.pts[1][0]-s.pts[0][0])*cw(),dy=(s.pts[1][1]-s.pts[0][1])*ch();
-    if(Math.hypot(dx,dy)<4){const L=strokes[cur];L.splice(L.indexOf(s),1);sched()}
-  }
+  if(s.t==='pen'||s.t==='er'){incDraw(s,true);return}
+  const tiny=isShape(s.t)&&Math.hypot((s.pts[1][0]-s.pts[0][0])*cw(),(s.pts[1][1]-s.pts[0][1])*ch())<4;
+  if(tiny){const L=strokes[cur];L.splice(L.indexOf(s),1)}
+  else{const d=dpr();ictx.setTransform(d,0,0,d,0,0);drawStroke(s,ictx)}   // 放開時把這一筆正式畫進筆跡層
+  clearLive();
 }
 function cancelStroke(){
-  if(!drawing)return;const L=strokes[cur];L.splice(L.indexOf(drawing),1);drawing=null;sched();
+  if(!drawing)return;const L=strokes[cur];L.splice(L.indexOf(drawing),1);drawing=null;clearLive();sched();
 }
 
 /* ---------- 指標事件：筆／滑鼠寫字，手指平移縮放，雙指縮放 ---------- */
