@@ -123,7 +123,8 @@ const cw=()=>pw*fit()*V.z,ch=()=>ph*fit()*V.z;
 /* ---------- 開檔與換頁 ---------- */
 // 加速重點：每一頁先畫成一張「整頁底圖」存起來（並在背景預先畫好前後頁）。
 // 翻頁、縮小、移動時直接把底圖貼上去，不必重新解析 PDF；只有放大時才另外重畫清晰版。
-const cache=new Map(),pend=new Map();let gen=0,E=null;
+const cache=new Map(),pend=new Map(),pfTasks=new Set();let gen=0,E=null,lastGesture=0;
+const cancelPrefetch=()=>{for(const t of pfTasks){try{t.cancel()}catch(e){}}pfTasks.clear()};   // 使用者一開始放大或移動，就停掉背景預載，把運算資源讓給清晰重畫
 const busy=on=>{$('#busy').hidden=!on};
 async function openFiles(list){
   const files=[...list];if(!files.length)return;
@@ -139,7 +140,7 @@ async function openFiles(list){
   strokes={};gen++;cache.clear();pend.clear();E=null;pw=0;
   document.body.classList.add('has');load(1);
 }
-function pageBmp(n){
+function pageBmp(n,low){
   if(cache.has(n)){const e=cache.get(n);cache.delete(n);cache.set(n,e);return Promise.resolve(e)}
   if(pend.has(n))return pend.get(n);
   const g=gen;
@@ -149,7 +150,9 @@ function pageBmp(n){
     const c=document.createElement('canvas');
     c.width=Math.max(1,Math.round(v.width*f));c.height=Math.max(1,Math.round(v.height*f));
     const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
-    await page.render({canvasContext:x,viewport:page.getViewport({scale:f})}).promise;
+    const rt=page.render({canvasContext:x,viewport:page.getViewport({scale:f})});
+    if(low)pfTasks.add(rt);
+    try{await rt.promise}finally{pfTasks.delete(rt)}
     const e={c,page,pw:v.width,ph:v.height};
     if(g===gen){cache.set(n,e);while(cache.size>4)cache.delete(cache.keys().next().value)}
     return e;
@@ -160,15 +163,18 @@ function pageBmp(n){
 }
 async function prefetchAround(n,t){
   for(const m of [n+1,n-1]){
-    if(t!==nav)return;
-    if(m>=1&&m<=total&&!cache.has(m)){try{await pageBmp(m)}catch(e){}}
+    if(m<1||m>total||cache.has(m))continue;
+    while(performance.now()-lastGesture<400){await new Promise(r=>setTimeout(r,200));if(t!==nav)return}   // 剛操作完先等一下
+    if(t!==nav||V.z>=1.06)return;   // 換頁了，或正在放大檢視時，不預載
+    try{await pageBmp(m,true)}catch(e){}
   }
 }
 async function load(n){
   n=Math.max(1,Math.min(total,n));const t=++nav;
   if(doc){
     if(!cache.has(n))busy(true);
-    let e;try{e=await pageBmp(n)}catch(err){if(t===nav)busy(false);return}
+    let e;
+    try{e=await pageBmp(n)}catch(err){try{e=await pageBmp(n)}catch(err2){if(t===nav)busy(false);return}}   // 若剛好被預載取消，就重畫一次
     if(t!==nav)return;
     busy(false);E=e;curPage=e.page;pw=e.pw;ph=e.ph;
   }else{const b=imgs[n-1];pw=b.width;ph=b.height}
@@ -197,17 +203,20 @@ function paint(){
   const d=dpr(),Wd=Math.round(SW()*d),Hd=Math.round(SH()*d);
   if(base.width!==Wd||base.height!==Hd){base.width=ink.width=laserC.width=Wd;base.height=ink.height=laserC.height=Hd}
   bctx.setTransform(1,0,0,1,0,0);bctx.clearRect(0,0,Wd,Hd);
-  bctx.imageSmoothingQuality='high';
+  bctx.imageSmoothingQuality=V.z>1.02?'medium':'high';
   bctx.drawImage(doc?E.c:imgs[cur-1],V.x*d,V.y*d,cw()*d,ch()*d);
 }
 function applyLive(){        // 手勢進行中
+  lastGesture=performance.now();cancelPrefetch();
   token++;if(task){try{task.cancel()}catch(e){}task=null}   // 停掉進行中的清晰重畫，讓畫面先跟手
   if(!pf)pf=requestAnimationFrame(()=>{pf=0;paint();redraw();updateUI()});
-  clearTimeout(settle);settle=setTimeout(crisp,90);
+  clearTimeout(settle);settle=setTimeout(crisp,60);
 }
 // 放大後停手：只針對目前看到的範圍重畫清晰版（圖片檔本身是原圖，不需要）
 async function crisp(){
-  if(!doc||!E||V.z<1.06)return;
+  if(!doc||!E)return;
+  if(V.z<1.06){setTimeout(()=>prefetchAround(cur,nav),500);return}
+  cancelPrefetch();
   const t=++token,d=dpr(),Wd=Math.round(SW()*d),Hd=Math.round(SH()*d),w=cw(),x=V.x,y=V.y,page=curPage;
   if(task){try{task.cancel()}catch(e){}task=null}
   if(off.width!==Wd||off.height!==Hd){off.width=Wd;off.height=Hd}
