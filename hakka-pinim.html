@@ -39,11 +39,14 @@ button.alt{background:transparent;color:var(--accent)}
 #msg{font-size:.88rem;color:var(--hailu);min-height:1.3em;margin-top:8px}
 #out{background:#fff;color:#1d2433;border:1px solid var(--line);border-radius:8px;padding:16px;min-height:80px}
 #stage{position:relative}
-#stage:fullscreen,#stage.fs{background:#fff;overflow:auto;padding:24px;width:100%;height:100%}
+#stage:fullscreen,#stage.fs{background:#fff;overflow:auto;padding:64px 24px 24px;width:100%;height:100%}
 #stage.fs{position:fixed;inset:0;z-index:99}
 #stage:fullscreen #out,#stage.fs #out{border:0;min-height:0;padding:8px 8px 48px}
-#exit{display:none;position:fixed;top:12px;right:12px;z-index:100;opacity:.85}
-#stage:fullscreen #exit,#stage.fs #exit{display:block}
+#fsbar{display:none;position:fixed;top:10px;right:10px;z-index:100;align-items:center;gap:6px;
+  padding:6px;background:rgba(255,255,255,.95);border:1px solid #d9d3c7;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+#stage:fullscreen #fsbar,#stage.fs #fsbar{display:flex}
+#fsbar button{padding:4px 10px;min-width:36px}
+#zl{min-width:48px;text-align:center;font-size:.9rem;color:#1d2433;font-variant-numeric:tabular-nums}
 #out .warn{color:#b3402a;font-size:.85rem;margin:0 0 4px}
 table.h{border-collapse:collapse;margin:0 0 18px;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
 table.h td{padding:2px 6px;text-align:center;white-space:nowrap}
@@ -76,13 +79,21 @@ tr.hl td.lab{color:#b3402a}
       <button id="go">產生對照</button>
       <button id="copy" class="alt">複製結果</button>
       <button id="full" class="alt">全螢幕</button>
+      <button id="png" class="alt">匯出圖片</button>
       <button id="clr" class="alt">清空</button>
     </div>
     <div id="msg" role="status"></div>
   </section>
 
   <div id="stage">
-    <button id="exit" type="button">離開全螢幕</button>
+    <div id="fsbar">
+      <button id="zo" type="button" class="alt" aria-label="縮小">－</button>
+      <span id="zl" aria-live="polite">100%</span>
+      <button id="zi" type="button" class="alt" aria-label="放大">＋</button>
+      <button id="zr" type="button" class="alt">還原</button>
+      <button id="png2" type="button" class="alt">匯出圖片</button>
+      <button id="exit" type="button">離開全螢幕</button>
+    </div>
     <section id="out" aria-live="polite"></section>
   </div>
 </main>
@@ -170,6 +181,70 @@ function render(){
   $('msg').textContent = '';
 }
 
+async function exportPng(){
+  const per = Math.max(2, Math.min(30, parseInt($('per').value) || 8));
+  const lines = id => $(id).value.replace(/\r/g,'').split('\n');
+  const A = lines('sx'), H = lines('hz'), B = lines('hl');
+  const chunks = [];
+  for (let k = 0; k < H.length; k++){
+    if (!H[k].trim()) continue;
+    const cells = toCells(A[k] || '', H[k], B[k] || '');
+    for (let i = 0; i < cells.length; i += per) chunks.push(cells.slice(i, i + per));
+  }
+  if (!chunks.length){ $('msg').textContent = '尚無內容可匯出。'; return; }
+  try{ await document.fonts.ready; }catch(_){}
+
+  const F_PY = `15px ${FONT}`, F_HZ = `27px ${FONT}`, F_LB = `700 13px ${FONT}`;
+  const PAD = 28, GAP = 18, RH = [26, 46, 26];
+  const m = document.createElement('canvas').getContext('2d');
+  m.font = F_PY;
+  let colW = 44;
+  chunks.forEach(seg => seg.forEach(x => {
+    colW = Math.max(colW, Math.ceil(Math.max(m.measureText(x.s).width, m.measureText(x.l).width)) + 14);
+  }));
+  const maxCols = Math.max(...chunks.map(c => c.length));
+  const tableH = RH[0] + RH[1] + RH[2];
+  const W = PAD * 2 + LAB_W + colW * maxCols;
+  const Hh = PAD * 2 + chunks.length * tableH + (chunks.length - 1) * GAP;
+  const scale = Math.max(1, Math.min(3, 16000 / Math.max(W, Hh), Math.sqrt(100e6 / (W * Hh))));
+
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(W * scale); cv.height = Math.round(Hh * scale);
+  const c = cv.getContext('2d');
+  c.scale(scale, scale);
+  c.fillStyle = '#fff'; c.fillRect(0, 0, W, Hh);
+  c.textBaseline = 'middle';
+
+  chunks.forEach((seg, n) => {
+    const y0 = PAD + n * (tableH + GAP);
+    const rows = [
+      {key:'s', lab:'四縣腔', color:'#1f5fa8', font:F_PY, h:RH[0], lc:'#1f5fa8'},
+      {key:'h', lab:'漢字',   color:'#1d2433', font:F_HZ, h:RH[1], lc:'#6b7385'},
+      {key:'l', lab:'海陸腔', color:'#b3402a', font:F_PY, h:RH[2], lc:'#b3402a'}
+    ];
+    let y = y0;
+    rows.forEach(r => {
+      const cy = y + r.h / 2;
+      c.textAlign = 'left'; c.font = F_LB; c.fillStyle = r.lc;
+      c.fillText(r.lab, PAD, cy);
+      c.textAlign = 'center'; c.font = r.font; c.fillStyle = r.color;
+      seg.forEach((x, i) => { if (x[r.key]) c.fillText(x[r.key], PAD + LAB_W + colW * i + colW / 2, cy); });
+      y += r.h;
+    });
+    c.fillStyle = '#c9c2b4'; c.fillRect(PAD + LAB_W - 6, y0, 2, tableH);
+  });
+
+  cv.toBlob(blob => {
+    if (!blob){ $('msg').textContent = '匯出失敗，圖片可能太大，請調小「每列字數」或分批匯出。'; return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '客語三行對照.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    $('msg').textContent = '已匯出圖片（白底 PNG）。';
+  }, 'image/png');
+}
+
 function plainText(){
   const rows = [];
   $('out').querySelectorAll('table').forEach(t => {
@@ -207,21 +282,48 @@ $('copy').onclick = async () => {
 
 const stage = $('stage');
 const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+const inFs = () => fsEl() === stage || stage.classList.contains('fs');
+
+let zoom = 1;
+function applyZoom(){
+  $('out').style.zoom = inFs() ? zoom : '';
+  $('zl').textContent = Math.round(zoom * 100) + '%';
+}
+function setZoom(z){ zoom = Math.max(0.5, Math.min(5, z)); applyZoom(); }
+
 function enterFs(){
   const req = stage.requestFullscreen || stage.webkitRequestFullscreen;
   if (req){
-    Promise.resolve(req.call(stage)).catch(() => stage.classList.add('fs'));
+    Promise.resolve(req.call(stage)).catch(() => { stage.classList.add('fs'); applyZoom(); });
   } else {
     stage.classList.add('fs');   // iPhone Safari 等不支援時，改用覆蓋整個畫面的方式
+    applyZoom();
   }
 }
 function exitFs(){
   if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
   stage.classList.remove('fs');
+  applyZoom();
 }
 $('full').onclick = enterFs;
+$('png').onclick = exportPng;
+$('png2').onclick = exportPng;
 $('exit').onclick = exitFs;
-document.addEventListener('keydown', e => { if (e.key === 'Escape') stage.classList.remove('fs'); });
+$('zi').onclick = () => setZoom(zoom * 1.15);
+$('zo').onclick = () => setZoom(zoom / 1.15);
+$('zr').onclick = () => setZoom(1);
+document.addEventListener('fullscreenchange', applyZoom);
+document.addEventListener('webkitfullscreenchange', applyZoom);
+document.addEventListener('keydown', e => {
+  if (!inFs()) return;
+  if (e.key === 'Escape') { stage.classList.remove('fs'); applyZoom(); }
+  else if (e.key === '+' || e.key === '=') setZoom(zoom * 1.15);
+  else if (e.key === '-' || e.key === '_') setZoom(zoom / 1.15);
+  else if (e.key === '0') setZoom(1);
+});
+stage.addEventListener('wheel', e => {
+  if (inFs() && (e.ctrlKey || e.metaKey)){ e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); }
+}, {passive:false});
 
 render();
 </script>
