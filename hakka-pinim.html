@@ -3,8 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>客語三行對照排版（四縣・漢字・海陸）</title>
+<title>客語拼音對照器（四縣・漢字・海陸）</title>
 <style>
+/* 引入字體資料夾的臺灣楷體 */
+@font-face{
+  font-family:'TaiwanKaiti';
+  src:url('./fonts/Taiwan-Kaiti.ttf') format('truetype');
+  font-weight:normal;
+  font-style:normal;
+  font-display:swap;
+}
 :root{
   --bg:#f6f3ee; --panel:#fffdf9; --ink:#1d2433; --muted:#6b7385; --line:#d9d3c7;
   --sixian:#1f5fa8; --hailu:#b3402a; --accent:#23406e;
@@ -48,12 +56,12 @@ button.alt{background:transparent;color:var(--accent)}
 #fsbar button{padding:4px 10px;min-width:36px}
 #zl{min-width:48px;text-align:center;font-size:.9rem;color:#1d2433;font-variant-numeric:tabular-nums}
 #out .warn{color:#b3402a;font-size:.85rem;margin:0 0 4px}
-table.h{border-collapse:collapse;margin:0 0 18px;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+table.h{border-collapse:collapse;margin:0 0 18px;font-family:'TaiwanKaiti','標楷體','DFKai-SB','Kaiti TC','BiauKai',"Noto Sans TC","PingFang TC","Microsoft JhengHei",serif}
 table.h td{padding:2px 6px;text-align:center;white-space:nowrap}
 table.h td.lab{font-size:.8rem;font-weight:700;text-align:left;padding-right:12px;border-right:2px solid #c9c2b4}
 tr.sx td{font-size:.95rem;color:#1f5fa8}
 tr.sx td.lab{color:#1f5fa8}
-tr.hz td{font-size:1.7rem;color:#1d2433;padding-top:0;padding-bottom:0}
+tr.hz td{font-family:'TaiwanKaiti','標楷體','DFKai-SB','Kaiti TC','BiauKai',"Noto Sans TC","PingFang TC","Microsoft JhengHei",serif;font-size:1.7rem;color:#1d2433;padding-top:0;padding-bottom:0}
 tr.hz td.lab{font-size:.8rem;color:#6b7385}
 tr.hl td{font-size:.95rem;color:#b3402a}
 tr.hl td.lab{color:#b3402a}
@@ -110,7 +118,8 @@ function tokens(line){
     .map(t => /^[_＿]+$/.test(t) ? '' : t);
 }
 
-const FONT = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+const FONT = '"TaiwanKaiti","標楷體","DFKai-SB","Kaiti TC","BiauKai","Noto Sans TC","PingFang TC","Microsoft JhengHei",serif';
+const FONT_HZ = FONT;
 const LAB_W = 64;
 
 function toCells(sx, hz, hl){
@@ -143,9 +152,9 @@ function copyGroup(cells, per, colW){
   for (let k = 0; k < cells.length; k += per){
     const seg = cells.slice(k, k + per);
     const total = LAB_W + colW * seg.length;
-    const td = (txt, size, color) =>
+    const td = (txt, size, color, fam = FONT) =>
       `<td width="${colW}" style="width:${colW}px;padding:2px 0;text-align:center;white-space:nowrap;` +
-      `font-family:${FONT};font-size:${size}px;line-height:1.4;color:${color}">${esc(txt) || '&nbsp;'}</td>`;
+      `font-family:${fam};font-size:${size}px;line-height:1.4;color:${color}">${esc(txt) || '&nbsp;'}</td>`;
     const lab = (txt, color) =>
       `<td width="${LAB_W}" style="width:${LAB_W}px;padding:2px 8px 2px 0;text-align:left;white-space:nowrap;` +
       `font-family:${FONT};font-size:13px;font-weight:700;color:${color};border-right:2px solid #c9c2b4">${txt}</td>`;
@@ -153,7 +162,7 @@ function copyGroup(cells, per, colW){
       `style="border-collapse:collapse;table-layout:fixed;width:${total}px">` +
       `<colgroup><col width="${LAB_W}">${seg.map(() => `<col width="${colW}">`).join('')}</colgroup>` +
       `<tr>${lab('四縣腔','#1f5fa8')}${seg.map(x => td(x.s, 15, '#1f5fa8')).join('')}</tr>` +
-      `<tr>${lab('漢字','#6b7385')}${seg.map(x => td(x.h, 27, '#1d2433')).join('')}</tr>` +
+      `<tr>${lab('漢字','#6b7385')}${seg.map(x => td(x.h, 27, '#1d2433', FONT_HZ)).join('')}</tr>` +
       `<tr>${lab('海陸腔','#b3402a')}${seg.map(x => td(x.l, 15, '#b3402a')).join('')}</tr>` +
       `</table><p style="margin:0;line-height:14px;font-size:10px">&nbsp;</p>`;
   }
@@ -192,9 +201,12 @@ async function exportPng(){
     for (let i = 0; i < cells.length; i += per) chunks.push(cells.slice(i, i + per));
   }
   if (!chunks.length){ $('msg').textContent = '尚無內容可匯出。'; return; }
-  try{ await document.fonts.ready; }catch(_){}
+  try{
+    await document.fonts.load('27px TaiwanKaiti', chunks.map(c => c.map(x => x.h + x.s + x.l).join('')).join(''));
+    await document.fonts.ready;
+  }catch(_){}
 
-  const F_PY = `15px ${FONT}`, F_HZ = `27px ${FONT}`, F_LB = `700 13px ${FONT}`;
+  const F_PY = `15px ${FONT}`, F_HZ = `27px ${FONT_HZ}`, F_LB = `700 13px ${FONT}`;
   const PAD = 28, GAP = 18, RH = [26, 46, 26];
   const m = document.createElement('canvas').getContext('2d');
   m.font = F_PY;
