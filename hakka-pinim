@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>客語三行對照排版（四縣・漢字・海陸）</title>
+<style>
+:root{
+  --bg:#f6f3ee; --panel:#fffdf9; --ink:#1d2433; --muted:#6b7385; --line:#d9d3c7;
+  --sixian:#1f5fa8; --hailu:#b3402a; --accent:#23406e;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#14171e; --panel:#1c2029; --ink:#e8e6e1; --muted:#9aa1b0; --line:#343a48;
+         --sixian:#7fb2ee; --hailu:#f0a08c; --accent:#8fb0e6; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+main{max-width:960px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.5rem;margin:0 0 4px;color:var(--accent)}
+p.sub{margin:0 0 20px;color:var(--muted);font-size:.95rem}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:20px}
+label.t{display:block;font-weight:600;margin-bottom:6px}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:720px){.cols{grid-template-columns:1fr}}
+.cols label.t.sx{color:var(--sixian)} .cols label.t.hl{color:var(--hailu)}
+textarea{width:100%;min-height:170px;white-space:pre;overflow:auto;padding:10px;font-size:1rem;line-height:1.7;
+  border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",monospace;resize:vertical}
+textarea:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:.88rem;color:var(--muted);margin:8px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:12px}
+.bar label{font-size:.92rem;color:var(--muted)}
+.bar input[type=number]{width:64px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+button{padding:7px 14px;font-size:.95rem;border:1px solid var(--accent);border-radius:6px;
+  background:var(--accent);color:#fff;cursor:pointer}
+button.alt{background:transparent;color:var(--accent)}
+@media (prefers-color-scheme: dark){ button{color:#14171e} button.alt{color:var(--accent)} }
+#msg{font-size:.88rem;color:var(--hailu);min-height:1.3em;margin-top:8px}
+#out{background:#fff;color:#1d2433;border:1px solid var(--line);border-radius:8px;padding:16px;min-height:80px}
+#stage{position:relative}
+#stage:fullscreen,#stage.fs{background:#fff;overflow:auto;padding:24px;width:100%;height:100%}
+#stage.fs{position:fixed;inset:0;z-index:99}
+#stage:fullscreen #out,#stage.fs #out{border:0;min-height:0;padding:8px 8px 48px}
+#exit{display:none;position:fixed;top:12px;right:12px;z-index:100;opacity:.85}
+#stage:fullscreen #exit,#stage.fs #exit{display:block}
+#out .warn{color:#b3402a;font-size:.85rem;margin:0 0 4px}
+table.h{border-collapse:collapse;margin:0 0 18px;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+table.h td{padding:2px 6px;text-align:center;white-space:nowrap}
+table.h td.lab{font-size:.8rem;font-weight:700;text-align:left;padding-right:12px;border-right:2px solid #c9c2b4}
+tr.sx td{font-size:.95rem;color:#1f5fa8}
+tr.sx td.lab{color:#1f5fa8}
+tr.hz td{font-size:1.7rem;color:#1d2433;padding-top:0;padding-bottom:0}
+tr.hz td.lab{font-size:.8rem;color:#6b7385}
+tr.hl td{font-size:.95rem;color:#b3402a}
+tr.hl td.lab{color:#b3402a}
+</style>
+</head>
+<body>
+<main>
+  <h1>客語三行對照排版</h1>
+  <p class="sub">上排四縣腔拼音、中間漢字、下排海陸腔拼音，逐字對齊。</p>
+
+  <section class="panel">
+    <div class="cols">
+      <div><label class="t sx" for="sx">四縣腔拼音</label><textarea id="sx" wrap="off" spellcheck="false"></textarea></div>
+      <div><label class="t" for="hz">漢字</label><textarea id="hz" wrap="off" spellcheck="false"></textarea></div>
+      <div><label class="t hl" for="hl">海陸腔拼音</label><textarea id="hl" wrap="off" spellcheck="false"></textarea></div>
+    </div>
+    <p class="hint">
+      三欄各貼一份，第 N 行互相對應（一行＝一句）。拼音以空格分隔，一個音節對應一個漢字，標點會自動略過。
+      拼音欄可以整欄或整行留白；若只想讓某個字不標拼音，在該位置填 <code>_</code> 即可。
+    </p>
+    <div class="bar">
+      <label>每列字數 <input type="number" id="per" value="8" min="2" max="30"></label>
+      <button id="go">產生對照</button>
+      <button id="copy" class="alt">複製結果</button>
+      <button id="full" class="alt">全螢幕</button>
+      <button id="clr" class="alt">清空</button>
+    </div>
+    <div id="msg" role="status"></div>
+  </section>
+
+  <div id="stage">
+    <button id="exit" type="button">離開全螢幕</button>
+    <section id="out" aria-live="polite"></section>
+  </div>
+</main>
+
+<script>
+const HAN = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u{20000}-\u{2ffff}]/u;
+const PUNCT_ONLY = /^[\s、，。！？；：「」『』（）()—…,.!?;:"'‧·\-]+$/;
+const $ = id => document.getElementById(id);
+
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+function tokens(line){
+  return line.trim().split(/\s+/).filter(t => t && !PUNCT_ONLY.test(t))
+    .map(t => /^[_＿]+$/.test(t) ? '' : t);
+}
+
+function buildGroup(sx, hz, hl, per){
+  const chars = Array.from(hz.trim());
+  const a = tokens(sx), b = tokens(hl);
+  const nHan = chars.filter(c => HAN.test(c)).length;
+  let warn = '';
+
+  const cells = []; let i = 0;
+  for (const c of chars){
+    if (HAN.test(c)) cells.push({h:c, s:a[i]||'', l:b[i]||''}), i++;
+    else cells.push({h:c, s:'', l:''});
+  }
+  let html = warn ? `<p class="warn">⚠ ${esc(warn)}</p>` : '';
+  for (let k = 0; k < cells.length; k += per){
+    const seg = cells.slice(k, k + per);
+    const row = (cls, lab, key) =>
+      `<tr class="${cls}"><td class="lab">${lab}</td>` +
+      seg.map(x => `<td>${esc(x[key]) || '&nbsp;'}</td>`).join('') + `</tr>`;
+    html += `<table class="h">${row('sx','四縣腔','s')}${row('hz','漢字','h')}${row('hl','海陸腔','l')}</table>`;
+  }
+  return html;
+}
+
+function render(){
+  const per = Math.max(2, Math.min(30, parseInt($('per').value) || 8));
+  const lines = id => $(id).value.replace(/\r/g,'').split('\n');
+  const A = lines('sx'), H = lines('hz'), B = lines('hl');
+  let html = '';
+  for (let k = 0; k < H.length; k++){
+    if (!H[k].trim()) continue;
+    html += buildGroup(A[k] || '', H[k], B[k] || '', per);
+  }
+  $('out').innerHTML = html || '<p style="color:#6b7385;margin:0">尚無內容，請在漢字欄貼上文字。</p>';
+  $('msg').textContent = '';
+}
+
+$('go').onclick = render;
+$('per').oninput = render;
+$('clr').onclick = () => { ['sx','hz','hl'].forEach(id => $(id).value = ''); render(); };
+['sx','hz','hl'].forEach(id => $(id).addEventListener('input', render));
+$('copy').onclick = () => {
+  const r = document.createRange(); r.selectNodeContents($('out'));
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  let ok = false; try{ ok = document.execCommand('copy'); }catch(e){}
+  s.removeAllRanges();
+  $('msg').textContent = ok ? '已複製，可直接貼到 Word、Google 文件或簡報。' : '複製失敗，請手動選取結果後複製。';
+};
+
+const stage = $('stage');
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function enterFs(){
+  const req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+  if (req){
+    Promise.resolve(req.call(stage)).catch(() => stage.classList.add('fs'));
+  } else {
+    stage.classList.add('fs');   // iPhone Safari 等不支援時，改用覆蓋整個畫面的方式
+  }
+}
+function exitFs(){
+  if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  stage.classList.remove('fs');
+}
+$('full').onclick = enterFs;
+$('exit').onclick = exitFs;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') stage.classList.remove('fs'); });
+
+render();
+</script>
+</body>
+</html>
