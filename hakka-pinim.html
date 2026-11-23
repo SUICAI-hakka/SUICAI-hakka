@@ -45,6 +45,15 @@ button.alt{background:transparent;color:var(--accent)}
 #exit{display:none;position:fixed;top:12px;right:12px;z-index:100;opacity:.85}
 #stage:fullscreen #exit,#stage.fs #exit{display:block}
 #out .warn{color:#b3402a;font-size:.85rem;margin:0 0 4px}
+table.h{border-collapse:collapse;margin:0 0 18px;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+table.h td{padding:2px 6px;text-align:center;white-space:nowrap}
+table.h td.lab{font-size:.8rem;font-weight:700;text-align:left;padding-right:12px;border-right:2px solid #c9c2b4}
+tr.sx td{font-size:.95rem;color:#1f5fa8}
+tr.sx td.lab{color:#1f5fa8}
+tr.hz td{font-size:1.7rem;color:#1d2433;padding-top:0;padding-bottom:0}
+tr.hz td.lab{font-size:.8rem;color:#6b7385}
+tr.hl td{font-size:.95rem;color:#b3402a}
+tr.hl td.lab{color:#b3402a}
 </style>
 </head>
 <body>
@@ -93,7 +102,7 @@ function tokens(line){
 const FONT = '"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
 const LAB_W = 64;
 
-function buildGroup(sx, hz, hl, per, colW){
+function toCells(sx, hz, hl){
   const chars = Array.from(hz.trim());
   const a = tokens(sx), b = tokens(hl);
   const cells = []; let i = 0;
@@ -101,13 +110,31 @@ function buildGroup(sx, hz, hl, per, colW){
     if (HAN.test(c)) cells.push({h:c, s:a[i]||'', l:b[i]||''}), i++;
     else cells.push({h:c, s:'', l:''});
   }
+  return cells;
+}
+
+/* 網頁顯示用：原本的樣式 */
+function screenGroup(cells, per){
+  let html = '';
+  for (let k = 0; k < cells.length; k += per){
+    const seg = cells.slice(k, k + per);
+    const row = (cls, lab, key) =>
+      `<tr class="${cls}"><td class="lab">${lab}</td>` +
+      seg.map(x => `<td>${esc(x[key]) || '&nbsp;'}</td>`).join('') + `</tr>`;
+    html += `<table class="h">${row('sx','四縣腔','s')}${row('hz','漢字','h')}${row('hl','海陸腔','l')}</table>`;
+  }
+  return html;
+}
+
+/* 複製用：固定欄寬＋樣式寫進每個儲存格，貼到 Word 等軟體不會跑位 */
+function copyGroup(cells, per, colW){
   let html = '';
   for (let k = 0; k < cells.length; k += per){
     const seg = cells.slice(k, k + per);
     const total = LAB_W + colW * seg.length;
-    const td = (txt, size, color, extra='') =>
+    const td = (txt, size, color) =>
       `<td width="${colW}" style="width:${colW}px;padding:2px 0;text-align:center;white-space:nowrap;` +
-      `font-family:${FONT};font-size:${size}px;line-height:1.4;color:${color};${extra}">${esc(txt) || '&nbsp;'}</td>`;
+      `font-family:${FONT};font-size:${size}px;line-height:1.4;color:${color}">${esc(txt) || '&nbsp;'}</td>`;
     const lab = (txt, color) =>
       `<td width="${LAB_W}" style="width:${LAB_W}px;padding:2px 8px 2px 0;text-align:left;white-space:nowrap;` +
       `font-family:${FONT};font-size:13px;font-weight:700;color:${color};border-right:2px solid #c9c2b4">${txt}</td>`;
@@ -122,19 +149,24 @@ function buildGroup(sx, hz, hl, per, colW){
   return html;
 }
 
-function render(){
+function buildAll(forCopy){
   const per = Math.max(2, Math.min(30, parseInt($('per').value) || 8));
   const lines = id => $(id).value.replace(/\r/g,'').split('\n');
   const A = lines('sx'), H = lines('hz'), B = lines('hl');
   let maxLen = 3;
   [...A, ...B].forEach(l => tokens(l).forEach(t => { maxLen = Math.max(maxLen, t.length); }));
-  const colW = Math.max(44, Math.ceil(maxLen * 8.5) + 14);   // 全部欄位統一寬度，貼到 Word 才不會跑位
+  const colW = Math.max(44, Math.ceil(maxLen * 8.5) + 14);   // 複製時全部欄位統一寬度
   let html = '';
   for (let k = 0; k < H.length; k++){
     if (!H[k].trim()) continue;
-    html += buildGroup(A[k] || '', H[k], B[k] || '', per, colW);
+    const cells = toCells(A[k] || '', H[k], B[k] || '');
+    html += forCopy ? copyGroup(cells, per, colW) : screenGroup(cells, per);
   }
-  $('out').innerHTML = html || '<p style="color:#6b7385;margin:0">尚無內容，請在漢字欄貼上文字。</p>';
+  return html;
+}
+
+function render(){
+  $('out').innerHTML = buildAll(false) || '<p style="color:#6b7385;margin:0">尚無內容，請在漢字欄貼上文字。</p>';
   $('msg').textContent = '';
 }
 
@@ -153,7 +185,7 @@ $('per').oninput = render;
 $('clr').onclick = () => { ['sx','hz','hl'].forEach(id => $(id).value = ''); render(); };
 ['sx','hz','hl'].forEach(id => $(id).addEventListener('input', render));
 $('copy').onclick = async () => {
-  const html = '<meta charset="utf-8">' + $('out').innerHTML, text = plainText();
+  const html = '<meta charset="utf-8">' + buildAll(true), text = plainText();
   try{
     await navigator.clipboard.write([new ClipboardItem({
       'text/html': new Blob([html], {type:'text/html'}),
@@ -161,10 +193,14 @@ $('copy').onclick = async () => {
     })]);
     $('msg').textContent = '已複製，可直接貼到 Word、Google 文件或簡報。';
   }catch(e){
-    const r = document.createRange(); r.selectNodeContents($('out'));
+    const box = document.createElement('div');
+    box.innerHTML = buildAll(true);
+    box.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff';
+    document.body.appendChild(box);
+    const r = document.createRange(); r.selectNodeContents(box);
     const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
     let ok = false; try{ ok = document.execCommand('copy'); }catch(_){}
-    sel.removeAllRanges();
+    sel.removeAllRanges(); box.remove();
     $('msg').textContent = ok ? '已複製，可直接貼到 Word、Google 文件或簡報。' : '複製失敗，請手動選取結果後複製。';
   }
 };
